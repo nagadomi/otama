@@ -1,0 +1,11 @@
+---
+namespace: ukbench
+
+driver:
+  name: sim
+  color_weight: 0.35
+  data_dir: ./data
+  
+database:
+  driver: sqlite3
+  name: ./data/example.sqlite3

@@ -1,0 +1,7 @@
+---
+namespace: test
+
+driver:
+  name: vlad_nodb
+  color_weight: 0.1
+

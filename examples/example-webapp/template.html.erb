@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+  <head>
+    <title>Otama Example-WebApp</title>
+    <style type="text/css">
+      body {
+        margin: 2em;
+      }
+      h1, h2 {
+        font-size: 1.2em;
+        margin: 4px;
+        padding: 4px;
+        background-color: #ccf;
+      }
+      form {
+        margin: 4px;
+        padding: 8px;
+      }
+      img {
+        max-height: 120px;
+        max-width: 120px;
+        border: 0;
+      }
+      .images {
+        float: left;
+        margin: 4px;
+        border-left: 1px solid #ccc;
+        padding: 4px;
+      }
+      .section-body {
+        margin: 4px;
+        padding: 4px;
+      }
+      .error {
+        color: blue;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Otama Example-WebApp</h1>
+    <div class="error">
+      <%= CGI.escapeHTML(@error_message ? @error_message : "") %>
+    </div>
+    <div>
+      <form action="/action" method="post" enctype="multipart/form-data">
+	<table>
+	  <tr>
+	    <td>
+	      url
+	    </td>
+	    <td>
+	      <input type="text" name="url" size="64"/>
+	    </td>
+	  </tr>
+	  <tr>
+	    <td>
+	      file
+	    </td>
+	    <td>
+	      <input type="file" name="file" size="64"/>
+	    </td>
+	  </tr>
+	  <tr>
+	    <td></td>
+	    <td>
+	      <input type="submit" value="Search" name="search"/>
+	      <input type="submit" value="Add" name="add" onclick="return window.confirm('Are you sure?')"/>
+	    </td>
+	  </tr>
+	</table>
+      </form>
+    </div>
+    <div class="section-body">
+      <form action="/" method="get">
+	<input type="submit" value="random"/>
+      </form>
+    </div>
+    <% if (@query_id.nil? && @query_url.nil?) %>
+      <div class="section-body images">
+	<% @random_images.each do |image_id| %>
+	  <a href="/search/<%= CGI.escapeHTML(image_id) %>"%>
+	    <img src="/thumb/<%= CGI.escapeHTML(image_id) %>.jpg"/>
+	  </a>
+	<% end %>
+      </div>
+    <% else %>
+      <% if (@query_id) %>
+        <h2>query</h2>
+	<div class="section-body">
+          <img src="/thumb/<%= CGI.escapeHTML(@query_id) %>.jpg"/>
+	</div>
+      <% elsif (@query_url) %>
+        <h2>query</h2>
+	<div class="section-body">
+	  <img src="<%= CGI.escapeHTML(@query_url) %>"/>
+	</div>
+      <% end %>
+    <% end %>
+    <div style="clear:both"></div>
+    <% if @results && @results.length > 0 %>
+      <h2>results</h2>
+      <div>
+	<% @results.each do |result| %>
+	  <div class="section-body images">
+            <div>
+	      <%= sprintf('%f', result.value[:similarity]) %>
+	    </div>
+	    <a href="/search/<%= CGI.escapeHTML(result.id) %>">
+	      <img src="/thumb/<%= CGI.escapeHTML(result.id) %>.jpg"/>
+            </a>
+	  </div>
+	<% end %>
+      </div>
+    <% end %>
+  </body>
+</html>

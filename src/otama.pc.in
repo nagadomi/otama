@@ -1,0 +1,14 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+bindir=${exec_prefix}/bin
+libexecdir=${exec_prefix}/libexec
+target=libotama
+
+Name: otama
+Description: a CBIR Library.
+Version: @VERSION@
+Libs: -L@libdir@ -lotama
+Libs.private: @LIBS@
+Cflags: -I@includedir@

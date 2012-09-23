@@ -1,0 +1,12 @@
+---
+namespace: test
+
+driver:
+  name: sim
+  data_dir: ./data
+  color_weight: 0.0
+  
+database:
+  driver: sqlite3
+  name: ./data/test.db
+

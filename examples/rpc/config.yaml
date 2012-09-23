@@ -1,0 +1,10 @@
+---
+namespace: http_api
+
+driver:
+  name: id
+  data_dir: ./data
+  
+database:
+  driver: sqlite3
+  name: ./data/test.db

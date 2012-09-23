@@ -1,0 +1,12 @@
+---
+namespace: test
+
+driver:
+  name: bovw2k
+  color_weight: 0.0
+  data_dir: ./data
+  
+database:
+  driver: sqlite3
+  name: ./data/test.db
+

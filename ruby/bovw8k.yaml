@@ -1,0 +1,11 @@
+---
+namespace: test
+
+driver:
+  name: bovw8k
+  data_dir: ./data
+  
+database:
+  driver: sqlite3
+  name: ./data/test.db
+

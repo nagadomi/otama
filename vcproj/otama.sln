@@ -1,0 +1,65 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama", "otama.vcproj", "{D7C4C9A4-22DF-4977-9117-F165F09A0CF1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_import", "otama_import.vcproj", "{75EE4809-4F30-4BA6-A76C-21E6C4ECAE30}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_create_table", "otama_create_table.vcproj", "{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_drop_table", "otama_drop_table.vcproj", "{E7086C56-AE09-484F-8665-0E64D7E4085C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_pull", "otama_pull.vcproj", "{A304D07C-2FC7-448F-A270-D538D5166A2F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_test", "otama_test.vcproj", "{A4A27F3C-9B8B-4488-9B68-23A066DB8663}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1}.Debug|Win32.Build.0 = Debug|Win32
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1}.Release|Win32.ActiveCfg = Release|Win32
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1}.Release|Win32.Build.0 = Release|Win32
+		{75EE4809-4F30-4BA6-A76C-21E6C4ECAE30}.Debug|Win32.ActiveCfg = Debug|Win32
+		{75EE4809-4F30-4BA6-A76C-21E6C4ECAE30}.Debug|Win32.Build.0 = Debug|Win32
+		{75EE4809-4F30-4BA6-A76C-21E6C4ECAE30}.Release|Win32.ActiveCfg = Release|Win32
+		{75EE4809-4F30-4BA6-A76C-21E6C4ECAE30}.Release|Win32.Build.0 = Release|Win32
+		{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}.Debug|Win32.Build.0 = Debug|Win32
+		{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}.Release|Win32.ActiveCfg = Release|Win32
+		{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}.Release|Win32.Build.0 = Release|Win32
+		{E7086C56-AE09-484F-8665-0E64D7E4085C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E7086C56-AE09-484F-8665-0E64D7E4085C}.Debug|Win32.Build.0 = Debug|Win32
+		{E7086C56-AE09-484F-8665-0E64D7E4085C}.Release|Win32.ActiveCfg = Release|Win32
+		{E7086C56-AE09-484F-8665-0E64D7E4085C}.Release|Win32.Build.0 = Release|Win32
+		{A304D07C-2FC7-448F-A270-D538D5166A2F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A304D07C-2FC7-448F-A270-D538D5166A2F}.Debug|Win32.Build.0 = Debug|Win32
+		{A304D07C-2FC7-448F-A270-D538D5166A2F}.Release|Win32.ActiveCfg = Release|Win32
+		{A304D07C-2FC7-448F-A270-D538D5166A2F}.Release|Win32.Build.0 = Release|Win32
+		{A4A27F3C-9B8B-4488-9B68-23A066DB8663}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A4A27F3C-9B8B-4488-9B68-23A066DB8663}.Debug|Win32.Build.0 = Debug|Win32
+		{A4A27F3C-9B8B-4488-9B68-23A066DB8663}.Release|Win32.ActiveCfg = Release|Win32
+		{A4A27F3C-9B8B-4488-9B68-23A066DB8663}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
