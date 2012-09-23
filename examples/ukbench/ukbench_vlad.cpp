@@ -73,9 +73,9 @@ int main(void)
 				++sum;
 			}
 		}
-		printf("%5d (%.4f)\r", i, (float)sum / i);
+		printf("%5d (%.2f)\r", i, (float)sum / i);
 	}
-	printf("%5d (%.4f)\n", i, (float)sum / count);
+	printf("%5d (%.2f)\n", i, (float)sum / count);
 
 	for (i = 0; i < (int)list.size(); ++i) {
 		otama_feature_raw_free(&list[i].second);
