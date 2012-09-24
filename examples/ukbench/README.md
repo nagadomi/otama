@@ -4,9 +4,18 @@
 
 ## 必要なライブラリをインストール
 
-(ubuntu)
+システムのライブラリをインストールします。
+
+(Ubuntu)
 
     sudo apt-get install libgdbm-dev libffi-dev
+
+(FreeBSD)
+
+    sudo pkg_add -r gdbm libffi
+
+Rubyの依存ライブラリをインストールします。
+
     sudo gem install bundler
     sudo bundle install
 
@@ -21,7 +30,7 @@ otamaとotamaのruby拡張ライブラリはインストール済みとします
 ファイルは2GB以上あるので本当にやる気のある人だけ…
  
     wget http://www.vis.uky.edu/~stewe/ukbench/ukbench.zip
-    unzip ukbench.zip -d ukbench
+    unzip -d ukbench ukbench.zip
  
 ./filelist.txtに画像のパスが入っています。
 ファイル名やパスが変わっている場合は
@@ -48,14 +57,11 @@ ukbench.gdbmがキャッシュに載っていないと重いのでcatしとき�
 
     cat ukbench.gdbm > /dev/null
 
-ベンチマークを実行。
+ベンチマークを実行します。
 
     ruby ukbench.rb
 
-うちの環境だと1000QPSくらい出て数秒で終わります。
-
-`sim`ドライバだとスコアが3.6くらいだと思います。
-（ドライバのパラメーターにも依存している）
+数十秒で結果が出ると思います。
 
 `id`ドライバを使う場合は `hit_threshold` を`1`に設定しないとスコアが落ちます。
 

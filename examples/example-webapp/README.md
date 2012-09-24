@@ -9,7 +9,13 @@
 
 必要なパッケージをインストールします。
 
+(Ubuntu)
+
     $ sudo apt-get install libgdbm-dev libmagickcore-dev libmagickwand-dev libmagic-dev libffi-dev
+
+(FreeBSD)
+
+    $ sudo pkg_add -r gdbm ImageMagick libffi
 
 Rubyの依存ライブラリをインストールします。
 
@@ -32,6 +38,8 @@ Rubyの依存ライブラリをインストールします。
 
 でインポートされます。
 (終わるまで待つ)
+
+import.shの中身は、
 
     cat ./import.sh
     #!/bin/sh

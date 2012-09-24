@@ -33,7 +33,7 @@ otamaをKyotoCabinetのデータベースに対応させる場合はKyotoCabinet
     sudo make install
     sudo ldconfig
 
-## 画像入力ライブラリ eiio をインストール
+## eiio をインストール
 
 画像の入力に使っているeiioというライブラリをインストールします。
 
@@ -48,7 +48,7 @@ otamaをKyotoCabinetのデータベースに対応させる場合はKyotoCabinet
 GIFを使わない場合は`configure`に `--disable-gif` を付けるとGIFの対応が外せます。
 jpegやpngも同様に外せますが、外すとotamaのテストが通らなくなります。
 
-## 機械学習と画像処理のライブラリ nv をインストール
+## nv をインストール
 
 otamaのコアな処理はほとんどこのライブラリを呼び出しているだけになっています。
 
@@ -64,7 +64,7 @@ OpenSSLをリンクしない場合は、configure に `--disable-openssl` を付
 
 POPCNT命令に対応しているAMD CPUの場合は、configure に `--enable-popcnt` を付けるとビットベクトルの検索が高速になります(simやcolorなどビットベクトルを使うドライバで2～10倍くらい速くなります)。Intel CPUの場合はSSE4.2に対応していれば自動で有効になります。
 
-## 画像検索エンジンのライブラリ otama をインストール
+## otama をインストール
 
     wget https://github.com/nagadomi/otama/tarball/master -O otama.tar.gz
     tar -xzvf otama.tar.gz
