@@ -37,7 +37,7 @@ otamaをKyotoCabinetのデータベースに対応させる場合はKyotoCabinet
 
 画像の入力に使っているeiioというライブラリをインストールします。
 
-    wget https://github.com/nagadomi/eiio/tarball/master -O eiio.tar.gz
+    wget https://github.com/nagadomi/eiio/tarball/v0.5.1 -O eiio.tar.gz
     tar -xzvf eiio.tar.gz
     cd nagadomi-eiio-*
     ./configure
@@ -50,9 +50,10 @@ jpegやpngも同様に外せますが、外すとotamaのテストが通らな�
 
 ## nv をインストール
 
+機械学習と画像処理のライブラリをインストールします。
 otamaのコアな処理はほとんどこのライブラリを呼び出しているだけになっています。
 
-    wget https://github.com/nagadomi/nv/tarball/master -O nv.tar.gz
+    wget https://github.com/nagadomi/nv/tarball/v2.0.0 -O nv.tar.gz
     tar -xzvf nv.tar.gz
     cd nagadomi-nv-*
     ./configure
@@ -66,7 +67,9 @@ POPCNT命令に対応しているAMD CPUの場合は、configure に `--enable-p
 
 ## otama をインストール
 
-    wget https://github.com/nagadomi/otama/tarball/master -O otama.tar.gz
+画像検索エンジンのライブラリotamaをインストールします。
+
+    wget https://github.com/nagadomi/otama/tarball/v0.6.0 -O otama.tar.gz
     tar -xzvf otama.tar.gz
     cd nagadomi-otama-*
     ./configure --enable-pgsql --enable-mysql --enable-kyotocabinet
