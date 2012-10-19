@@ -420,8 +420,6 @@ otama_feature_raw_free(otama_feature_raw_t **raw)
 {
 	otama_status_t ret;
 	
-	NV_ASSERT(otama != NULL);
-
 	ret = otama::DriverInterface::feature_raw_free(raw);
 
 	return ret;

@@ -162,7 +162,7 @@ namespace otama
 					tmp2[i].no = tmp[i].no;
 						
 					otama_id_hexstr2bin(&tmp2[i].id, id);
-					ng = feature_deserialize(&fixed, vec);
+					ng = this->feature_deserialize(&fixed, vec);
 					if (ng) {
 						ret = OTAMA_STATUS_ASSERTION_FAILURE;
 						OTAMA_LOG_ERROR("invalid vector string. id(%s)", id);

@@ -120,9 +120,9 @@ namespace otama
 		name(void)
 		{
 			if (typeid(COLOR_CLASS) == typeid(nv_color_sboc_t)) {
-				return prefixed_name(std::string("otama_bovw") + itos(BIT/1024) + "k_sboc");
+				return this->prefixed_name(std::string("otama_bovw") + itos(BIT/1024) + "k_sboc");
 			} else {
-				return prefixed_name(std::string("otama_bovw") + itos(BIT/1024) + "k");
+				return this->prefixed_name(std::string("otama_bovw") + itos(BIT/1024) + "k");
 			}
 		}
 		
