@@ -208,7 +208,7 @@ namespace otama
 		virtual std::string
 		name(void)
 		{
-			return prefixed_name(std::string("otama_bovw") + itos(BIT/1024) + "k_iv");
+			return this->prefixed_name(std::string("otama_bovw") + itos(BIT/1024) + "k_iv");
 		}
 		
 		BOVWInvertedIndexDriver(otama_variant_t *options)

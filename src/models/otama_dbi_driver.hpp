@@ -133,7 +133,7 @@ namespace otama
 			otama_dbi_result_t *res;
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
 			time_t curernt_time = time(NULL);
-			char *s = feature_serialize(fixed);
+			char *s = this->feature_serialize(fixed);
 			size_t esc_len = strlen(s) * 2 + 3;
 			char *esc = nv_alloc_type(char, esc_len);
 			char time_string[256];
@@ -184,7 +184,7 @@ namespace otama
 					const char *vec = otama_dbi_result_string(res, 0);
 					int ng;
 					
-					ng = feature_deserialize(fixed, vec);
+					ng = this->feature_deserialize(fixed, vec);
 					if (ng != 0) {
 						OTAMA_LOG_ERROR("invalid vector string. id(%s), size(%zd), vec(%s)",
 										id_hexstr, strlen(vec), vec);

@@ -61,7 +61,7 @@ namespace otama
 					   T *fixed)
 		{
 			if (m_mmap->try_load(id, seq, fixed) != OTAMA_STATUS_OK) {
-				otama_status_t ret = load(id, fixed);
+				otama_status_t ret = this->load(id, fixed);
 				if (ret != OTAMA_STATUS_OK) {
 					return ret;
 				}
@@ -100,7 +100,7 @@ namespace otama
 					
 				m_mmap->extend(count + ntuples + 1);
 				last_no = seq;
-				ng = feature_deserialize(&fixed, vec);
+				ng = this->feature_deserialize(&fixed, vec);
 				if (ng) {
 					ret = OTAMA_STATUS_ASSERTION_FAILURE;
 					OTAMA_LOG_ERROR("invalid vector size. id(%s), size(%zd), vec(%s)",
