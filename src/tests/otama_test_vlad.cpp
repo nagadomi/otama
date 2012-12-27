@@ -21,48 +21,45 @@
 #include "otama_test.h"
 #include "nv_core.h"
 #include "nv_num.h"
-#include "nv_vlad.h"
+#include "nv_vlad.hpp"
 
-void
-otama_test_vlad(void)
+template<nv_vlad_word_e K>
+static void
+otama_test_vlad_main(void)
 {
-	nv_vlad_t *vlad1 = nv_vlad_alloc();
-	nv_vlad_t *vlad2 = nv_vlad_alloc();
-	nv_vlad_t *vlad3 = nv_vlad_alloc();
-	nv_vlad_t *vlad4;
+	nv_vlad_ctx<K> ctx;
+	nv_matrix_t *vlad = nv_matrix_alloc(nv_vlad_ctx<K>::DIM, 4);
+
 	void *p1, *p2, *p3;
 	size_t len1, len2, len3;
 	char *s1, *s2;
 	long t;
-	
 	float similarity1, similarity2;
 	
 	OTAMA_TEST_NAME;
 	
-	NV_ASSERT(vlad1 != NULL && vlad2 != NULL && vlad3 != NULL);
-	
 	t = nv_clock();
-	nv_vlad_file(vlad1, OTAMA_TEST_IMG);
+	ctx.extract(vlad, 0, OTAMA_TEST_IMG);
 	printf("%s: %ldms\n", OTAMA_TEST_IMG, nv_clock() - t);
 	t = nv_clock();
-	nv_vlad_file(vlad2, OTAMA_TEST_IMG_NEGA);
+	ctx.extract(vlad, 1, OTAMA_TEST_IMG_NEGA);
 	printf("%s: %ldms\n", OTAMA_TEST_IMG_NEGA, nv_clock() - t);
 	t = nv_clock();
-	nv_vlad_file(vlad3, OTAMA_TEST_IMG_SCALE);
+	ctx.extract(vlad, 2, OTAMA_TEST_IMG_SCALE);
 	printf("%s: %ldms\n", OTAMA_TEST_IMG_SCALE, nv_clock() - t);
 
-	similarity1 = nv_vlad_similarity(vlad1, vlad2);
-	similarity2 = nv_vlad_similarity(vlad1, vlad1);
+	similarity1 = ctx.similarity(vlad, 0, vlad, 1);
+	similarity2 = ctx.similarity(vlad, 0, vlad, 0);
 	printf("%E < %E\n", similarity1, similarity2);
 	NV_ASSERT(similarity1 < similarity2);
 	
-	similarity1 = nv_vlad_similarity(vlad1, vlad3);
-	similarity2 = nv_vlad_similarity(vlad1, vlad1);
+	similarity1 = ctx.similarity(vlad, 0, vlad, 2);
+	similarity2 = ctx.similarity(vlad, 0, vlad, 0);
 	printf("%E < %E\n", similarity1, similarity2);
 	NV_ASSERT(similarity1 < similarity2);
 	
-	similarity1 = nv_vlad_similarity(vlad1, vlad2);
-	similarity2 = nv_vlad_similarity(vlad1, vlad3);
+	similarity1 = ctx.similarity(vlad, 0, vlad, 1);
+	similarity2 = ctx.similarity(vlad, 0, vlad, 2);
 	printf("%E < %E\n", similarity1, similarity2);
 	NV_ASSERT(similarity1 < similarity2);
 	
@@ -70,44 +67,42 @@ otama_test_vlad(void)
 	otama_test_read_file(OTAMA_TEST_IMG_NEGA, &p2, &len2);
 	otama_test_read_file(OTAMA_TEST_IMG_SCALE, &p3, &len3);
 	
-	nv_vlad_data(vlad1, p1, len1);
-	nv_vlad_data(vlad2, p2, len2);
-	nv_vlad_data(vlad3, p3, len3);
-
-	similarity1 = nv_vlad_similarity(vlad1, vlad2);
-	similarity2 = nv_vlad_similarity(vlad1, vlad1);
+	ctx.extract(vlad, 0, p1, len1);
+	ctx.extract(vlad, 1, p2, len2);
+	ctx.extract(vlad, 2, p3, len3);
+	
+	similarity1 = ctx.similarity(vlad, 0, vlad, 1);
+	similarity2 = ctx.similarity(vlad, 0, vlad, 0);
 	printf("%E < %E\n", similarity1, similarity2);
 	NV_ASSERT(similarity1 < similarity2);
 	
-	similarity1 = nv_vlad_similarity(vlad1, vlad3);
-	similarity2 = nv_vlad_similarity(vlad1, vlad1);
+	similarity1 = ctx.similarity(vlad, 0, vlad, 2);
+	similarity2 = ctx.similarity(vlad, 0, vlad, 0);
 	printf("%E < %E\n", similarity1, similarity2);
 	NV_ASSERT(similarity1 < similarity2);
 	
-	similarity1 = nv_vlad_similarity(vlad1, vlad2);
-	similarity2 = nv_vlad_similarity(vlad1, vlad3);
+	similarity1 = ctx.similarity(vlad, 0, vlad, 1);
+	similarity2 = ctx.similarity(vlad, 0, vlad, 2);
 	printf("%E < %E\n", similarity1, similarity2);
 	NV_ASSERT(similarity1 < similarity2);
-
-	s1 = nv_vlad_serialize(vlad1);
+	
+	s1 = ctx.serialize(vlad, 0);
 	NV_ASSERT(s1 != NULL);
-	vlad4 = nv_vlad_deserialize(s1);
-	NV_ASSERT(vlad4 != NULL);
-	s2 = nv_vlad_serialize(vlad4);
+	ctx.deserialize(vlad, 3, s1);
+	s2 = ctx.serialize(vlad, 3);
 	NV_ASSERT(s2 != NULL);
 	NV_ASSERT(strcmp(s1, s2) == 0);
 
-	similarity1 = nv_vlad_similarity(vlad1, vlad4);
+	similarity1 = ctx.similarity(vlad, 0, vlad, 3);
 	printf("%E == 1.0f\n", similarity1);
 	NV_ASSERT(OTAMA_TEST_EQ1(similarity1));
 	
-	nv_vlad_free(&vlad1);
-	nv_vlad_free(&vlad2);
-	nv_vlad_free(&vlad3);
-	nv_vlad_free(&vlad4);
-	nv_free(s1);
-	nv_free(s2);
-	nv_free(p1);
-	nv_free(p2);
-	nv_free(p3);
+	nv_matrix_free(&vlad);
+}
+
+void
+otama_test_vlad(void)
+{
+	otama_test_vlad_main<NV_VLAD_512>();
+	otama_test_vlad_main<NV_VLAD_128>();
 }

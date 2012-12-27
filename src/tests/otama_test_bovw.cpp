@@ -20,7 +20,6 @@
 #undef NDEBUG
 
 #include "otama_test.h"
-#include "nv_vlad.h"
 #include "nv_core.h"
 #include "nv_bovw.hpp"
 #include <vector>

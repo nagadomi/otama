@@ -2,4 +2,4 @@
 namespace: test
 
 driver:
-  name: vlad_nodb
+  name: vlad128_nodb

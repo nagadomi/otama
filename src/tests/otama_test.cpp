@@ -82,7 +82,7 @@ int main(void)
 #if OTAMA_WITH_KC
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
 #endif
-	
+
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sim.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/id.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/color.yaml");
@@ -92,6 +92,7 @@ int main(void)
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sboc.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/vlad_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/vlad128_nodb.yaml");
 #if OTAMA_WITH_KC
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
 #endif
