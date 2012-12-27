@@ -205,6 +205,7 @@ src/lib/otama_config_auto.h
 src/nvcolorex/Makefile
 src/nvbovw/Makefile
 src/nvvlad/Makefile
+src/nvlmcaex/Makefile
 src/tests/Makefile
 src/otama.pc
 src/Makefile

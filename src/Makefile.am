@@ -1,10 +1,10 @@
 EXTRA_DIST = lib/posix/otama_mmap.c lib/windows/otama_mmap.c lib/otama_config_msvc.h
 
-SUBDIRS    = nvcolorex nvbovw nvvlad
+SUBDIRS    = nvcolorex nvbovw nvvlad nvlmcaex
 
 lib_LTLIBRARIES = libotama.la
-libotama_la_LIBADD = $(builddir)/nvcolorex/libnvcolorex.la $(builddir)/nvbovw/libnvbovw.la $(builddir)/nvvlad/libnvvlad.la
-libotama_la_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
+libotama_la_LIBADD = $(builddir)/nvcolorex/libnvcolorex.la $(builddir)/nvbovw/libnvbovw.la $(builddir)/nvvlad/libnvvlad.la $(builddir)/nvlmcaex/libnvlmcaex.la
+libotama_la_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvlmcaex -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
 libotama_la_CXXFLAGS = $(libotama_la_CFLAGS)
 libotama_la_CPPFLAGS = $(libotama_la_CFLAGS)
 libotama_la_LDFLAGS = -no-undefined -rpath "$(libdir)" -version-number @OTAMA_MAJOR@:@OTAMA_MINOR@:0
@@ -60,6 +60,7 @@ models/otama_nodb_driver.hpp \
 models/otama_fixed_driver.hpp \
 models/otama_inverted_index_driver.hpp \
 models/otama_bovw_fixed_driver.hpp \
+models/otama_lmca_fixed_driver.hpp \
 models/otama_bovw_inverted_index_driver.hpp \
 models/otama_bovw_nodb_driver.hpp \
 models/otama_sboc_nodb_driver.hpp \

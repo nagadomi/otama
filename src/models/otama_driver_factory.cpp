@@ -20,6 +20,7 @@
 #include "otama_config.h"
 #include "otama_driver_factory.hpp"
 #include "otama_bovw_fixed_driver.hpp"
+#include "otama_lmca_fixed_driver.hpp"
 #include "otama_bovw_inverted_index_driver.hpp"
 #include "otama_bovw_nodb_driver.hpp"
 #include "otama_vlad_nodb_driver.hpp"
@@ -160,7 +161,17 @@ otama::createDriver(otama_variant_t *config)
 	// vald
 	else if (strcmp(driver_name, "vlad_nodb") == 0)
 	{
-		return new VLADNoDBDriver(config);
+		return new VLADNoDBDriver<NV_VLAD_512>(config);
+	}
+	// vald 128
+	else if (strcmp(driver_name, "vlad128_nodb") == 0)
+	{
+		return new VLADNoDBDriver<NV_VLAD_128>(config);
+	}
+	// vald 512
+	else if (strcmp(driver_name, "vlad512_nodb") == 0)
+	{
+		return new VLADNoDBDriver<NV_VLAD_512>(config);
 	}
 	
 	// sboc
@@ -171,6 +182,27 @@ otama::createDriver(otama_variant_t *config)
 	else if (strcmp(driver_name, "sboc_nodb") == 0)
 	{
 		return new SBOCNoDBDriver(config);
+	}
+	// vlad_lmca
+	else if (strcmp(driver_name, "lmca_vlad") == 0)
+	{
+		return new LMCAFixedDriver<NV_LMCA_FEATURE_VLAD, nv_lmca_empty_color_t>(config);
+	}
+	else if (strcmp(driver_name, "lmca_hsv") == 0)
+	{
+		return new LMCAFixedDriver<NV_LMCA_FEATURE_HSV, nv_lmca_empty_color_t>(config);
+	}
+	else if (strcmp(driver_name, "lmca_vlad_hsv") == 0)
+	{
+		return new LMCAFixedDriver<NV_LMCA_FEATURE_VLAD_HSV, nv_lmca_hsv_t>(config);
+	}
+	else if (strcmp(driver_name, "lmca_vladhsv") == 0)
+	{
+		return new LMCAFixedDriver<NV_LMCA_FEATURE_VLADHSV, nv_lmca_empty_color_t>(config);
+	}
+	else if (strcmp(driver_name, "lmca_vlad_colorcode") == 0)
+	{
+		return new LMCAFixedDriver<NV_LMCA_FEATURE_VLAD_COLORCODE, nv_lmca_colorcode_t>(config);
 	}
 	
 	OTAMA_LOG_ERROR("Can't locate `%s' driver.", driver_name);
