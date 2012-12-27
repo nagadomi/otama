@@ -58,8 +58,10 @@ namespace otama
 		virtual otama_feature_raw_free_t feature_free_func(void) = 0;
 		
 		virtual void feature_extract(T *fixed, nv_matrix_t *image) = 0;
-		virtual int feature_extract_file(T *fixed, const char *file) = 0;
-		virtual int feature_extract_data(T *fixed, const void *data, size_t data_len) = 0;
+		virtual int feature_extract_file(T *fixed, const char *file,
+										 otama_variant_t *options) = 0;
+		virtual int feature_extract_data(T *fixed, const void *data, size_t data_len,
+										 otama_variant_t *options) = 0;
 		virtual int feature_deserialize(T *fixed, const char *s) = 0;
 		virtual char *feature_serialize(const T *fixed) = 0;
 		virtual void feature_serialized_free(char *s)	{ nv_free(s); }
@@ -248,7 +250,7 @@ namespace otama
 				}
 				has_id = true;
 				if (try_load(id, fixed) != OTAMA_STATUS_OK) {
-					if (feature_extract_file(fixed, otama_variant_to_string(file)) != 0) {
+					if (feature_extract_file(fixed, otama_variant_to_string(file), data) != 0) {
 						return OTAMA_STATUS_SYSERROR;				
 					}
 				} else {
@@ -262,8 +264,9 @@ namespace otama
 				has_id = true;
 				if (try_load(id, fixed) != OTAMA_STATUS_OK) {
 					if (feature_extract_data(fixed,
-												   otama_variant_to_binary_ptr(blob),
-												   otama_variant_to_binary_len(blob)) != 0)
+											 otama_variant_to_binary_ptr(blob),
+											 otama_variant_to_binary_len(blob),
+											 data) != 0)
 					{
 						return OTAMA_STATUS_INVALID_ARGUMENTS;
 					}

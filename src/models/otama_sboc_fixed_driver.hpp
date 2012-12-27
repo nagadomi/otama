@@ -60,14 +60,16 @@ namespace otama
 		}
 		
 		virtual int
-		feature_extract_file(nv_color_sboc_t *fixed, const char *file)
+		feature_extract_file(nv_color_sboc_t *fixed, const char *file,
+							 otama_variant_t *options)
 		{
 			return nv_color_sboc_file(fixed, file);
 		}
 		
 		virtual int
 		feature_extract_data(nv_color_sboc_t *fixed,
-								   const void *data, size_t data_len)
+							 const void *data, size_t data_len,
+							 otama_variant_t *options)
 		{
 			return nv_color_sboc_data(fixed, data, data_len);
 		}

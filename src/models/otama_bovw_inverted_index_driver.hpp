@@ -86,7 +86,8 @@ namespace otama
 		}
 		
 		virtual int
-		feature_extract_file(InvertedIndex::sparse_vec_t *fixed, const char *file)
+		feature_extract_file(InvertedIndex::sparse_vec_t *fixed, const char *file,
+							 otama_variant_t *options)
 		{
 			if (m_ctx->extract(*fixed, file)) {
 				return 1;
@@ -97,7 +98,8 @@ namespace otama
 		
 		virtual int
 		feature_extract_data(InvertedIndex::sparse_vec_t *fixed,
-							 const void *data, size_t data_len)
+							 const void *data, size_t data_len,
+							 otama_variant_t *options)
 		{
 			if (m_ctx->extract(*fixed, data, data_len)) {
 				return 1;

@@ -78,14 +78,15 @@ namespace otama
 		}
 		
 		virtual int
-		feature_extract_file(FT *fixed, const char *file)
+		feature_extract_file(FT *fixed, const char *file, otama_variant_t *options)
 		{
 			return m_ctx->extract(fixed, file);
 		}
 		
 		virtual int
 		feature_extract_data(FT *fixed,
-							 const void *data, size_t data_len)
+							 const void *data, size_t data_len,
+							 otama_variant_t *options)
 		{
 			return m_ctx->extract(fixed, data, data_len);
 		}
