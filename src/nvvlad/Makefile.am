@@ -7,6 +7,8 @@ libnvvlad_la_CPPFLAGS = $(libnvvlad_la_CFLAGS)
 libnvvlad_la_LDFLAGS = -no-undefined 
 
 libnvvlad_la_SOURCES = \
-nv_vlad.h \
-nv_vlad.cpp \
-nv_vlad_static.c
+nv_vlad.hpp \
+nv_vlad512_static.c \
+nv_vlad256_static.c \
+nv_vlad160_static.c \
+nv_vlad128_static.c 

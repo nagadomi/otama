@@ -22,30 +22,33 @@
 #define OTAMA_VLAD_TABLE_HPP
 
 #include "otama_nodb_driver.hpp"
-#include "nv_vlad.h"
+#include "nv_vlad.hpp"
 #include <typeinfo>
 
 namespace otama
 {
-	class VLADNoDBDriver: public NoDBDriver<nv_vlad_t>
+	template <nv_vlad_word_e K>
+	class VLADNoDBDriver: public NoDBDriver<nv_matrix_t>
 	{
 	protected:
-		virtual nv_vlad_t *
+		nv_vlad_ctx<K> m_ctx;
+		
+		virtual nv_matrix_t *
 		feature_new(void)
 		{
-			return nv_vlad_alloc();
+			return nv_matrix_alloc(nv_vlad_ctx<K>::DIM, 1);
 		}
 		
 		virtual void
-		feature_free(nv_vlad_t *fixed)
+		feature_free(nv_matrix_t *fv)
 		{
-			nv_vlad_free(&fixed);
+			nv_matrix_free(&fv);
 		}
 		static void
 		feature_raw_free(void *p)
 		{
-			nv_vlad_t *ft = (nv_vlad_t *)p;
-			nv_vlad_free(&ft);
+			nv_matrix_t *ft = (nv_matrix_t *)p;
+			nv_matrix_free(&ft);
 		}
 		virtual otama_feature_raw_free_t
 		feature_free_func(void)
@@ -54,61 +57,56 @@ namespace otama
 		}
 		
 		virtual void
-		feature_copy(nv_vlad_t *to, const nv_vlad_t *from)
+		feature_copy(nv_matrix_t *to, const nv_matrix_t *from)
 		{
-			nv_vlad_copy(to, from);
+			nv_vector_copy(to, 0, from, 0);
 		}
 		
 		virtual void
-		feature_extract(nv_vlad_t *fixed, nv_matrix_t *image)
+		feature_extract(nv_matrix_t *fv, nv_matrix_t *image)
 		{
-			nv_vlad(fixed, image);
+			m_ctx.extract(fv, 0, image);
 		}
 		
 		virtual int
-		feature_extract_file(nv_vlad_t *fixed, const char *file)
+		feature_extract_file(nv_matrix_t *fv, const char *file,
+							 otama_variant_t *options)
 		{
-			return nv_vlad_file(fixed, file);
+			return m_ctx.extract(fv, 0, file);
 		}
 		
 		virtual int
-		feature_extract_data(nv_vlad_t *fixed,
-								   const void *data, size_t data_len)
+		feature_extract_data(nv_matrix_t *fv,
+							 const void *data, size_t data_len,
+							 otama_variant_t *options)
 		{
-			return nv_vlad_data(fixed, data, data_len);
+			return m_ctx.extract(fv, 0, data, data_len);
 		}
 		
 		virtual int
-		feature_deserialize(nv_vlad_t *fixed, const char *s)
+		feature_deserialize(nv_matrix_t *fv, const char *s)
 		{
-			nv_vlad_t *vlad = nv_vlad_deserialize(s);
-			if (vlad) {
-				nv_vlad_copy(fixed, vlad);
-				nv_vlad_free(&vlad);
-				return 0;
-			} else {
-				return -1;
-			}
+			return m_ctx.deserialize(fv, 0, s);
 		}
 		
 		virtual char *
-		feature_serialize(const nv_vlad_t *fixed)
+		feature_serialize(const nv_matrix_t *fv)
 		{
-			return nv_vlad_serialize(fixed);
+			return m_ctx.serialize(fv, 0);
 		}
 		
 		virtual float
-		feature_similarity(const nv_vlad_t *fixed1,
-							const nv_vlad_t *fixed2,
+		feature_similarity(const nv_matrix_t *fv1,
+							const nv_matrix_t *fv2,
 							otama_variant_t *options)
 		{
-			return nv_vlad_similarity(fixed1, fixed2);
+			return m_ctx.similarity(fv1, 0, fv2, 0);
 		}
 		
 	public:
 		virtual std::string name(void) { return "otama_vlad_nodb"; }
 		VLADNoDBDriver(otama_variant_t *options)
-			: NoDBDriver<nv_vlad_t>(options)
+			: NoDBDriver<nv_matrix_t>(options)
 		{}
 		~VLADNoDBDriver() {}
 	};

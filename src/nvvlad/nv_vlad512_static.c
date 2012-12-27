@@ -1,5 +1,5 @@
 #include "nv_core.h"
-NV_ALIGNED(static float, nv_vlad_posi_static_v[18432], 16) = {
+NV_ALIGNED(static float, nv_vlad512_posi_v[18432], 16) = {
    4.354759E-02f,   4.217864E-02f,   4.331390E-02f,   8.269324E-02f,   1.683263E-01f,
    1.809404E-01f,   8.331006E-02f,   4.948201E-02f,   4.762889E-02f,   5.407259E-02f,
    4.284427E-02f,   4.819807E-02f,   8.261849E-02f,   1.955317E-01f,   1.479083E-01f,
@@ -3841,10 +3841,10 @@ NV_ALIGNED(static float, nv_vlad_posi_static_v[18432], 16) = {
    8.816906E-02f,   8.997964E-02f,   1.080470E-01f,   9.602102E-02f,   3.346115E-02f,
    2.643887E-02f,   3.525646E-02f
 };
-nv_matrix_t nv_vlad_posi_static = {
- 1, 18432, 72, 256, 1, 256, 72, 0, nv_vlad_posi_static_v
+nv_matrix_t nv_vlad512_posi = {
+ 1, 18432, 72, 256, 1, 256, 72, 0, nv_vlad512_posi_v
 };
-NV_ALIGNED(static float, nv_vlad_nega_static_v[18432], 16) = {
+NV_ALIGNED(static float, nv_vlad512_nega_v[18432], 16) = {
    1.300530E-01f,   6.181305E-02f,   7.491630E-02f,   9.647577E-02f,   1.542804E-01f,
    8.479141E-02f,   7.243422E-02f,   6.469313E-02f,   2.463908E-01f,   5.046833E-02f,
    3.644686E-02f,   4.480616E-02f,   1.008059E-01f,   5.207194E-02f,   4.975509E-02f,
@@ -7686,10 +7686,10 @@ NV_ALIGNED(static float, nv_vlad_nega_static_v[18432], 16) = {
    3.562716E-02f,   2.973275E-02f,   1.950033E-02f,   3.297633E-02f,   3.123927E-02f,
    3.203474E-02f,   3.665832E-02f
 };
-nv_matrix_t nv_vlad_nega_static = {
- 1, 18432, 72, 256, 1, 256, 72, 0, nv_vlad_nega_static_v
+nv_matrix_t nv_vlad512_nega = {
+ 1, 18432, 72, 256, 1, 256, 72, 0, nv_vlad512_nega_v
 };
-NV_ALIGNED(static float, nv_vlad_idf_static_v[512], 16) = {
+NV_ALIGNED(static float, nv_vlad512_idf_v[512], 16) = {
    1.006826E+01f,   1.011590E+01f,   9.265060E+00f,   1.010348E+01f,   9.621345E+00f,
    1.018471E+01f,   1.004410E+01f,   1.041564E+01f,   9.839375E+00f,   1.013705E+01f,
    1.023372E+01f,   9.787621E+00f,   9.229706E+00f,   1.011352E+01f,   1.017017E+01f,
@@ -7794,6 +7794,6 @@ NV_ALIGNED(static float, nv_vlad_idf_static_v[512], 16) = {
    1.016380E+01f,   1.026781E+01f,   1.013848E+01f,   9.664042E+00f,   1.001992E+01f,
    9.662416E+00f,   1.030755E+01f
 };
-nv_matrix_t nv_vlad_idf_static = {
- 1, 512, 512, 1, 1, 1, 512, 0, nv_vlad_idf_static_v
+nv_matrix_t nv_vlad512_idf = {
+ 1, 512, 512, 1, 1, 1, 512, 0, nv_vlad512_idf_v
 };
