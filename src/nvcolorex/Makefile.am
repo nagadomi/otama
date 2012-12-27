@@ -12,4 +12,8 @@ nv_color_boc_static.c \
 nv_color_boc.h \
 nv_color_boc.cpp \
 nv_color_major.h \
-nv_color_major.c 
+nv_color_major.c \
+nv_color_vlad.h \
+nv_color_vlad.c \
+nv_color_hist.h \
+nv_color_hist.c 
