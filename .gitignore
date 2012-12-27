@@ -30,7 +30,7 @@ src/otama_import
 src/otama_pull
 src/nvbovw/nv_bovw_train
 src/nvbovw/nv_bovw_benchmark
-src/nvlmca/nv_lmca_train
+src/nvlmcaex/nv_lmca_train
 src/tests/otama_test
 ruby/data/
 examples/rpc/data/
