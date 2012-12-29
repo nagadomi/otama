@@ -40,6 +40,10 @@ namespace otama
 		float m_color_threshold;
 		float m_color_weight;
 		
+		static const float DEFAULT_COLOR_THRESHOLD() { return 0.7f; }
+		static const float DEFAULT_COLOR_WEIGHT() { return 0.5f; }
+		static const typename T::color_method_e DEFAULT_COLOR_METHOD = T::COLOR_METHOD_LINEAR;
+		
 		typename T::color_method_e m_color_method;
 		T *m_ctx;
 		
@@ -133,13 +137,36 @@ namespace otama
 			strcpy(s, str.c_str());
 			return s;
 		}
-		
+
 		virtual float
 		feature_similarity(const FT *fixed1,
 						   const FT *fixed2,
 						   otama_variant_t *options)
 		{
-			return T::similarity(fixed1, fixed2);
+			otama_variant_t *value;
+			float color_weight = m_color_weight;
+			float color_threshold = m_color_threshold;
+			typename T::color_method_e color_method = m_color_method;
+			
+			value = otama_variant_hash_at(options, "color_method");
+			if (!OTAMA_VARIANT_IS_NULL(value)) {
+				const char *method = otama_variant_to_string(value);
+				if (nv_strcasecmp(method, "linear") == 0) {
+					color_method = T::COLOR_METHOD_LINEAR;
+				} else if (nv_strcasecmp(method, "step") == 0) {
+					color_method = T::COLOR_METHOD_STEP;
+				}
+			}
+			value = otama_variant_hash_at(options, "color_threshold");
+			if (!OTAMA_VARIANT_IS_NULL(value)) {
+				color_threshold = otama_variant_to_float(value);
+			}
+			value = otama_variant_hash_at(options, "color_weight");
+			if (!OTAMA_VARIANT_IS_NULL(value)) {
+				color_weight = otama_variant_to_float(value);
+			}
+			
+			return T::similarity(fixed1, fixed2, color_method, color_weight, color_threshold);
 		}
 		
 		static inline void
@@ -219,16 +246,16 @@ namespace otama
 		
 		LMCAFixedDriver(otama_variant_t *options)
 		: FixedDriver<FT>(options),
-		  m_color_threshold(0.0f), m_color_method(T::COLOR_METHOD_SIMILARITY)
+		  m_color_threshold(0.0f), m_color_method(T::COLOR_METHOD_LINEAR)
 		{
 			otama_variant_t *driver, *value;
-
+			
+			m_color_method = DEFAULT_COLOR_METHOD;
+			m_color_threshold = DEFAULT_COLOR_THRESHOLD();
 			switch (F) {
 			case NV_LMCA_FEATURE_VLAD_HSV:
-				m_color_weight = 0.65f;
-				break;
 			case NV_LMCA_FEATURE_VLAD_COLORCODE:
-				m_color_weight = 0.5f;
+				m_color_weight = DEFAULT_COLOR_WEIGHT();
 				break;
 			case NV_LMCA_FEATURE_VLADHSV:
 			case NV_LMCA_FEATURE_VLAD:
@@ -254,11 +281,6 @@ namespace otama
 						m_lmca_file = otama_variant_to_string(value);
 					}
 				}
-				
-				value = otama_variant_hash_at(driver, "color_threshold");
-				if (!OTAMA_VARIANT_IS_NULL(value)) {
-					m_color_threshold = otama_variant_to_float(value);
-				}
 				value = otama_variant_hash_at(driver, "color_weight");
 				if (!OTAMA_VARIANT_IS_NULL(value)) {
 					m_color_weight = otama_variant_to_float(value);
@@ -266,11 +288,15 @@ namespace otama
 				value = otama_variant_hash_at(driver, "color_method");
 				if (!OTAMA_VARIANT_IS_NULL(value)) {
 					const char *method = otama_variant_to_string(value);
-					if (nv_strcasecmp(method, "similarity") == 0) {
-						m_color_method = T::COLOR_METHOD_SIMILARITY;
-					} else if (nv_strcasecmp(method, "constant") == 0) {
-						m_color_method = T::COLOR_METHOD_CONSTANT;
+					if (nv_strcasecmp(method, "linear") == 0) {
+						m_color_method = T::COLOR_METHOD_LINEAR;
+					} else if (nv_strcasecmp(method, "step") == 0) {
+						m_color_method = T::COLOR_METHOD_STEP;
 					}
+				}
+				value = otama_variant_hash_at(driver, "color_threshold");
+				if (!OTAMA_VARIANT_IS_NULL(value)) {
+					m_color_threshold = otama_variant_to_float(value);
 				}
 			}
 			m_ctx = new T;
@@ -294,14 +320,14 @@ namespace otama
 					return OTAMA_STATUS_INVALID_ARGUMENTS;
 				}
 				if (m_ctx->open(m_lmca_file.c_str(), m_lmca2_file.c_str()) != 0) {
-					OTAMA_LOG_ERROR("Can't open metric file: %s, %s",
+					OTAMA_LOG_ERROR("invalid metric file: %s, %s",
 									m_lmca_file.c_str(),
 									m_lmca2_file.c_str());
 					return OTAMA_STATUS_SYSERROR;
 				}
 			} else {
 				if (m_ctx->open(m_lmca_file.c_str()) != 0) {
-					OTAMA_LOG_ERROR("Can't open metric file: %s", m_lmca_file.c_str());
+					OTAMA_LOG_ERROR("invalid metric file: %s", m_lmca_file.c_str());
 					return OTAMA_STATUS_SYSERROR;
 				}
 			}

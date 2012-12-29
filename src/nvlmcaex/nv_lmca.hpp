@@ -45,6 +45,7 @@ typedef enum {
 	NV_LMCA_FEATURE_VLAD_COLORCODE,
 	NV_LMCA_FEATURE_VLAD_HSV
 } nv_lmca_feature_e;
+	
 
 #define NV_LMCA_VLAD_DIM 128
 #define NV_LMCA_HSV_DIM 64
@@ -77,6 +78,10 @@ public:
 		NV_ALIGNED(float, v[T == NV_LMCA_FEATURE_HSV ? NV_LMCA_HSV_DIM : NV_LMCA_VLAD_DIM], 32);
 		NV_ALIGNED(C, color, 32);
 	} vector_t;
+	typedef enum {
+		COLOR_METHOD_LINEAR,
+		COLOR_METHOD_STEP
+	} color_method_e;
 	
 private:
 	nv_vlad_ctx<NV_VLAD_128> m_ctx;
@@ -91,20 +96,18 @@ private:
 	}
 
 	static float
-	distance(const vector_t *db, int64_t j,
-			 const vector_t *query)
+	distance(const float *v1,
+			 const float *v2)
 	{
 		int i;
 		float dist;
-		const float *v1 = &db[j].v[0];
-		const float *v2 = &query->v[0];
 		
-		// LMCA_DLM %4 == 0
+		NV_ASSERT(LMCA_DIM % 4 == 0);
 #if NV_ENABLE_SSE
 		__m128 u = _mm_setzero_ps();
 		NV_ALIGNED(float, mm[4], 16);
 		
-		for (i = 0; i < LMCA_DIM; i+= 4) {
+		for (i = 0; i < LMCA_DIM; i += 4) {
 			//__m128 x = _mm_sub_ps(_mm_loadu_ps(&v1[i]), *(const __m128 *)&v2[i]);
 			__m128 x = _mm_sub_ps(_mm_load_ps(&v1[i]), *(const __m128 *)&v2[i]);
 			u = _mm_add_ps(u, _mm_mul_ps(x, x));
@@ -113,7 +116,7 @@ private:
 		dist = mm[0] + mm[1] + mm[2] + mm[3];
 #else
 		dist = 0.0f;
-		for (i = 0; i < LMCA_DIM; i+= 4) {
+		for (i = 0; i < LMCA_DIM; i += 4) {
 			dist += (v1[i] - v2[i]) * (v1[i] - v2[i]);
 		}
 #endif
@@ -133,6 +136,10 @@ public:
 		if (m_lmca == NULL) {
 			return -1;
 		}
+		if (m_lmca->n != RAW_DIM || m_lmca->m != LMCA_DIM) {
+			nv_matrix_free(&m_lmca);
+			return -1;
+		}
 		return 0;
 	}
 		
@@ -147,6 +154,12 @@ public:
 		}
 		m_lmca2 = nv_load_matrix(lmca2_file);
 		if (m_lmca2 == NULL) {
+			nv_matrix_free(&m_lmca);
+			return -1;
+		}
+		if (m_lmca2->n != HSV_DIM || m_lmca2->m != NV_LMCA_HSV_DIM) {
+			nv_matrix_free(&m_lmca);
+			nv_matrix_free(&m_lmca2);
 			return -1;
 		}
 		return 0;
@@ -196,7 +209,7 @@ public:
 			extract_vlad_vector(vec, vec_j, image);
 		}
 	}
-
+	
 	void
 	extract_color(nv_lmca_empty_color_t *color,
 				  const nv_matrix_t *image, const float *colorcode)
@@ -219,14 +232,15 @@ public:
 				  const nv_matrix_t *image, const float *colorcode)
 	{
 		NV_ASSERT(m_lmca2 != NULL);
-		NV_ASSERT(m_lmca2->n = HSV_DIM);
-		NV_ASSERT(m_lmca2->m = NV_LMCA_HSV_DIM);
+		NV_ASSERT(m_lmca2->n == HSV_DIM);
+		NV_ASSERT(m_lmca2->m == NV_LMCA_HSV_DIM);
 		
 		int i;
 		float norm = 0.0f, scale;
 		nv_matrix_t *vec = nv_matrix_alloc(HSV_DIM, 1);
 		
 		extract_hsv_vector(vec, 0, image);
+		// normalize
 #ifdef _OPENMP
 #pragma omp parallel for reduction (+:norm)
 #endif
@@ -257,6 +271,7 @@ public:
 		NV_ASSERT(m_lmca->m == LMCA_DIM);
 		
 		extract_raw_vector(T, vec, 0, image);
+		// normalize
 #ifdef _OPENMP
 #pragma omp parallel for reduction (+:norm)
 #endif
@@ -421,28 +436,38 @@ public:
 		return (MAX_DIST - sqrtf(dist)) / MAX_DIST;
 	}
 	static inline float
-	similarity(const vector_t *v1,
-			   const vector_t *v2,
-			   const float color_weight = 0.0f,
-			   const float color_threshold = 0.0f)
+	similarity(const float *v1,
+			   const float *v2)
 	{
-		float lmca_similarity = 1.0f - sqrtf(distance(v1, 0, v2)) * 0.5f;
-		float color_similarity = similarity(&v1->color, &v2->color);
-		return (1.0 - color_weight) * lmca_similarity + color_weight * color_similarity;
+		return 1.0f - sqrtf(distance(v1, v2)) * 0.5f;
 	}
 	
-	typedef enum {
-		COLOR_METHOD_SIMILARITY,
-		COLOR_METHOD_CONSTANT
-	} color_method_e;
-	
+	static inline float
+	similarity(const vector_t *v1,
+			   const vector_t *v2,
+			   color_method_e method,
+			   const float color_weight,
+			   const float color_threshold)
+	{
+		float lmca_similarity = similarity(v1->v, v2->v);
+		float color_similarity = similarity(&v1->color, &v2->color);
+		
+		if (method == COLOR_METHOD_STEP) {
+			if (color_threshold < color_similarity) {
+				color_similarity = 1.0f;
+			} else {
+				color_similarity = 0.0f;
+			}
+		}
+		return (1.0 - color_weight) * lmca_similarity + color_weight * color_similarity;
+	}
 	static int
 	search(nv_lmca_result_t *results, int n,
 		   const vector_t *db, int64_t ndb,
 		   const vector_t *query,
-		   color_method_e method = COLOR_METHOD_SIMILARITY,
-		   const float color_weight = 0.6f,
-		   const float color_threshold = -1.0f)
+		   color_method_e method,
+		   const float color_weight,
+		   const float color_threshold)
 	{
 		typedef std::priority_queue<nv_lmca_result_t, std::vector<nv_lmca_result_t>,
 									std::greater<std::vector<nv_lmca_result_t>::value_type> > topn_t;
@@ -462,11 +487,11 @@ public:
 			if (color_weight == 1.0f) {
 				new_node.similarity = similarity(&db[i].color, &query->color);
 			} else if (color_weight == 0.0f) {
-				new_node.similarity = similarity(&db[i], query);
+				new_node.similarity = similarity(db[i].v, query->v);
 			} else {
-				float lmca_similarity = similarity(&db[i], query);
+				float lmca_similarity = similarity(db[i].v, query->v);
 				float color_similarity = similarity(&db[i].color, &query->color);
-				if (method == COLOR_METHOD_CONSTANT) {
+				if (method == COLOR_METHOD_STEP) {
 					if (color_threshold < color_similarity) {
 						color_similarity = 1.0f;
 					} else {
