@@ -1,0 +1,12 @@
+---
+namespace: test
+
+driver:
+  name: lmca_vlad_colorcode
+  data_dir: ./data
+  metric: ./config/lmca_vlad.mat
+  
+database:
+  driver: sqlite3
+  name: ./data/test.db
+

@@ -30,7 +30,6 @@ handle_segv(int i)
 	abort();
 }
 
-
 size_t
 otama_test_read_file(const char *file, void **p, size_t *len)
 {
@@ -79,10 +78,16 @@ int main(void)
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw8k.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/sboc.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_hsv.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vladhsv.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_hsv.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_colorcode.yaml");
+	
 #if OTAMA_WITH_KC
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
 #endif
-
+	
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sim.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/id.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/color.yaml");
@@ -93,6 +98,12 @@ int main(void)
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sboc.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/vlad_nodb.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/vlad128_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_hsv.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vladhsv.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_hsv.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_colorcode.yaml");
+
 #if OTAMA_WITH_KC
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
 #endif

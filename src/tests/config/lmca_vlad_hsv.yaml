@@ -1,0 +1,14 @@
+---
+namespace: test
+
+driver:
+  name: lmca_vlad_hsv
+  data_dir: ./data
+  metric:
+    - ./config/lmca_vlad.mat
+    - ./config/lmca_hsv.mat
+  
+database:
+  driver: sqlite3
+  name: ./data/test.db
+
