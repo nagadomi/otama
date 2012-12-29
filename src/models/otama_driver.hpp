@@ -475,9 +475,11 @@ namespace otama
 			
 			ret = extract(&id, has_id, pfixed, has_feature, exist, data);
 			if (ret != OTAMA_STATUS_OK) {
+				feature_free(pfixed);
 				return ret;
 			}
 			if (!has_feature) {
+				feature_free(pfixed);
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
 			*raw = new otama_feature_raw_t;
