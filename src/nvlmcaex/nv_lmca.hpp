@@ -236,11 +236,10 @@ public:
 		NV_ASSERT(m_lmca2->m == NV_LMCA_HSV_DIM);
 		
 		int i;
-		float norm = 0.0f, scale;
+		float norm = 0.0f;
 		nv_matrix_t *vec = nv_matrix_alloc(HSV_DIM, 1);
 		
 		extract_hsv_vector(vec, 0, image);
-		// normalize
 #ifdef _OPENMP
 #pragma omp parallel for reduction (+:norm)
 #endif
@@ -250,7 +249,7 @@ public:
 			color->v[i] = v;
 		}
 		if (norm > 0.0f) {
-			scale = 1.0f / sqrtf(norm);
+			float scale = 1.0f / sqrtf(norm);
 			for (i = 0; i < NV_LMCA_HSV_DIM; ++i) {
 				color->v[i] *= scale;
 			}
@@ -262,16 +261,15 @@ public:
 	extract(vector_t *lmca, const nv_matrix_t *image,
 			const float *colorcode = NULL)
 	{
-		nv_matrix_t *vec = nv_matrix_alloc(RAW_DIM, 1);
 		int i;
-		float norm = 0, scale;
+		float norm = 0.0f;
+		nv_matrix_t *vec = nv_matrix_alloc(RAW_DIM, 1);
 
 		NV_ASSERT(m_lmca != NULL);
 		NV_ASSERT(m_lmca->n == RAW_DIM);
 		NV_ASSERT(m_lmca->m == LMCA_DIM);
 		
 		extract_raw_vector(T, vec, 0, image);
-		// normalize
 #ifdef _OPENMP
 #pragma omp parallel for reduction (+:norm)
 #endif
@@ -281,7 +279,7 @@ public:
 			lmca->v[i] = v;
 		}
 		if (norm > 0.0f) {
-			scale = 1.0f / sqrtf(norm);
+			float scale = 1.0f / sqrtf(norm);
 			for (i = 0; i < LMCA_DIM; ++i) {
 				lmca->v[i] *= scale;
 			}
@@ -585,13 +583,13 @@ public:
 	
 	static void
 	train(nv_matrix_t *l, const nv_matrix_t *data, const nv_matrix_t *labels, int show,
-		  int nk, int mk, float margin, float push_ratio, float delta, int max_epoch,
+		  int k, int k_n, float margin, float push_weight, float learning_rate, int max_iteration,
 		  bool initialize = true
 		)
 	{
-		printf("lmca_train: data: %d, labels: %d, nk: %d, mk: %d, margin: %f, push_ratio: %f, delta: %f, max_epoch: %d, resume: %s\n",
+		printf("lmca_train: data: %d, labels: %d, k: %d, k_n: %d, margin: %f, push_weight: %f, learning_rate: %f, max_iteration: %d, resume: %s\n",
 			   data->m, labels->m,
-			   nk, mk, margin, push_ratio, delta, max_epoch,
+			   k, k_n, margin, push_weight, learning_rate, max_iteration,
 			   initialize ? "false" : "true"
 			);
 		
@@ -599,17 +597,17 @@ public:
 		if (initialize) {
 			nv_lmca_init_cov(l, data);
 		}
-		nv_lmca_train(l, data, labels, nk, mk, margin, push_ratio, delta, max_epoch);
+		nv_lmca_train(l, data, labels, k, k_n, margin, push_weight, learning_rate, max_iteration);
 		
 		if (show) {
 			int i;
-			int k = 0;
+			int cls = 0;
 			nv_matrix_t *data_lmca = nv_matrix_alloc(LMCA_DIM, data->m);
 			
 			for (i = 0; i < labels->m; ++i) {
-				k = NV_MAX(k, NV_MAT_VI(labels, i, 0));
+				cls = NV_MAX(cls, NV_MAT_VI(labels, i, 0));
 			}
-			k += 1;
+			cls += 1;
 			nv_knn_result_t results[k];
 			int ok;
 			
@@ -618,15 +616,16 @@ public:
 			}
 			ok = 0;
 			for (i = 0; i < data->m; ++i) {
-				int knn[k];
+				int knn[cls];
 				int j, n, max_v, max_i;
+				
 				memset(knn, 0, sizeof(knn));
-				n = nv_knn(results, nk, data_lmca, data_lmca, i);
+				n = nv_knn(results, k, data_lmca, data_lmca, i);
 				for (j = 0; j < n; ++j) {
 					++knn[NV_MAT_VI(labels, results[j].index, 0)];
 				}
 				max_v = max_i= 0;
-				for (j = 0; j < k; ++j) {
+				for (j = 0; j < cls; ++j) {
 					if (max_v < knn[j]) {
 						max_v = knn[j];
 						max_i = j;
@@ -636,9 +635,10 @@ public:
 					++ok;
 				}
 			}
-			printf("Train Accuracy = %f%% (%d/%d)\n",
+			printf("Training Accuracy = %f%% (%d/%d)\n",
 				   (float)ok / data->m * 100.0f,
 				   ok, data->m);
+			
 			nv_matrix_free(&data_lmca);
 		}
 	}
