@@ -603,11 +603,11 @@ namespace otama
 			return OTAMA_STATUS_OK;
 		}
 		
-		otama_status_t sync(void) { return OTAMA_STATUS_OK;	}
-		bool is_active(void) { return false; };
-		otama_status_t set(const std::string &key, otama_variant_t *value) { return OTAMA_STATUS_INVALID_ARGUMENTS;	}
-		otama_status_t unset(const std::string &key) { return OTAMA_STATUS_INVALID_ARGUMENTS; }
-		otama_status_t get(const std::string &key, otama_variant_t *value) { return OTAMA_STATUS_INVALID_ARGUMENTS;	}
+		virtual otama_status_t sync(void) { return OTAMA_STATUS_OK;	}
+		virtual bool is_active(void) { return false; };
+		virtual otama_status_t set(const std::string &key, otama_variant_t *value) { return OTAMA_STATUS_INVALID_ARGUMENTS;	}
+		virtual otama_status_t unset(const std::string &key) { return OTAMA_STATUS_INVALID_ARGUMENTS; }
+		virtual otama_status_t get(const std::string &key, otama_variant_t *value) { return OTAMA_STATUS_INVALID_ARGUMENTS;	}
 	};
 }
 
