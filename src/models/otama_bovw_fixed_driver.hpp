@@ -110,7 +110,15 @@ namespace otama
 							const FT *fixed2,
 							otama_variant_t *options)
 		{
-			return m_ctx->similarity(fixed1, fixed2, m_rerank_method, m_color_weight);
+			float color_weight = m_color_weight;
+			otama_variant_t *cw;
+			
+			if (OTAMA_VARIANT_IS_HASH(options)
+				&& !OTAMA_VARIANT_IS_NULL(cw = otama_variant_hash_at(options, "color_weight")))
+			{
+				color_weight = otama_variant_to_float(cw);
+			}
+			return m_ctx->similarity(fixed1, fixed2, m_rerank_method, color_weight);
 		}
 		
 		static inline void
@@ -139,10 +147,11 @@ namespace otama
 			float color_weight = m_color_weight;
 			otama_variant_t *cw;
 			
-			if (OTAMA_VARIANT_IS_HASH(cw = otama_variant_hash_at(options, "color_weight"))) {
+			if (OTAMA_VARIANT_IS_HASH(options)
+				&& !OTAMA_VARIANT_IS_NULL(cw = otama_variant_hash_at(options, "color_weight")))
+			{
 				color_weight = otama_variant_to_float(cw);
 			}
-			
 			*results = otama_result_alloc(n);
 			nresult = m_ctx->search(first_results, first_n,
 									FixedDriver<FT>::m_mmap->vec(),
@@ -339,6 +348,20 @@ namespace otama
 				return OTAMA_STATUS_OK;
 			}
 			return FixedDriver<FT>::set(key, value);
+		}
+		
+		virtual otama_status_t
+		get(const std::string &key,
+			otama_variant_t *value)
+		{
+#ifdef _OPENMP
+			OMPLock lock(FixedDriver<FT>::m_lock);
+#endif
+			if (key == "color_weight") {
+				otama_variant_set_float(value, m_color_weight);
+				return OTAMA_STATUS_OK;
+			}
+			return FixedDriver<FT>::get(key, value);
 		}
 		
 		virtual otama_status_t

@@ -115,6 +115,8 @@ otama_drop_table_LDFLAGS =
 otama_drop_table_SOURCES = util/otama_drop_table.c
 otama_drop_table_LDADD = libotama.la
 
+bin_SCRIPTS = util/otama_lmca_train
+
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA = otama.pc
 

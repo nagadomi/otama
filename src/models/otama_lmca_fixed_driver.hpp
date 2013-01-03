@@ -148,22 +148,24 @@ namespace otama
 			float color_threshold = m_color_threshold;
 			typename T::color_method_e color_method = m_color_method;
 			
-			value = otama_variant_hash_at(options, "color_method");
-			if (!OTAMA_VARIANT_IS_NULL(value)) {
-				const char *method = otama_variant_to_string(value);
-				if (nv_strcasecmp(method, "linear") == 0) {
-					color_method = T::COLOR_METHOD_LINEAR;
-				} else if (nv_strcasecmp(method, "step") == 0) {
-					color_method = T::COLOR_METHOD_STEP;
+			if (OTAMA_VARIANT_IS_HASH(options)) {
+				value = otama_variant_hash_at(options, "color_method");
+				if (!OTAMA_VARIANT_IS_NULL(value)) {
+					const char *method = otama_variant_to_string(value);
+					if (nv_strcasecmp(method, "linear") == 0) {
+						color_method = T::COLOR_METHOD_LINEAR;
+					} else if (nv_strcasecmp(method, "step") == 0) {
+						color_method = T::COLOR_METHOD_STEP;
+					}
 				}
-			}
-			value = otama_variant_hash_at(options, "color_threshold");
-			if (!OTAMA_VARIANT_IS_NULL(value)) {
-				color_threshold = otama_variant_to_float(value);
-			}
-			value = otama_variant_hash_at(options, "color_weight");
-			if (!OTAMA_VARIANT_IS_NULL(value)) {
-				color_weight = otama_variant_to_float(value);
+				value = otama_variant_hash_at(options, "color_threshold");
+				if (!OTAMA_VARIANT_IS_NULL(value)) {
+					color_threshold = otama_variant_to_float(value);
+				}
+				value = otama_variant_hash_at(options, "color_weight");
+				if (!OTAMA_VARIANT_IS_NULL(value)) {
+					color_weight = otama_variant_to_float(value);
+				}
 			}
 			
 			return T::similarity(fixed1, fixed2, color_method, color_weight, color_threshold);
@@ -191,19 +193,39 @@ namespace otama
 			nv_lmca_result_t *first_results = nv_alloc_type(nv_lmca_result_t, first_n);
 			int nresult = 0;
 			int i, j, results_size;
+			otama_variant_t *value;
+			float color_weight = m_color_weight;
+			float color_threshold = m_color_threshold;
+			typename T::color_method_e color_method = m_color_method;
 
-			*results = otama_result_alloc(n);
-			
+			if (OTAMA_VARIANT_IS_HASH(options)) {
+				value = otama_variant_hash_at(options, "color_method");
+				if (!OTAMA_VARIANT_IS_NULL(value)) {
+					const char *method = otama_variant_to_string(value);
+					if (nv_strcasecmp(method, "linear") == 0) {
+						color_method = T::COLOR_METHOD_LINEAR;
+					} else if (nv_strcasecmp(method, "step") == 0) {
+						color_method = T::COLOR_METHOD_STEP;
+					}
+				}
+				value = otama_variant_hash_at(options, "color_threshold");
+				if (!OTAMA_VARIANT_IS_NULL(value)) {
+					color_threshold = otama_variant_to_float(value);
+				}
+				value = otama_variant_hash_at(options, "color_weight");
+				if (!OTAMA_VARIANT_IS_NULL(value)) {
+					color_weight = otama_variant_to_float(value);
+				}
+			}
 			this->sync();
-			
+			*results = otama_result_alloc(n);
 			nresult = m_ctx->search(first_results, first_n,
 									FixedDriver<FT>::m_mmap->vec(),
 									FixedDriver<FT>::m_mmap->count(),
 									query,
-									m_color_method,
-									m_color_weight,
-									m_color_threshold
-				);
+									color_method,
+									color_weight,
+									color_threshold);
 			for (j = i = 0; j < nresult; ++j) {
 				if ((FixedDriver<FT>::m_mmap->flag_at(first_results[j].index) &
 					 this->FLAG_DELETE) == 0)
@@ -335,6 +357,49 @@ namespace otama
 		}
 		~LMCAFixedDriver() {
 			delete m_ctx;
+		}
+		
+		virtual otama_status_t
+		set(const std::string &key, otama_variant_t *value)
+		{
+#ifdef _OPENMP
+			OMPLock lock(FixedDriver<FT>::m_lock);
+#endif
+			OTAMA_LOG_DEBUG("set key: %s\n", key.c_str());
+			
+			if (key == "color_weight") {
+				m_color_weight = otama_variant_to_float(value);
+				return OTAMA_STATUS_OK;
+			}
+			return FixedDriver<FT>::set(key, value);
+		}
+		
+		virtual otama_status_t
+		get(const std::string &key,
+			otama_variant_t *value)
+		{
+#ifdef _OPENMP
+			OMPLock lock(FixedDriver<FT>::m_lock);
+#endif
+			if (key == "color_weight") {
+				otama_variant_set_float(value, m_color_weight);
+				return OTAMA_STATUS_OK;
+			}
+			return FixedDriver<FT>::get(key, value);
+		}
+		
+		virtual otama_status_t
+		unset(const std::string &key)
+		{
+#ifdef _OPENMP
+			OMPLock lock(FixedDriver<FT>::m_lock);
+#endif
+			OTAMA_LOG_DEBUG("unset key: %s\n", key.c_str());
+			if (key == "color_weight") {
+				m_color_weight = DEFAULT_COLOR_WEIGHT();
+				return OTAMA_STATUS_OK;
+			}
+			return FixedDriver<FT>::unset(key);
 		}
 	};
 }
