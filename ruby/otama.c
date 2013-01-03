@@ -427,8 +427,8 @@ otama_rb_set(VALUE self, VALUE key, VALUE value)
 	
 	Data_Get_Struct(self, otama_t, otama);
 	OTAMA_CHECK_NULL(otama);
-	StringValue(key);
-
+	key = rb_funcall(key, rb_intern("to_s"), 0);
+	
 	pool = otama_variant_pool_alloc();
 	var = otama_variant_new(pool);
 	
@@ -454,7 +454,7 @@ otama_rb_unset(VALUE self, VALUE key)
 	
 	Data_Get_Struct(self, otama_t, otama);
 	OTAMA_CHECK_NULL(otama);
-	StringValue(key);
+	key = rb_funcall(key, rb_intern("to_s"), 0);
 
 	ret = otama_unset(otama, RSTRING_PTR(key));
 	if (ret != OTAMA_STATUS_OK) {
@@ -476,7 +476,7 @@ otama_rb_get(VALUE self, VALUE key)
 	
 	Data_Get_Struct(self, otama_t, otama);
 	OTAMA_CHECK_NULL(otama);
-	StringValue(key);
+	key = rb_funcall(key, rb_intern("to_s"), 0);
 	
 	ret = otama_get(otama, RSTRING_PTR(key), var);
 	if (ret != OTAMA_STATUS_OK) {
