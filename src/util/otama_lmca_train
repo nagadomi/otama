@@ -1,2 +1,2 @@
 #!/bin/sh
-nv_lmca_train $@
+exec nv_lmca_train $@
