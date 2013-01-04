@@ -34,11 +34,11 @@ help(void)
 		   "    -e (vlad|hsv|vladhsv) extract mode\n"
 		   "    -t (vlad|hsv|vladhsv) train mode\n"
 		   " train mode options\n"
-		   "    -i n   iteration\n"
+		   "    -i n   iteration (default: 30)\n"
 		   "    -k n   pull kNN k (default: 12)\n"
 		   "    -n n   push kNN k (default: 16)\n"
-		   "    -r f   push weight (default: 0.2, pull weight:1.0-f)\n"
-		   "    -m f   margin (default: 0.5)\n"
+		   "    -r f   push weight (default: vlad: 0.25, vladhsv: 0.2, hsv: 0.4, pull weight:1.0-f)\n"
+		   "    -m f   margin (default: vlad: 0.5, vladhsv: 0.5, hsv: 0.1)\n"
 		   "    -d f   learning rate (default: 0.1)\n"
 		   "    -l s   lmca_file (resume)\n",
 		   name
@@ -53,7 +53,7 @@ typedef enum {
 
 template<nv_lmca_feature_e T, typename C>
 int _main(mode_e mode,
-		  int nk, int mk, float margin, float push_ratio, float delta, int  max_epoch,
+		  int k, int k_n, float margin, float push_weight, float learnin_rate, int  max_epoch,
 		  const char *base_file)
 {
 	nv_matrix_t *data = NULL;
@@ -108,10 +108,10 @@ int _main(mode_e mode,
 			fprintf(stderr, "%s: error\n", label_file);
 			return -1;
 		}
-		nk = NV_MIN(data->m, nk);
-		mk = NV_MIN(data->m, mk);
+		k = NV_MIN(data->m, k);
+		k_n = NV_MIN(data->m, k_n);
 		
-		ctx.train(l, data, labels, 1, nk, mk, margin, push_ratio, delta, max_epoch, initialize);
+		ctx.train(l, data, labels, 1, k, k_n, margin, push_weight, learnin_rate, max_epoch, initialize);
 		nv_save_matrix_text(metric_file, l);
 		nv_matrix_free(&data);
 		nv_matrix_free(&labels);
@@ -139,34 +139,34 @@ main(int argc, char** argv)
 {
 	mode_e mode = UNKNOWN;
 	int opt;
-	int nk = 12;
-	int mk = 16;
-	float margin = 0.5f;
-	float delta = 0.1f;
-	float push_ratio = 0.2f;
-	int max_epoch = 20;
+	int k = 12;
+	int k_n = 16;
+	float margin = -1.0f;
+	float learnin_rate = 0.05f;
+	int max_epoch = 30;
 	char base_file[1024] = {0};
 	char feature[256] = {0};
-	
+	float push_weight = -1.0f;
+
 	while ((opt = nv_getopt(argc, argv, "e:t:hk:m:d:n:i:r:l:")) != -1) {
 		switch (opt) {
 		case 'l':
 			strncpy(base_file, nv_getopt_optarg, sizeof(base_file) - 1);
 			break;
 		case 'k':
-			nk = atoi(nv_getopt_optarg);
+			k = atoi(nv_getopt_optarg);
 			break;
 		case 'n':
-			mk = atoi(nv_getopt_optarg);
+			k_n = atoi(nv_getopt_optarg);
 			break;
 		case 'm':
 			margin = atof(nv_getopt_optarg);
 			break;
 		case 'r':
-			push_ratio = atof(nv_getopt_optarg);
+			push_weight = atof(nv_getopt_optarg);
 			break;
 		case 'd':
-			delta = atof(nv_getopt_optarg);
+			learnin_rate = atof(nv_getopt_optarg);
 			break;
 		case 'i':
 			max_epoch = atof(nv_getopt_optarg);
@@ -190,14 +190,32 @@ main(int argc, char** argv)
 		return -1;
 	}
 	if (nv_strcasecmp(feature, "vlad") == 0) {
+		if (push_weight < 0.0) {
+			push_weight = 0.25f;
+		}
+		if (margin < 0.0) {
+			margin = 0.5f;
+		}
 		_main<NV_LMCA_FEATURE_VLAD, nv_lmca_empty_color_t>(
-			mode, nk, mk, margin, push_ratio, delta, max_epoch, base_file);
-	} else if (nv_strcasecmp(feature, "hsv") == 0) {
-		_main<NV_LMCA_FEATURE_HSV, nv_lmca_empty_color_t>(
-			mode, nk, mk, margin, push_ratio, delta, max_epoch, base_file);
+			mode, k, k_n, margin, push_weight, learnin_rate, max_epoch, base_file);
 	} else if (nv_strcasecmp(feature, "vladhsv") == 0) {
+		if (push_weight < 0.0) {
+			push_weight = 0.25f;
+		}
+		if (margin < 0.0) {
+			margin = 0.5f;
+		}
 		_main<NV_LMCA_FEATURE_VLADHSV, nv_lmca_empty_color_t>(
-			mode, nk, mk, margin, push_ratio, delta, max_epoch, base_file);
+			mode, k, k_n, margin, push_weight, learnin_rate, max_epoch, base_file);
+	} else if (nv_strcasecmp(feature, "hsv") == 0) {
+		if (push_weight < 0.0) {
+			push_weight = 0.4f;
+		}
+		if (margin < 0.0) {
+			margin = 0.1f;
+		}
+		_main<NV_LMCA_FEATURE_HSV, nv_lmca_empty_color_t>(
+			mode, k, k_n, margin, push_weight, learnin_rate, max_epoch, base_file);
 	} else {
 		return -1;
 	}
