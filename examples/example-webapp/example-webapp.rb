@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 require 'rubygems'
 require 'filemagic'
-require 'sinatra'
+require 'sinatra/base'
 require 'otama'
 require 'yaml'
 require 'erb'
@@ -13,48 +13,135 @@ require 'resolv-replace'
 require 'timeout'
 require 'fileutils'
 
-ROOT = File.expand_path(File.dirname(__FILE__))
-Dir.chdir(ROOT);
-
-class ExampleWebApp
-  CONFIG = File.join(ROOT, 'config.yaml')
-  DBM_FILE = File.join(ROOT, 'example.gdbm')
-  TEAMPLE = File.join(ROOT, 'template.html.erb')
+class ExampleWebApp < Sinatra::Base
+  ROOT = File.expand_path(File.dirname(__FILE__))
+  # otamaログレベル
+  Otama.log_level = Otama::LOG_LEVEL_DEBUG
+  # アップロード検索を許可するか
+  ENABLE_UPLOAD_SEARCH = false
+  # データベース登録を許可するか
+  ENABLE_CREATE = false
+  # 検索結果の列
+  COLUMNS = 7
+  # 検索結果の行
+  ROWS = 6
+  # 検索結果のサムネイルサイズ
+  THUMB_SIZE = 96
+  # 設定ファイル
+  CONFIG_FILE = File.join(ROOT, 'config.yaml')
+  # アップロードされたファイルを置くディレクトリ
   UPLOAD_DIR = File.join(ROOT, 'upload')
+  # サムネイルを置くディレクトリ
   THUMB_DIR = File.join(ROOT, 'public/thumb')
-  RESULT_MAX = 20
+  # IDとファイル名を対応付けるデータベース(make-database.rbで作成)
+  DBM_FILE = File.join(ROOT, 'example.gdbm')
+  # URLを指定して検索する場合の最大画像サイズ
   MAX_CONTENT_LENGTH = 10 * 1024 * 1024
+  # URLを指定して検索する場合のタイムアウト
   CONTENT_TIMEOUT = 10
   
-  Otama.log_level = Otama::LOG_LEVEL_DEBUG
+  RESULT_MAX = ROWS * COLUMNS
+  
+  configure do
+    Dir.chdir(ROOT)
+    
+    set :db, GDBM::open(DBM_FILE, 0600, GDBM::NOLOCK|GDBM::READER|GDBM::WRITER)
+    set :config, YAML.load_file(CONFIG_FILE)
+    set :otama, Otama.open(settings.config)
+    set :mime, FileMagic.new(FileMagic::MAGIC_MIME)
 
-  @@instance = nil
-  
-  def self.get
-    @@instance ||= ExampleWebApp.new
+    settings.otama.pull
+    
+    trap(:TERM) do
+      settings.otama.close
+      exit
+    end
+    trap(:INT) do
+      settings.otama.close
+      exit
+    end
+    unless (File.directory?(UPLOAD_DIR))
+      FileUtils.mkdir_p(UPLOAD_DIR)
+    end
+    unless (File.directory?(THUMB_DIR))
+      FileUtils.mkdir_p(THUMB_DIR)
+    end
+  end
+  get '/' do
+    send_template
+  end
+  get '/search/:image_id' do
+    search_by_id(params[:image_id])
+  end
+  post '/action' do
+    if (params[:file] && params[:file][:tempfile])
+      if (params[:search])
+        search_by_file(params[:file][:tempfile])
+      elsif (params[:add])
+        create_by_file(params[:file][:tempfile])      
+      end
+    elsif (params[:url] && !params[:url].empty?)
+      if (params[:search])    
+        search_by_url(params[:url])
+      elsif (params[:add])
+        create_by_url(params[:url])
+      end
+    else
+      send_template
+    end
+  end
+  get '/thumb/:image_id.jpg' do
+    path = image_filename(params[:image_id])
+    if (path)
+      thumb_path = thumb_filename(path)
+      unless (File.exist?(thumb_path))
+        img = Magick::Image.read(path).first
+        img.resize_to_fit!(THUMB_SIZE, THUMB_SIZE)
+        img.format = "JPEG"
+        img.write(thumb_path)
+      end
+      send_file(thumb_path, {
+                  :type => settings.mime.file(path),
+                  :disposition => 'inline'})
+    end
+  end
+  get '/upload/:hash' do
+    path = upload_filename(params[:hash])
+    if (path)
+      send_file(path, {
+                  :type => settings.mime.file(path),
+                  :disposition => 'inline'})
+    end
   end
   
-  def close
-    @db.close
-    @otama.close
-  end
+  private
   def search_by_id(image_id)
     file = image_filename(image_id)
     begin
+      query = {:file => file}
+      if (color_weight = get_color_weight)
+        query[:color_weight] = color_weight
+      end
       send_template(:query_id => image_id,
-                    :results => @otama.search(RESULT_MAX, :file => file))
+                    :results => settings.otama.search(RESULT_MAX, query))
     rescue => e
+      puts e.backtrace
       send_template(:error_message => e.message)
      end
   end
   def search_by_url(url)
+    raise "disabled" unless (ENABLE_UPLOAD_SEARCH)
     if (url =~ /^s?https?:\/\//)
       begin
         image = get_remote_content(url)
+        query = {:data => image}
+        if (color_weight = get_color_weight)        
+          query[:color_weight] = color_weight
+        end
         send_template(:query_url => url,
-                      :results => @otama.search(RESULT_MAX, :data => image)
-                      )
+                      :results => settings.otama.search(RESULT_MAX, query))
       rescue => e
+        puts e.backtrace
         send_template(:error_message => e.message)
       end
     else
@@ -62,52 +149,56 @@ class ExampleWebApp
     end
   end
   def search_by_file(file)
+    raise "disabled" unless (ENABLE_UPLOAD_SEARCH)
     begin
       id, path = save_image(file.read)
+      query = {:file => path}
+      if (color_weight = get_color_weight)
+        query[:color_weight] = color_weight
+      end
       send_template(:query_url => "/upload/" + id,
-                    :results => @otama.search(RESULT_MAX, :file => path)
-                    )
+                    :results => settings.otama.search(RESULT_MAX, query))
     rescue => e
       send_template(:error_message => e.message)
     end
   end
   def create_by_file(file)
+    raise "disabled" unless (ENABLE_CREATE)
     begin
       blob = file.read
       id, path = save_image(blob)
-      id = @otama.insert(:data => blob)
-      @db[id] = path
-      @otama.pull
-      
+      id = settings.otama.insert(:data => blob)
+      settings.db[id] = path
+      settings.otama.pull
       send_template(:error_message => "#{id} created.")
     rescue => e
       send_template(:error_message => e.message)
     end
   end
   def create_by_url(url)
+    raise "disabled" unless (ENABLE_CREATE)
     begin
       blob = get_remote_content(url)
       id, path = save_image(blob)
-      id = @otama.insert(:data => blob)
-      @db[id] = path
-      @otama.pull
+      id = settings.otama.insert(:data => blob)
+      settings.db[id] = path
+      settings.otama.pull
       send_template(:error_message => "#{id} created.") 
     rescue => e
       send_template(:error_message => e.message)
     end
   end
   def send_template(options = {})
-    erb = template
     @query_id = options[:query_id]
     @query_url = options[:query_url]
     @error_message = options[:error_message]
     @results = options[:results] || []
     @random_images = random_images || []
-    
-    erb.result(binding)
+    @color_weight = get_color_weight
+    erb :template
   end
   def image_filename(image_id)
-    path = @db[image_id]
+    path = settings.db[image_id]
     if (File.exist?(path))
       path
     else
@@ -123,22 +214,18 @@ class ExampleWebApp
   def thumb_filename(filename)
     File.join(THUMB_DIR, sprintf("%s.jpg", Otama.id(:file => filename)))
   end
-  
-  private
-  def initialize
-    unless (File.directory?(UPLOAD_DIR))
-      FileUtils.mkdir_p(UPLOAD_DIR)
-    end
-    unless (File.directory?(THUMB_DIR))
-      FileUtils.mkdir_p(THUMB_DIR)
-    end
-    
-    @db = GDBM::open(DBM_FILE, 0600, GDBM::NOLOCK|GDBM::READER|GDBM::WRITER)
-    @config = YAML.load_file(CONFIG)
-    @otama = Otama.open(@config)
-    @otama.pull
+  def color_weight_support?
+    ["sim", "bovw2k_sboc", "bovw8k_sboc",
+     "bovw2k_boc", "bovw8k_boc",
+     "lmca_vlad_hsv", "lmca_vlad_colorcode"].include?(settings.config["driver"]["name"])
   end
-  
+  def get_color_weight
+    if (color_weight_support?)
+      params[:color_weight] ? params[:color_weight].to_f : settings.otama.get(:color_weight)
+    else
+      nil
+    end
+  end
   def save_image(blob)
     id = Otama.id(:data => blob)
     path = File.join(UPLOAD_DIR, id)
@@ -147,16 +234,11 @@ class ExampleWebApp
     end
     [id, path]
   end
-  def template
-    @template ||= File.open(TEAMPLE) do |f|
-      ERB.new(f.read)
-    end
-  end
   def random_images(n = RESULT_MAX)
     results = []
-    count = @db['COUNT'].to_i
+    count = settings.db['COUNT'].to_i
     n.times do |i|
-      image_id = @db[rand(count).to_i.to_s]
+      image_id = settings.db[rand(count).to_i.to_s]
       if (image_id)
         results << image_id
       end
@@ -186,72 +268,3 @@ class ExampleWebApp
     content
   end
 end
-trap(:TERM) do
-  OtamaInstance.close
-  exit
-end
-trap(:INT) do
-  OtamaInstance.close
-  exit
-end
-
-get '/' do
-  controller = ExampleWebApp.get
-  controller.send_template
-end
-
-get '/search/:image_id' do
-  controller = ExampleWebApp.get
-  controller.search_by_id(params[:image_id])
-end
-
-post '/action' do
-  controller = ExampleWebApp.get
-  
-  if (params[:file] && params[:file][:tempfile])
-    if (params[:search])
-      controller.search_by_file(params[:file][:tempfile])
-    elsif (params[:add])
-      controller.create_by_file(params[:file][:tempfile])      
-    end
-  elsif (params[:url] && !params[:url].empty?)
-    if (params[:search])    
-      controller.search_by_url(params[:url])
-    elsif (params[:add])
-      controller.create_by_url(params[:url])
-    end
-  else
-    controller.send_template
-  end
-end
-
-MIME = FileMagic.new(FileMagic::MAGIC_MIME)
-get '/thumb/:image_id.jpg' do
-  controller = ExampleWebApp.get
-  
-  path = controller.image_filename(params[:image_id])
-  if (path)
-    thumb_path = controller.thumb_filename(path)
-    unless (File.exist?(thumb_path))
-      img = Magick::Image.read(path).first
-      img.resize_to_fit!(120, 120)
-      img.format = "JPEG"
-      img.write(thumb_path)
-    end
-    send_file(thumb_path, {
-                :type => MIME.file(path),
-                :disposition => 'inline'})
-  end
-end
-
-get '/upload/:hash' do
-  controller = ExampleWebApp.get
-  
-  path = controller.upload_filename(params[:hash])
-  if (path)
-    send_file(path, {
-                :type => MIME.file(path),
-                :disposition => 'inline'})
-  end
-end
-

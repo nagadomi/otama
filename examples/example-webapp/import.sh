@@ -1,7 +1,14 @@
 #!/bin/sh
+
+if [ $# -ne 1 ]; then
+    filename="./filelist.txt"
+else
+    filename=$1
+fi
 renice 19 -p $$
 otama_create_table -c ./config.yaml
-otama_import -c ./config.yaml ./filelist.txt > id.txt
+otama_import -c ./config.yaml $filename > id.txt
 otama_pull -c ./config.yaml
+rm -f example.gdbm
 ruby make-database.rb
 
