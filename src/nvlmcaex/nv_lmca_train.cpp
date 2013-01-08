@@ -27,17 +27,17 @@
 #include "nv_color_boc.h"
 
 static void
-help(void)
+print_usage(void)
 {
 	const char *name = "nv_lmca_train";	
-	printf("%s [OPTIONS]\n"
+	printf("%s [OPTIONS] [filelist.txt]\n"
 		   "    -e (vlad|hsv|vladhsv) extract mode\n"
-		   "    -t (vlad|hsv|vladhsv) train mode\n"
-		   " train mode options\n"
+		   "    -t (vlad|hsv|vladhsv) training mode\n"
+		   " training mode options\n"
 		   "    -i n   iteration (default: 30)\n"
 		   "    -k n   pull kNN k (default: 12)\n"
 		   "    -n n   push kNN k (default: 16)\n"
-		   "    -r f   push weight (default: vlad: 0.25, vladhsv: 0.2, hsv: 0.4, pull weight:1.0-f)\n"
+		   "    -r f   push weight (default: vlad: 0.25, vladhsv: 0.2, hsv: 0.45, pull weight: 1.0-f)\n"
 		   "    -m f   margin (default: vlad: 0.5, vladhsv: 0.5, hsv: 0.1)\n"
 		   "    -d f   learning rate (default: 0.1)\n"
 		   "    -l s   lmca_file (resume)\n",
@@ -53,7 +53,8 @@ typedef enum {
 
 template<nv_lmca_feature_e T, typename C>
 int _main(mode_e mode,
-		  int k, int k_n, float margin, float push_weight, float learnin_rate, int  max_epoch,
+		  int k, int k_n, float margin, float push_weight, float learning_rate, int  max_epoch,
+		  const char *filelist,
 		  const char *base_file)
 {
 	nv_matrix_t *data = NULL;
@@ -111,14 +112,14 @@ int _main(mode_e mode,
 		k = NV_MIN(data->m, k);
 		k_n = NV_MIN(data->m, k_n);
 		
-		ctx.train(l, data, labels, 1, k, k_n, margin, push_weight, learnin_rate, max_epoch, initialize);
+		ctx.train(l, data, labels, 1, k, k_n, margin, push_weight, learning_rate, max_epoch, initialize);
 		nv_save_matrix_text(metric_file, l);
 		nv_matrix_free(&data);
 		nv_matrix_free(&labels);
 		nv_matrix_free(&l);
 		break;
 	case EXTRACT:
-		if (ctx.make_train_data(&data, &labels, "filelist.txt") != 0) {
+		if (ctx.make_train_data(&data, &labels, filelist) != 0) {
 			return -1;
 		}
 		nv_save_matrix_bin(data_file, data);
@@ -127,7 +128,7 @@ int _main(mode_e mode,
 		nv_matrix_free(&labels);
 		break;
 	default:
-		help();
+		print_usage();
 		return -1;
 	}
 	
@@ -142,11 +143,12 @@ main(int argc, char** argv)
 	int k = 12;
 	int k_n = 16;
 	float margin = -1.0f;
-	float learnin_rate = 0.05f;
+	float learning_rate = 0.1f;
 	int max_epoch = 30;
 	char base_file[1024] = {0};
 	char feature[256] = {0};
 	float push_weight = -1.0f;
+	const char *filelist = NULL;
 
 	while ((opt = nv_getopt(argc, argv, "e:t:hk:m:d:n:i:r:l:")) != -1) {
 		switch (opt) {
@@ -166,7 +168,7 @@ main(int argc, char** argv)
 			push_weight = atof(nv_getopt_optarg);
 			break;
 		case 'd':
-			learnin_rate = atof(nv_getopt_optarg);
+			learning_rate = atof(nv_getopt_optarg);
 			break;
 		case 'i':
 			max_epoch = atof(nv_getopt_optarg);
@@ -181,13 +183,22 @@ main(int argc, char** argv)
 			break;
 		case 'h':
 		default:
-			help();
+			print_usage();
 			return -1;
 		}
 	}
 	if (mode == UNKNOWN) {
-		help();
+		print_usage();
 		return -1;
+	}
+	if (mode == EXTRACT) {
+		argc -= nv_getopt_optind;
+		argv += nv_getopt_optind;
+		if (argc != 1) {
+			print_usage();
+			return -1;
+		}
+		filelist = argv[0];
 	}
 	if (nv_strcasecmp(feature, "vlad") == 0) {
 		if (push_weight < 0.0) {
@@ -197,7 +208,7 @@ main(int argc, char** argv)
 			margin = 0.5f;
 		}
 		_main<NV_LMCA_FEATURE_VLAD, nv_lmca_empty_color_t>(
-			mode, k, k_n, margin, push_weight, learnin_rate, max_epoch, base_file);
+			mode, k, k_n, margin, push_weight, learning_rate, max_epoch, filelist, base_file);
 	} else if (nv_strcasecmp(feature, "vladhsv") == 0) {
 		if (push_weight < 0.0) {
 			push_weight = 0.25f;
@@ -206,16 +217,16 @@ main(int argc, char** argv)
 			margin = 0.5f;
 		}
 		_main<NV_LMCA_FEATURE_VLADHSV, nv_lmca_empty_color_t>(
-			mode, k, k_n, margin, push_weight, learnin_rate, max_epoch, base_file);
+			mode, k, k_n, margin, push_weight, learning_rate, max_epoch, filelist, base_file);
 	} else if (nv_strcasecmp(feature, "hsv") == 0) {
 		if (push_weight < 0.0) {
-			push_weight = 0.4f;
+			push_weight = 0.45f;
 		}
 		if (margin < 0.0) {
 			margin = 0.1f;
 		}
 		_main<NV_LMCA_FEATURE_HSV, nv_lmca_empty_color_t>(
-			mode, k, k_n, margin, push_weight, learnin_rate, max_epoch, base_file);
+			mode, k, k_n, margin, push_weight, learning_rate, max_epoch, filelist, base_file);
 	} else {
 		return -1;
 	}
