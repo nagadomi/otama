@@ -595,7 +595,7 @@ public:
 		
 		nv_lmca_progress(show);
 		if (initialize) {
-			nv_lmca_init_cov(l, data);
+			nv_lmca_init_pca(l, data);
 		}
 		nv_lmca_train(l, data, labels, k, k_n, margin, push_weight, learning_rate, max_iteration);
 		
