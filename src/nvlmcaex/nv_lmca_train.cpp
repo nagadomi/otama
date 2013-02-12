@@ -34,10 +34,10 @@ print_usage(void)
 		   "    -e (vlad|hsv|vladhsv) extract mode\n"
 		   "    -t (vlad|hsv|vladhsv) training mode\n"
 		   " training mode options\n"
-		   "    -i n   iteration (default: 30)\n"
+		   "    -i n   iteration (default: 50)\n"
 		   "    -k n   pull kNN k (default: 12)\n"
 		   "    -n n   push kNN k (default: 16)\n"
-		   "    -r f   push weight (default: vlad: 0.25, vladhsv: 0.2, hsv: 0.45, pull weight: 1.0-f)\n"
+		   "    -r f   push weight (default: vlad: 0.3, vladhsv: 0.3, hsv: 0.5, pull weight: 1.0-f)\n"
 		   "    -m f   margin (default: vlad: 0.5, vladhsv: 0.5, hsv: 0.1)\n"
 		   "    -d f   learning rate (default: 0.1)\n"
 		   "    -l s   lmca_file (resume)\n",
@@ -144,7 +144,7 @@ main(int argc, char** argv)
 	int k_n = 16;
 	float margin = -1.0f;
 	float learning_rate = 0.1f;
-	int max_epoch = 30;
+	int max_epoch = 50;
 	char base_file[1024] = {0};
 	char feature[256] = {0};
 	float push_weight = -1.0f;
@@ -202,7 +202,7 @@ main(int argc, char** argv)
 	}
 	if (nv_strcasecmp(feature, "vlad") == 0) {
 		if (push_weight < 0.0) {
-			push_weight = 0.25f;
+			push_weight = 0.3f;
 		}
 		if (margin < 0.0) {
 			margin = 0.5f;
@@ -211,7 +211,7 @@ main(int argc, char** argv)
 			mode, k, k_n, margin, push_weight, learning_rate, max_epoch, filelist, base_file);
 	} else if (nv_strcasecmp(feature, "vladhsv") == 0) {
 		if (push_weight < 0.0) {
-			push_weight = 0.25f;
+			push_weight = 0.3f;
 		}
 		if (margin < 0.0) {
 			margin = 0.5f;
@@ -220,7 +220,7 @@ main(int argc, char** argv)
 			mode, k, k_n, margin, push_weight, learning_rate, max_epoch, filelist, base_file);
 	} else if (nv_strcasecmp(feature, "hsv") == 0) {
 		if (push_weight < 0.0) {
-			push_weight = 0.45f;
+			push_weight = 0.5f;
 		}
 		if (margin < 0.0) {
 			margin = 0.1f;
@@ -228,6 +228,7 @@ main(int argc, char** argv)
 		_main<NV_LMCA_FEATURE_HSV, nv_lmca_empty_color_t>(
 			mode, k, k_n, margin, push_weight, learning_rate, max_epoch, filelist, base_file);
 	} else {
+		print_usage();
 		return -1;
 	}
 	
