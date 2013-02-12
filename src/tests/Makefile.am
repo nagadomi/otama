@@ -26,6 +26,16 @@ otama_test_similarity_api.c \
 otama_test_cluster.c \
 otama_test_dbi.c
 
+noinst_DATA = config/lmca_vlad.mat config/lmca_hsv.mat config/lmca_vladhsv.mat
+
+config/lmca_vlad.mat:
+	gzip -d -c $(srcdir)/config/lmca_vlad.mat.gz > $(builddir)/config/lmca_vlad.mat
+
+config/lmca_hsv.mat:
+	gzip -d -c $(srcdir)/config/lmca_hsv.mat.gz > $(builddir)/config/lmca_hsv.mat
+
+config/lmca_vladhsv.mat:
+	gzip -d -c $(srcdir)/config/lmca_vladhsv.mat.gz > $(builddir)/config/lmca_vladhsv.mat
 
 check-local:
 	$(MKDIR_P) ./data

@@ -14,6 +14,7 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
+
 VPATH = @srcdir@
 am__make_dryrun = \
   { \
@@ -106,6 +107,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+DATA = $(noinst_DATA)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -265,6 +267,7 @@ otama_test_similarity_api.c \
 otama_test_cluster.c \
 otama_test_dbi.c
 
+noinst_DATA = config/lmca_vlad.mat config/lmca_hsv.mat config/lmca_vladhsv.mat
 all: all-am
 
 .SUFFIXES:
@@ -651,7 +654,7 @@ check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS check-local
 check: check-am
-all-am: Makefile all-local
+all-am: Makefile $(DATA) all-local
 installdirs:
 install: install-am
 install-exec: install-exec-am
@@ -770,6 +773,15 @@ uninstall-am:
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am
 
+
+config/lmca_vlad.mat:
+	gzip -d -c $(srcdir)/config/lmca_vlad.mat.gz > $(builddir)/config/lmca_vlad.mat
+
+config/lmca_hsv.mat:
+	gzip -d -c $(srcdir)/config/lmca_hsv.mat.gz > $(builddir)/config/lmca_hsv.mat
+
+config/lmca_vladhsv.mat:
+	gzip -d -c $(srcdir)/config/lmca_vladhsv.mat.gz > $(builddir)/config/lmca_vladhsv.mat
 
 check-local:
 	$(MKDIR_P) ./data
