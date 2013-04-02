@@ -782,12 +782,12 @@ Init_otama(void)
 	rb_define_method(cOtama, "count", otama_rb_count, 0);
 	rb_define_method(cOtama, "exists?", otama_rb_exists, 1);
 
-	cOtamaRecord = rb_define_class("Record", cOtama);
+	cOtamaRecord = rb_define_class_under(cOtama, "Record", rb_cObject);
 	rb_define_private_method(cOtamaRecord, "initialize", otama_record_rb_initialize, 2);
 	rb_define_method(cOtamaRecord, "id", otama_record_rb_id, 0);
 	rb_define_method(cOtamaRecord, "value", otama_record_rb_value, 0);
 	
-	cOtamaFeatureRaw = rb_define_class("FeatureRaw", cOtama);
+	cOtamaFeatureRaw = rb_define_class_under(cOtama, "FeatureRaw", rb_cObject);
 	rb_define_alloc_func(cOtamaFeatureRaw, otama_raw_rb_alloc);
 	rb_define_private_method(cOtamaFeatureRaw, "initialize", otama_raw_rb_initialize, 0);
 	rb_define_method(cOtamaFeatureRaw, "dispose", otama_raw_rb_dispose, 0);
