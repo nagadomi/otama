@@ -202,7 +202,7 @@ main(int argc, char** argv)
 	}
 	if (nv_strcasecmp(feature, "vlad") == 0) {
 		if (push_weight < 0.0) {
-			push_weight = 0.3f;
+			push_weight = 0.25f;
 		}
 		if (margin < 0.0) {
 			margin = 0.5f;
@@ -211,7 +211,7 @@ main(int argc, char** argv)
 			mode, k, k_n, margin, push_weight, learning_rate, max_epoch, filelist, base_file);
 	} else if (nv_strcasecmp(feature, "vladhsv") == 0) {
 		if (push_weight < 0.0) {
-			push_weight = 0.3f;
+			push_weight = 0.25f;
 		}
 		if (margin < 0.0) {
 			margin = 0.5f;
@@ -220,7 +220,7 @@ main(int argc, char** argv)
 			mode, k, k_n, margin, push_weight, learning_rate, max_epoch, filelist, base_file);
 	} else if (nv_strcasecmp(feature, "hsv") == 0) {
 		if (push_weight < 0.0) {
-			push_weight = 0.5f;
+			push_weight = 0.45f;
 		}
 		if (margin < 0.0) {
 			margin = 0.1f;
