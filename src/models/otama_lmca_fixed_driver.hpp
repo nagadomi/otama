@@ -263,6 +263,9 @@ namespace otama
 				return this->prefixed_name("otama_lmca_vlad_colorcode");
 			case NV_LMCA_FEATURE_VLAD_HSV:
 				return this->prefixed_name("otama_lmca_vlad_hsv");
+			default:
+				NV_ASSERT("unknown driver" == NULL);
+				return "unknown";
 			}
 		}
 		
@@ -292,7 +295,7 @@ namespace otama
 				value = otama_variant_hash_at(driver, "metric");
 				if (!OTAMA_VARIANT_IS_NULL(value)) {
 					if (OTAMA_VARIANT_IS_ARRAY(value)) {
-						int len = otama_variant_array_count(value);
+						int64_t len = otama_variant_array_count(value);
 						if (len == 1) {
 							m_lmca_file = otama_variant_to_string(value);
 						} else if (len > 1) {

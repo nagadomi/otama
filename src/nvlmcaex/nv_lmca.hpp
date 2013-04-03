@@ -169,7 +169,7 @@ public:
 	extract_vlad_vector(nv_matrix_t *vec, int vec_j, const nv_matrix_t *image)
 	{
 		m_ctx.extract(vec, vec_j, image);
-		if (!nv_vector_norm(vec, vec_j) > 0.0f) {
+		if (!(nv_vector_norm(vec, vec_j) > 0.0f)) {
 			/* キーポイントがひとつもない場合は他と似ないように潰しておく */
 			NV_MAT_V(vec, vec_j, 0) = -1.0f;
 			nv_vector_normalize(vec, vec_j);
@@ -457,7 +457,7 @@ public:
 				color_similarity = 0.0f;
 			}
 		}
-		return (1.0 - color_weight) * lmca_similarity + color_weight * color_similarity;
+		return (1.0f - color_weight) * lmca_similarity + color_weight * color_similarity;
 	}
 	static int
 	search(nv_lmca_result_t *results, int n,
@@ -497,7 +497,7 @@ public:
 					}
 				}
 				new_node.similarity =
-					(1.0 - color_weight) * lmca_similarity
+					(1.0f - color_weight) * lmca_similarity
 					+ color_weight * color_similarity;
 			}
 			new_node.index = i;
@@ -527,7 +527,7 @@ public:
 		delete [] topn_temp;
 		nv_free(sim_min);
 		
-		return imax;
+		return (int)imax;
 	}
 	
 	int
