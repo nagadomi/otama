@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\src\lib;..\src\models;..\src\nvbovw;..\src\nvvlad;..\src\nvcolorex"
+				AdditionalIncludeDirectories="..\src\lib;..\src\models;..\src\nvbovw;..\src\nvvlad;..\src\nvcolorex;..\src\nvlmcaex"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;__STDC_FORMAT_MACROS;__STDC_LIMIT_MACROS;__SSE__;__SSE2__;PKGDATADIR=\&quot;.\&quot;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -110,7 +110,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="..\src\lib;..\src\models;..\src\nvbovw;..\src\nvvlad;..\src\nvcolorex"
+				AdditionalIncludeDirectories="..\src\lib;..\src\models;..\src\nvbovw;..\src\nvvlad;..\src\nvcolorex;..\src\nvlmcaex"
 				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;__STDC_FORMAT_MACROS;__STDC_LIMIT_MACROS;NDEBUG;__SSE__;__SSE2__;__SSE3__;__SSE4_1__;__SSE4_2__;PKGDATADIR=\&quot;.\&quot;"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -391,6 +391,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\src\models\otama_lmca_fixed_driver.hpp"
+					>
+				</File>
+				<File
 					RelativePath="..\src\models\otama_nodb_driver.hpp"
 					>
 				</File>
@@ -459,6 +463,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\src\lib\otama_feature_raw.h"
+					>
+				</File>
+				<File
 					RelativePath="..\src\lib\otama_id.c"
 					>
 				</File>
@@ -515,10 +523,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\src\lib\otama_feature_raw.h"
-					>
-				</File>
-				<File
 					RelativePath="..\src\lib\otama_status.c"
 					>
 				</File>
@@ -571,15 +575,23 @@
 				Name="nvvlad"
 				>
 				<File
-					RelativePath="..\src\nvvlad\nv_vlad.cpp"
+					RelativePath="..\src\nvvlad\nv_vlad.hpp"
 					>
 				</File>
 				<File
-					RelativePath="..\src\nvvlad\nv_vlad.h"
+					RelativePath="..\src\nvvlad\nv_vlad128_static.c"
 					>
 				</File>
 				<File
-					RelativePath="..\src\nvvlad\nv_vlad_static.c"
+					RelativePath="..\src\nvvlad\nv_vlad160_static.c"
+					>
+				</File>
+				<File
+					RelativePath="..\src\nvvlad\nv_vlad256_static.c"
+					>
+				</File>
+				<File
+					RelativePath="..\src\nvvlad\nv_vlad512_static.c"
 					>
 				</File>
 			</Filter>
@@ -599,11 +611,35 @@
 					>
 				</File>
 				<File
+					RelativePath="..\src\nvcolorex\nv_color_hist.c"
+					>
+				</File>
+				<File
+					RelativePath="..\src\nvcolorex\nv_color_hist.h"
+					>
+				</File>
+				<File
 					RelativePath="..\src\nvcolorex\nv_color_major.c"
 					>
 				</File>
 				<File
 					RelativePath="..\src\nvcolorex\nv_color_major.h"
+					>
+				</File>
+				<File
+					RelativePath="..\src\nvcolorex\nv_color_vlad.c"
+					>
+				</File>
+				<File
+					RelativePath="..\src\nvcolorex\nv_color_vlad.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="nvlmcaex"
+				>
+				<File
+					RelativePath="..\src\nvlmcaex\nv_lmca.hpp"
 					>
 				</File>
 			</Filter>
