@@ -65,7 +65,7 @@ class nv_lmca_ctx
 {
 public:
 	static const int LMCA_DIM = (T == NV_LMCA_FEATURE_HSV ? NV_LMCA_HSV_DIM : NV_LMCA_VLAD_DIM);
-	static const int VLAD_DIM = nv_vlad_ctx<NV_VLAD_128>::DIM;
+	static const int VLAD_DIM = nv_vlad_ctx<NV_VLAD_64>::DIM;
 	static const int HSV_DIM = NV_COLOR_SHIST_DIM;
 	static const int RAW_DIM = (T == NV_LMCA_FEATURE_HSV ? HSV_DIM : (T == NV_LMCA_FEATURE_VLADHSV ? VLAD_DIM + HSV_DIM : VLAD_DIM));
 	static float VLAD_W(void) {
@@ -84,7 +84,7 @@ public:
 	} color_method_e;
 	
 private:
-	nv_vlad_ctx<NV_VLAD_128> m_ctx;
+	nv_vlad_ctx<NV_VLAD_64> m_ctx;
 	nv_matrix_t *m_lmca;
 	nv_matrix_t *m_lmca2;
 	
@@ -128,6 +128,11 @@ public:
 	~nv_lmca_ctx() { close(); }
 	
 	int
+	set_vq_table(const char *file)
+	{
+		return m_ctx.set_vq_table(file);
+	}
+	int
 	open(const char *lmca_file)
 	{
 		close();
@@ -142,7 +147,7 @@ public:
 		}
 		return 0;
 	}
-		
+	
 	int
 	open(const char *lmca_file, const char *lmca2_file)
 	{
@@ -278,6 +283,9 @@ public:
 			norm += v * v;
 			lmca->v[i] = v;
 		}
+		/* ここは学習からするとnormalizeするべきではないが
+		 * 学習時に想定外だったデータの悪影響が出にくいようにnormalizeする
+		 */
 		if (norm > 0.0f) {
 			float scale = 1.0f / sqrtf(norm);
 			for (i = 0; i < LMCA_DIM; ++i) {
@@ -531,12 +539,13 @@ public:
 	}
 	
 	int
-	make_train_data(nv_matrix_t **data, nv_matrix_t **labels, const char *filename)
+	make_train_data(nv_matrix_t **data, nv_matrix_t **labels,
+					const char *filename, bool xflip = false)
 	{
 		char line[8192];
 		FILE *fp;
 		std::vector<std::string> list;
-		int i, n;
+		int i, j, n;
 		int ret = 0;
 		
 		fp = fopen(filename, "r");
@@ -546,28 +555,49 @@ public:
 		}
 		while (fgets(line, sizeof(line) - 1, fp)) {
 			size_t len = strlen(line);
-			line[len-1] = '\0';
+			if (line[len-1] == '\n') {
+				line[len-1] = '\0';
+			}
 			list.push_back(std::string(line));
 		}
 		fclose(fp);
 		
 		n = (int)list.size();
 		
-		*data = nv_matrix_alloc(RAW_DIM, n);
-		*labels = nv_matrix_alloc(1, n);
+		*data = nv_matrix_alloc(RAW_DIM, n * (xflip ? 2 : 1));
+		*labels = nv_matrix_alloc(1, n * (xflip ? 2 : 1));
 		
-		for (i = 0; i < n; ++i) {
+		for (i = 0, j = 0; i < n; ++i) {
 			const char *file = strstr(list[i].c_str(), " ");
 			if (file) {
+				nv_matrix_t *raw = nv_matrix_alloc((*data)->n, 1);
 				nv_matrix_t *image = nv_load_image(file + 1);
+				float lno = (float)atoi(list[i].c_str());
+				
 				if (image == NULL) {
 					fprintf(stderr, "%s: error\n", filename);
 					ret = -1;
 					break;
 				}
-				extract_raw_vector(T, *data, i, image);
+				extract_raw_vector(T, raw, 0, image);
+				{
+					nv_vector_copy(*data, j, raw, 0);
+					NV_MAT_V(*labels, j, 0) = lno;
+					++j;
+				}
+				if (xflip) {
+					nv_matrix_t *flip = nv_matrix_clone(image);
+					nv_flip_x(flip, image);
+
+					extract_raw_vector(T, raw, 0, flip);
+					{
+						nv_vector_copy(*data, j, raw, 0);
+						NV_MAT_V(*labels, j, 0) = lno;
+						++j;
+					}
+					nv_matrix_free(&flip);
+				}
 				nv_matrix_free(&image);
-				NV_MAT_V(*labels, i, 0) = (float)atoi(list[i].c_str());
 			} else {
 				fprintf(stderr, "%s: error\n", filename);
 				ret = -1;
@@ -641,6 +671,211 @@ public:
 			
 			nv_matrix_free(&data_lmca);
 		}
+	}
+};
+
+class nv_lmca_vq
+{
+public:	
+	static const int VQ_DIM = 32;
+	static const int VQ_KMEANS_STEP = 100;
+	static const int VQ_KEYPOINT_MAX = 3000;
+	static float VQ_IMAGE_SIZE(void) {return 512.0f;}
+	
+private:
+
+	static int
+	read_filelist(const char *filename, std::vector<std::string> &filelist)
+	{
+		FILE *fp = fopen(filename, "r");
+		char line[8192];
+	
+		if (fp == NULL) {
+			fprintf(stderr, "%s: %s\n", filename, strerror(errno));
+			return -1;
+		}
+		while (fgets(line, sizeof(line) - 1, fp)) {
+			size_t len = strlen(line);
+			const char *file;
+			if (line[len-1] == '\n') {
+				line[len-1] = '\0';
+			}
+			file = strstr(line, " ");
+			if (file && strlen(file) > 0) {
+				filelist.push_back(std::string(file + 1));
+			} else {
+				filelist.push_back(std::string(line));
+			}
+		}
+		fclose(fp);
+		
+		return 0;
+	}
+	
+	static int
+	vq_extract(int sign,
+			   nv_matrix_t *data,
+			   const std::vector<std::string> &filelist,
+			   bool xflip)
+	{
+		int j;
+		int count = 0;
+		int max_samples = data->m / filelist.size();
+		nv_keypoint_param_t param = {
+			16,
+			NV_KEYPOINT_EDGE_THRESH,
+			4.0f,
+			NV_KEYPOINT_LEVEL,
+			0.3f,
+			NV_KEYPOINT_DETECTOR_STAR,
+			NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
+		};
+		nv_keypoint_ctx_t *ctx = nv_keypoint_ctx_alloc(&param);
+
+		if (xflip) {
+			max_samples /= 2;
+		}
+		if (max_samples < 1) {
+			max_samples = 1;
+		}
+	
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 1)
+#endif
+		for (j = 0; j < (int)filelist.size(); ++j) {
+			int o;
+			int flip_n = xflip ? 2:1;
+			nv_matrix_t *image = nv_load(filelist[j].c_str());
+			if (image == NULL) {
+				printf("cant load %s\n", filelist[j].c_str());
+				continue;
+			}
+			for (o = 0; o < flip_n; ++o) {
+				int desc_m;
+				nv_matrix_t *desc_vec = nv_matrix_alloc(NV_KEYPOINT_DESC_N, VQ_KEYPOINT_MAX);
+				nv_matrix_t *key_vec = nv_matrix_alloc(NV_KEYPOINT_KEYPOINT_N, desc_vec->m);
+				float scale = VQ_IMAGE_SIZE() / (float)NV_MAX(image->rows, image->cols);
+				nv_matrix_t *gray = nv_matrix3d_alloc(1, image->rows, image->cols);
+				nv_matrix_t *resize = nv_matrix3d_alloc(1, (int)(image->rows * scale),
+													(int)(image->cols * scale));
+				nv_matrix_t *smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+				
+				if (o == 1) {
+					nv_matrix_t *flip = nv_matrix_clone(image);
+					nv_flip_x(flip, image);
+					nv_matrix_copy_all(image, flip);
+					nv_matrix_free(&flip);
+				}
+				nv_gray(gray, image);
+				nv_resize(resize, gray);
+				nv_gaussian5x5(smooth, 0, resize, 0);
+				
+				desc_m = 0;
+				nv_matrix_zero(desc_vec);
+				
+				desc_m = nv_keypoint_ex(ctx, key_vec, desc_vec, smooth, 0);
+#ifdef _OPENMP
+#pragma omp critical (vq_extract)
+#endif
+				{
+					int l;
+					int *r_idx = (int *)nv_malloc(sizeof(int) * desc_m);
+					int samples = NV_MIN(max_samples, desc_m);
+					
+					nv_shuffle_index(r_idx, 0, desc_m);
+			
+					for (l = 0; l < samples; ++l) {
+						int i = r_idx[l];
+						if (sign > 0) {
+							if (NV_MAT_V(key_vec, i, NV_KEYPOINT_RESPONSE_IDX) > 0.0f) {
+								nv_vector_copy(data, count, desc_vec, i);
+								nv_vector_normalize(data, count);
+								++count;
+							}
+						} else {
+							if (NV_MAT_V(key_vec, i, NV_KEYPOINT_RESPONSE_IDX) < 0.0f) {
+								nv_vector_copy(data, count, desc_vec, i);
+								nv_vector_normalize(data, count);
+								++count;
+							}
+						}
+					}
+					nv_free(r_idx);
+				}
+				nv_matrix_free(&desc_vec);
+				nv_matrix_free(&key_vec);
+				nv_matrix_free(&resize);
+				nv_matrix_free(&gray);
+				nv_matrix_free(&smooth);
+			}
+			nv_matrix_free(&image);
+		}
+		nv_keypoint_ctx_free(&ctx);
+	
+		return count;
+	}
+
+	static void
+	vq_kmeans(nv_matrix_t *data,
+			  nv_matrix_t *vq)
+	{
+		nv_matrix_t *labels = nv_matrix_alloc(1, data->m);
+		nv_matrix_t *counts = nv_matrix_alloc(1, data->m);
+
+		nv_matrix_zero(vq);
+		nv_matrix_zero(labels);
+		nv_matrix_zero(counts);
+
+		//nv_kmeans_progress(1);
+		nv_kmeans(vq, counts, labels, data, vq->m, VQ_KMEANS_STEP);
+		
+		nv_matrix_free(&labels);
+		nv_matrix_free(&counts);
+	}
+
+public:
+	static int
+	train(int data_max, nv_matrix_t *vq_posi, nv_matrix_t *vq_nega,
+		  const char *file, bool flip = false)
+	{
+		long t;
+		nv_matrix_t *data;
+		std::vector<std::string> filelist;
+		int ret = 0;
+		int m;
+		
+		if (read_filelist(file, filelist) != 0) {
+			return -1;
+		}
+		printf("read filelist: %d\n", (int)filelist.size());
+		
+		data = nv_matrix_alloc(NV_KEYPOINT_DESC_N, data_max);
+		nv_matrix_zero(vq_posi);
+		nv_matrix_zero(vq_nega);
+		nv_matrix_zero(data);
+		
+		t = nv_clock();
+		m = vq_extract(1, data, filelist, flip);
+		printf("posi keypoints: %d, %ldms\n", m, nv_clock() - t);
+		t = nv_clock();
+		nv_matrix_m(data, m);
+		vq_kmeans(data, vq_posi);
+		printf("posi keypoints clustring: %d, %ldms\n", m, nv_clock() - t);
+		
+		nv_matrix_m(data, data_max);
+		nv_matrix_zero(data);
+		
+		t = nv_clock();
+		m = vq_extract(-1, data, filelist, flip);
+		printf("nega keypoints: %d, %ldms\n", m, nv_clock() - t);
+		t = nv_clock();
+		nv_matrix_m(data, m);
+		vq_kmeans(data, vq_nega);
+		printf("nega keypoints clustring: %d, %ldms\n", m, nv_clock() - t);
+		
+		nv_matrix_free(&data);
+		
+		return ret;
 	}
 };
 

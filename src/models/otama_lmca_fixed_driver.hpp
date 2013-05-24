@@ -37,6 +37,7 @@ namespace otama
 		
 		std::string m_lmca_file;
 		std::string m_lmca2_file;
+		std::string m_vq_file;
 		float m_color_threshold;
 		float m_color_weight;
 		
@@ -306,6 +307,10 @@ namespace otama
 						m_lmca_file = otama_variant_to_string(value);
 					}
 				}
+				value = otama_variant_hash_at(driver, "vq");
+				if (!OTAMA_VARIANT_IS_NULL(value)) {
+					m_vq_file = otama_variant_to_string(value);
+				}
 				value = otama_variant_hash_at(driver, "color_weight");
 				if (!OTAMA_VARIANT_IS_NULL(value)) {
 					m_color_weight = otama_variant_to_float(value);
@@ -353,6 +358,12 @@ namespace otama
 			} else {
 				if (m_ctx->open(m_lmca_file.c_str()) != 0) {
 					OTAMA_LOG_ERROR("invalid metric file: %s", m_lmca_file.c_str());
+					return OTAMA_STATUS_SYSERROR;
+				}
+			}
+			if (m_vq_file.size() != 0) {
+				if (m_ctx->set_vq_table(m_vq_file.c_str()) != 0) {
+					OTAMA_LOG_ERROR("invalid vq file: %s", m_vq_file.c_str());
 					return OTAMA_STATUS_SYSERROR;
 				}
 			}

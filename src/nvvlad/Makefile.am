@@ -10,5 +10,5 @@ libnvvlad_la_SOURCES = \
 nv_vlad.hpp \
 nv_vlad512_static.c \
 nv_vlad256_static.c \
-nv_vlad160_static.c \
-nv_vlad128_static.c 
+nv_vlad128_static.c \
+nv_vlad64_static.c 
