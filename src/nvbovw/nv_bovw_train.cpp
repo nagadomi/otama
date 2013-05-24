@@ -38,7 +38,11 @@ static int s_keypoint_max = 1800;
 
 typedef nv_bovw_ctx<NV_BOVW_BIT512K, nv_bovw_dummy_color_t> bovw;
 //typedef nv_bovw_ctx<NV_BOVW_BIT8K, nv_bovw_dummy_color_t> bovw;
-
+static int s_keypoint_maxs[] = {
+	1800,
+	1024,
+	3000
+};
 static nv_keypoint_param_t s_param[] = {
 	{
 		NV_KEYPOINT_THRESH,
@@ -55,6 +59,15 @@ static nv_keypoint_param_t s_param[] = {
 		4.0,
 		15,
 		0.8f,
+		NV_KEYPOINT_DETECTOR_STAR,
+		NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
+	},
+	{
+		16.0f,
+		NV_KEYPOINT_EDGE_THRESH,
+		4.0f,
+		NV_KEYPOINT_LEVEL,
+		0.3f,
 		NV_KEYPOINT_DETECTOR_STAR,
 		NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
 	}
@@ -791,7 +804,7 @@ help(void)
 {
 	puts("nv_bovw_train [OPTIONS]\n"
 		 "    -n           data size.\n"
-		 "    -d 0|1       keypoint type.(0=512k,1=2k,8k)"
+		 "    -t 0|1|2     keypoint type.(0=512k,1=2k,8k,2=VLAD)"
 		 "    -w 1024,256  kmeans(tree) nodes"
 		 "    -e [1|-1]    1.1. extract keypoint from filelist.txt.\n"
 		 "    -k [1|-1]    1.2. VQ(kmeans-tree).\n"
@@ -898,7 +911,7 @@ main(int argc, char** argv)
 			return 0;
 		}
 	}
-	s_keypoint_max = param_i == 0 ? 1800 : 1024;
+	s_keypoint_max = s_keypoint_maxs[param_i];
 	s_ctx = nv_keypoint_ctx_alloc(&s_param[param_i]);
 	
 	switch (mode) {
