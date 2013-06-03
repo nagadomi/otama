@@ -496,7 +496,6 @@ namespace otama
 			otama_status_t ret;
 			T *fixed = this->feature_new();
 			bool has_id, has_feature, exist;
-			uint64_t seq;
 
 			ret = extract(id, has_id, fixed, has_feature, exist, data);
 			if (ret != OTAMA_STATUS_OK) {
@@ -510,10 +509,8 @@ namespace otama
 			if (!exist) {
 				ret = insert(id, fixed);
 				if (ret != OTAMA_STATUS_OK) {
-					otama_status_t eret = exists_master(exist, seq, id);
-					if (eret == OTAMA_STATUS_OK && exist) {
-						ret = eret;
-					}
+					feature_free(fixed);
+					return ret;
 				}
 			} else {
 				ret = update_flag(id, 0);

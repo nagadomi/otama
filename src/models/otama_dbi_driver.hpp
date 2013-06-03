@@ -133,9 +133,9 @@ namespace otama
 			otama_dbi_result_t *res;
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
 			time_t curernt_time = time(NULL);
-			char *s = this->feature_serialize(fixed);
-			size_t esc_len = strlen(s) * 2 + 3;
-			char *esc = nv_alloc_type(char, esc_len);
+			char *fv = this->feature_serialize(fixed);
+			size_t esc_len = strlen(fv) * 2 + 3;
+			char *fv_esc = nv_alloc_type(char, esc_len);
 			char time_string[256];
 			
 #ifdef _OPENMP
@@ -145,18 +145,22 @@ namespace otama
 			res = otama_dbi_queryf(
 				m_dbi,
 				"INSERT INTO %s (otama_id, vector, created_at) "
-				" VALUES('%s', %s, '%s'); ",
+				"  SELECT '%s', %s, '%s' "
+				"    WHERE NOT EXISTS(SELECT otama_id FROM %s WHERE otama_id='%s');",
 				this->table_name().c_str(),
 				id_hexstr,
-				otama_dbi_escape(m_dbi, esc, esc_len, s),
-				otama_dbi_time_string(time_string, &curernt_time));
+				otama_dbi_escape(m_dbi, fv_esc, esc_len, fv),
+				otama_dbi_time_string(time_string, &curernt_time),
+				this->table_name().c_str(),
+				id_hexstr
+				);
 			if (!res) {
 				ret = OTAMA_STATUS_SYSERROR;
 			} else {
 				otama_dbi_result_free(&res);
 			}
-			nv_free(s);
-			nv_free(esc);
+			nv_free(fv);
+			nv_free(fv_esc);
 			
 			return ret;
 		}
