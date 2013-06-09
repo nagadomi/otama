@@ -2,7 +2,7 @@
 
 ## 依存しているパッケージをインストール
 
-    sudo apt-get install gcc g++ make autoconf
+    sudo apt-get install gcc g++ make autoconf automake libtool
     
 gccなど開発環境がない場合はインストールしておきます。
 
@@ -40,6 +40,7 @@ otamaをKyotoCabinetのデータベースに対応させる場合はKyotoCabinet
     wget https://github.com/nagadomi/eiio/tarball/v0.5.1 -O eiio.tar.gz
     tar -xzvf eiio.tar.gz
     cd nagadomi-eiio-*
+    ./autogen.sh
     ./configure
     make
     sudo make install
@@ -56,6 +57,7 @@ otamaのコアな処理はほとんどこのライブラリを呼び出してい
     wget https://github.com/nagadomi/nv/tarball/v2.0.0 -O nv.tar.gz
     tar -xzvf nv.tar.gz
     cd nagadomi-nv-*
+    ./autogen.sh
     ./configure
     make
     sudo make install
@@ -72,6 +74,7 @@ POPCNT命令に対応しているAMD CPUの場合は、configure に `--enable-p
     wget https://github.com/nagadomi/otama/tarball/v0.6.0 -O otama.tar.gz
     tar -xzvf otama.tar.gz
     cd nagadomi-otama-*
+    ./autogen.sh
     ./configure --enable-pgsql --enable-mysql --enable-kyotocabinet
     make
     make check
