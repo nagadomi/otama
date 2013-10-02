@@ -1,3 +1,4 @@
+
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
@@ -24,7 +25,12 @@ fi
 if test "" = "$CPPFLAGS"; then
     CPPFLAGS=" "
 fi
+if test "" = "$LDFLAGS"; then
+    LDFLAGS=" "
+fi
+
 CFLAGS=" $CFLAGS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -Wall "
+CFLAGS=" $CFLAGS -D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security "
 
 # Checks for programs.
 AC_PROG_CC
@@ -35,6 +41,13 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_MKDIR_P
 #AC_OPENMP
+
+AC_PATH_PROG([DEBUILD], [debuild], [notfound])
+AC_PATH_PROG([TEST], [test], [notfound])
+AC_PATH_PROG([ECHO], [echo], [notfound])
+AC_PATH_PROG([CP], [cp], [notfound])
+AC_PATH_PROG([MV], [mv], [notfound])
+AC_PATH_PROG([TAR], [tar], [notfound])
 
 AC_CHECK_PROG(GZIP,gzip,gzip,no)
 if test "$GZIP" = no ; then
@@ -47,8 +60,23 @@ LT_INIT([win32-dll])
 # Checks for typedefs, structures, and compiler characteristics.
 
 AC_CHECK_LIB(m, main)
-AC_CHECK_LIB(rt, main)
 AC_CHECK_LIB(stdc++, main)
+
+otama_deb=0
+otama_debsign=0
+DPKG_FLAGS=""
+AX_ARG_ENABLE(deb,
+        AC_HELP_STRING([--enable-deb], [build debian package. ]), [no],
+	[otama_deb=1],
+        [])
+AX_ARG_ENABLE(debsrc,
+        AC_HELP_STRING([--enable-debsrc], [build debian source package. ]), [no],
+	[otama_deb=1;DPKG_FLAGS=" $DPKG_FLAGS -S -sa "],
+        [])
+AX_ARG_ENABLE(sign,
+        AC_HELP_STRING([--enable-sign], [build signed debian package. ]), [no],
+	[otama_deb=1],
+        [DPKG_FLAGS=" $DPKG_FLAGS -uc -us "])
 
 AX_ARG_ENABLE(debug,
         AS_HELP_STRING([--enable-debug], [enable assert and -g ]), [no],
@@ -136,10 +164,6 @@ AX_ARG_ENABLE(mysql,
 		[AC_MSG_ERROR(*** libmysqlclient not found. please install libmysqlclient-dev.)])],
         [])
         
-AC_CHECK_HEADERS([eiio.h], 
-	[AC_CHECK_LIB(eiio, eiio_read_file)],
-	[AC_MSG_ERROR(*** eiio not found. please install libeiio.)])
-
 AC_CHECK_HEADERS([nv_core.h],
 	[AC_CHECK_LIB(nv, nv_matrix_alloc)],
 	[AC_MSG_ERROR(*** nv not found. please install libnv.)])
@@ -180,6 +204,10 @@ case $host in
     CFLAGS="$CFLAGS -mstackrealign -mthreads "
     LDFLAGS="$LDFLAGS -Wl,--stack,10485760 "
     ;;
+  *-linux*)
+    LDFLAGS="$LDFLAGS -Wl,-z,relro "
+    CFLAGS="$CFLAGS -rdynamic "
+    ;;
   *)
     CFLAGS="$CFLAGS -rdynamic "
     ;;
@@ -187,8 +215,9 @@ esac
 
 CXXFLAGS="$CFLAGS"
 CPPFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS  "
 
+AM_CONDITIONAL([BUILDING_DEB], [$TEST $otama_deb = 1])
+AC_SUBST(DPKG_FLAGS)
 AC_SUBST(otama_kc)
 AC_SUBST(otama_lzo)
 AC_SUBST(otama_sqlite3)

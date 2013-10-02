@@ -1,7 +1,8 @@
-EXTRA_DIST = lib/posix/otama_mmap.c lib/windows/otama_mmap.c lib/otama_config_msvc.h
+EXTRA_DIST = lib/posix/otama_mmap.c lib/windows/otama_mmap.c lib/otama_config_msvc.h util/otama_lmca_train
 
 SUBDIRS    = nvcolorex nvbovw nvvlad nvlmcaex
 
+# libotama
 lib_LTLIBRARIES = libotama.la
 libotama_la_LIBADD = $(builddir)/nvcolorex/libnvcolorex.la $(builddir)/nvbovw/libnvbovw.la $(builddir)/nvvlad/libnvvlad.la $(builddir)/nvlmcaex/libnvlmcaex.la
 libotama_la_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvlmcaex -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
@@ -85,39 +86,40 @@ lib/otama_yaml.h \
 lib/otama_dbi.h \
 lib/otama_image.h
 
-bin_PROGRAMS = otama_pull otama_import otama_create_table otama_drop_table
+pkgconfigdir = @pkgconfigdir@
+pkgconfig_DATA = otama.pc
 
-otama_pull_CFLAGS = $(libotama_la_CFLAGS)
+CLEANFILES = otama.pc
+
+# util
+bin_PROGRAMS = otama_pull otama_import otama_create_table otama_drop_table
+bin_SCRIPTS = util/otama_lmca_train
+
+otama_pull_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvlmcaex -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
 otama_pull_CXXFLAGS = $(otama_pull_CFLAGS)
 otama_pull_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_pull_LDFLAGS = 
 otama_pull_SOURCES = util/otama_pull.c
-otama_pull_LDADD = libotama.la
+otama_pull_LDADD = $(builddir)/libotama.la
 
 otama_import_CFLAGS = $(otama_pull_CFLAGS)
 otama_import_CXXFLAGS = $(otama_pull_CFLAGS)
 otama_import_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_import_LDFLAGS = 
 otama_import_SOURCES = util/otama_import.cpp
-otama_import_LDADD = libotama.la
+otama_import_LDADD = $(builddir)/libotama.la
 
 otama_create_table_CFLAGS = $(otama_pull_CFLAGS)
 otama_create_table_CXXFLAGS = $(otama_pull_CFLAGS)
 otama_create_table_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_create_table_LDFLAGS = 
 otama_create_table_SOURCES = util/otama_create_table.c
-otama_create_table_LDADD = libotama.la
+otama_create_table_LDADD = $(builddir)/libotama.la
 
 otama_drop_table_CFLAGS = $(otama_pull_CFLAGS)
 otama_drop_table_CXXFLAGS = $(otama_pull_CFLAGS)
 otama_drop_table_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_drop_table_LDFLAGS = 
 otama_drop_table_SOURCES = util/otama_drop_table.c
-otama_drop_table_LDADD = libotama.la
+otama_drop_table_LDADD = $(builddir)/libotama.la
 
-bin_SCRIPTS = util/otama_lmca_train
-
-pkgconfigdir = @pkgconfigdir@
-pkgconfig_DATA = otama.pc
-
-CLEANFILES = otama.pc
