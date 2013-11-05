@@ -445,7 +445,6 @@ otama_rb_set(VALUE self, VALUE key, VALUE value)
 	return Qtrue;
 }
 
-
 static VALUE
 otama_rb_unset(VALUE self, VALUE key)
 {
@@ -488,6 +487,33 @@ otama_rb_get(VALUE self, VALUE key)
 	otama_variant_pool_free(&pool);	
 	
 	return value;
+}
+
+static VALUE
+otama_rb_invoke(VALUE self, VALUE method, VALUE input)
+{
+	otama_t *otama;
+	otama_status_t ret;
+	otama_variant_pool_t *pool = otama_variant_pool_alloc();
+	otama_variant_t *output_var = otama_variant_new(pool);
+	otama_variant_t *input_var = otama_variant_new(pool);
+	VALUE output;
+	
+	Data_Get_Struct(self, otama_t, otama);
+	OTAMA_CHECK_NULL(otama);
+	method = rb_funcall(method, rb_intern("to_s"), 0);
+	rubyobj2variant(input, input_var);
+	
+	ret = otama_invoke(otama, RSTRING_PTR(method), output_var, input_var);
+	if (ret != OTAMA_STATUS_OK) {
+		otama_variant_pool_free(&pool);
+		otama_rb_raise(ret);
+		return Qfalse;
+	}
+	output = variant2rubyobj(output_var);
+	otama_variant_pool_free(&pool);	
+	
+	return output;
 }
 
 static VALUE
@@ -770,7 +796,8 @@ Init_otama(void)
 	rb_define_method(cOtama, "insert", otama_rb_insert, 1);
 	rb_define_method(cOtama, "set", otama_rb_set, 2);
 	rb_define_method(cOtama, "unset", otama_rb_unset, 1);
-	rb_define_method(cOtama, "get", otama_rb_get, 1);	
+	rb_define_method(cOtama, "get", otama_rb_get, 1);
+	rb_define_method(cOtama, "invoke", otama_rb_invoke, 2);
 	rb_define_method(cOtama, "feature_string", otama_rb_feature_string, 1);
 	rb_define_method(cOtama, "feature_raw", otama_rb_feature_raw, 1);
 	rb_define_method(cOtama, "remove", otama_rb_remove, 1);

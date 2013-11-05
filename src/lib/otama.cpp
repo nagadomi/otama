@@ -640,6 +640,17 @@ otama_unset(otama_t *otama,
 	return otama->driver->unset(std::string(key));
 }
 
+otama_status_t
+otama_invoke(otama_t *otama,
+			 const char *method,
+			 otama_variant_t *output,
+			 otama_variant_t *input
+	)
+{
+	NV_ASSERT(otama != NULL);	
+	return otama->driver->invoke(std::string(method), output, input);
+}
+
 void
 otama_cuda_set(int onoff)
 {

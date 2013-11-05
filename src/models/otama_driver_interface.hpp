@@ -73,6 +73,7 @@ namespace otama
 		virtual otama_status_t set(const std::string &key, otama_variant_t *value) = 0;
 		virtual otama_status_t unset(const std::string &key) = 0;
 		virtual otama_status_t get(const std::string &key, otama_variant_t *value) = 0;
+		virtual otama_status_t invoke(const std::string &method, otama_variant_t *output, otama_variant_t *input) = 0;
 		
 		virtual ~DriverInterface() {};
 	};

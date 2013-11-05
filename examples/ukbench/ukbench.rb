@@ -9,7 +9,7 @@ def ukbench
   otama.pull
   
   begin
-    otama.set("update_idf", 0)
+    otama.invoke("update_idf", 0)
   rescue
   end
   

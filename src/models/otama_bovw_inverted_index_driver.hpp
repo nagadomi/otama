@@ -255,15 +255,16 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		set(const std::string &key, otama_variant_t *value)
+		invoke(const std::string &method, otama_variant_t *output, otama_variant_t *input)
 		{
-			OTAMA_LOG_DEBUG("set key: %s\n", key.c_str());
+			OTAMA_LOG_DEBUG("invoke: %s\n", method.c_str());
 			
-			if (key == "print_idf") {
-				print_idf(value);
+			if (method == "print_idf") {
+				print_idf(input);
+				otama_variant_set_null(output);
 				return OTAMA_STATUS_OK;
 			}
-			return InvertedIndexDriver<InvertedIndex::sparse_vec_t, IV>::set(key, value);
+			return InvertedIndexDriver<InvertedIndex::sparse_vec_t, IV>::invoke(method, output, input);
 		}
 	};
 }

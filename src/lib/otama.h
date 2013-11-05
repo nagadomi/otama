@@ -140,6 +140,10 @@ otama_status_t otama_unset(otama_t *otama,
 otama_status_t otama_get(otama_t *otama,
 						 const char *key,
 						 otama_variant_t *value);
+otama_status_t otama_invoke(otama_t *otama,
+							const char *method,
+							otama_variant_t *output,
+							otama_variant_t *input);
 
 void otama_omp_set_procs(int procs);
 

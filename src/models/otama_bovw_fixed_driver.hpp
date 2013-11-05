@@ -343,9 +343,6 @@ namespace otama
 			} else if (key == "strip") {
 				m_strip = otama_variant_to_bool(value) ? true : false;
 				return OTAMA_STATUS_OK;
-			} else if (key == "update_idf") {
-				update_idf(value);
-				return OTAMA_STATUS_OK;
 			}
 			return FixedDriver<FT>::set(key, value);
 		}
@@ -380,6 +377,25 @@ namespace otama
 			}
 			
 			return FixedDriver<FT>::unset(key);
+		}
+
+
+		virtual otama_status_t
+		invoke(const std::string &method,
+			   otama_variant_t *output,
+			   otama_variant_t *input)
+		{
+#ifdef _OPENMP
+			OMPLock lock(FixedDriver<FT>::m_lock);
+#endif
+			OTAMA_LOG_DEBUG("invoke: %s\n", method.c_str());
+			
+			if (method == "update_idf") {
+				update_idf(input);
+				otama_variant_set_null(output);
+				return OTAMA_STATUS_OK;
+			}
+			return FixedDriver<FT>::invoke(method, output, input);
 		}
 	};
 }
