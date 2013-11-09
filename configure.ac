@@ -95,20 +95,21 @@ AX_ARG_ENABLE(kyotocabinet,
         AS_HELP_STRING([--enable-kyotocabinet], [enable kyotocabinet.]), [no],
 	[AC_CHECK_HEADERS([kcpolydb.h],
 		[otama_kc=1
-        AC_CHECK_LIB(kyotocabinet, main)
+		AC_CHECK_LIB(kyotocabinet, main)
 		],
 		[AC_MSG_ERROR(*** libkyotocabinet not found. please install kyotocabinet.)])],
         [])
-	
+
 otama_leveldb=0
 AC_LANG_PUSH([C++])
 AX_ARG_ENABLE(leveldb,
         AS_HELP_STRING([--enable-leveldb], [enable leveldb.]), [yes],
 	[AC_CHECK_HEADERS([leveldb/db.h],
 		[otama_leveldb=1
-        AC_CHECK_LIB(leveldb, main)
+		AC_CHECK_LIB(snappy, main)
+		AC_CHECK_LIB(leveldb, main)
 		],
-		[AC_MSG_ERROR(*** libleveldb not found. please install leveldb.)])],
+		[AC_MSG_ERROR(*** libleveldb not found. please install libleveldb-dev and libsnappy-dev.)])],
         [])
 
 # unordered_map
