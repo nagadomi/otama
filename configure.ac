@@ -99,6 +99,17 @@ AX_ARG_ENABLE(kyotocabinet,
 		],
 		[AC_MSG_ERROR(*** libkyotocabinet not found. please install kyotocabinet.)])],
         [])
+	
+otama_leveldb=0
+AC_LANG_PUSH([C++])
+AX_ARG_ENABLE(leveldb,
+        AS_HELP_STRING([--enable-leveldb], [enable leveldb.]), [yes],
+	[AC_CHECK_HEADERS([leveldb/db.h],
+		[otama_leveldb=1
+        AC_CHECK_LIB(leveldb, main)
+		],
+		[AC_MSG_ERROR(*** libleveldb not found. please install leveldb.)])],
+        [])
 
 # unordered_map
 # TODO: -std=c++0x
@@ -219,6 +230,7 @@ CPPFLAGS="$CFLAGS"
 AM_CONDITIONAL([BUILDING_DEB], [$TEST $otama_deb = 1])
 AC_SUBST(DPKG_FLAGS)
 AC_SUBST(otama_kc)
+AC_SUBST(otama_leveldb)
 AC_SUBST(otama_lzo)
 AC_SUBST(otama_sqlite3)
 AC_SUBST(otama_pgsql)

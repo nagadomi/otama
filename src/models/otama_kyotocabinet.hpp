@@ -110,7 +110,7 @@ namespace otama
 		}
 		
 		bool
-		keep_alive_open(uint32_t mode)
+		keep_alive_open(uint32_t mode = kyotocabinet::BasicDB::OWRITER | kyotocabinet::BasicDB::OCREATE)
 		{
 			bool ret = true;
 
@@ -146,9 +146,15 @@ namespace otama
 		inline bool
 		append(const KEY_TYPE *key, const VALUE_TYPE *value)
 		{
+			return append(key, value, 1);
+		}
+		
+		inline bool
+		append(const KEY_TYPE *key, const VALUE_TYPE *value, size_t n)
+		{
 			assert(m_db != NULL);			
 			return m_db->append((const char *)key, sizeof(KEY_TYPE),
-								(const char *)value, sizeof(VALUE_TYPE));
+								(const char *)value, sizeof(VALUE_TYPE) * n);
 		}
 		
 		inline bool
@@ -213,8 +219,7 @@ namespace otama
 			return (void *)m_db->get((const char *)key, key_len, sp);
 		}
 
-		template<typename T>
-		void free_value(T *p)
+		void free_value_raw(void *p)
 		{
 			delete [] (char *)p;
 		}
@@ -229,6 +234,13 @@ namespace otama
 		{
 			assert(m_db != NULL);			
 			return m_db->count();
+		}
+
+		inline bool
+		update_count(void)
+		{
+			assert(m_db != NULL);
+			return true;
 		}
 		
 		std::string

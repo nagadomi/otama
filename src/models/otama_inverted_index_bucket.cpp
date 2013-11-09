@@ -342,6 +342,12 @@ InvertedIndexBucket::sync(void)
 	return true;
 }
 
+bool
+InvertedIndexBucket::update_count(void)
+{
+	return true;
+}
+
 int64_t
 InvertedIndexBucket::hash_count(uint32_t hash)
 {

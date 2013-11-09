@@ -87,7 +87,9 @@ int main(void)
 #if OTAMA_WITH_KC
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
 #endif
-	
+#if OTAMA_WITH_LEVELDB
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb.yaml");
+#endif
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sim.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/id.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/color.yaml");
@@ -107,6 +109,9 @@ int main(void)
 #if OTAMA_WITH_KC
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
 #endif
+#if OTAMA_WITH_LEVELDB
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb.yaml");
+#endif	
 #if !OTAMA_WINDOWS /* WindowsÇÕmmapÇÃé¿ëïè„ìØÇ∂prefixÇ™äJÇØÇ»Ç¢ */
 	otama_test_cluster(
 		OTAMA_TEST_CONFIG_DIR "/bovw8k_node1.yaml",

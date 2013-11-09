@@ -40,6 +40,16 @@ namespace otama
 			}
 		};
 		typedef std::vector<uint32_t> sparse_vec_t;
+		typedef struct {
+			float norm;
+			uint8_t flag;
+		} metadata_record_t;
+		typedef struct {
+			int64_t no;
+			otama_id_t id;
+			InvertedIndex::sparse_vec_t vec;
+		} batch_record_t;
+		typedef std::vector<batch_record_t> batch_records_t;
 		
 	protected:
 		static const int HIT_THRESHOLD = 8;
@@ -127,7 +137,7 @@ namespace otama
 		
 		virtual otama_status_t
 		search_cosine(otama_result_t **results, int n,
-									   const sparse_vec_t &vec) = 0;
+					  const sparse_vec_t &vec) = 0;
 		
 		virtual int64_t hash_count(uint32_t hash) = 0;
 		virtual int64_t count(void) = 0;
@@ -138,12 +148,26 @@ namespace otama
 		/* begin_writer required */
 		virtual otama_status_t set(int64_t no, const otama_id_t *id,
 								   const sparse_vec_t &hash) = 0;
+		virtual otama_status_t
+		batch_set(const batch_records_t records)
+		{
+			batch_records_t::const_iterator i;
+			otama_status_t ret;
+			for (i = records.begin(); i != records.end(); ++i) {
+				ret = set(i->no, &i->id, i->vec);
+				if (ret != OTAMA_STATUS_OK) {
+					return ret;
+				}
+			}
+			return OTAMA_STATUS_OK;
+		}
 		virtual otama_status_t set_flag(int64_t no, uint8_t flag) = 0;
 		virtual int64_t get_last_commit_no(void) = 0;
 		virtual bool set_last_commit_no(int64_t no) = 0;
 		virtual int64_t get_last_no(void) = 0;
 		virtual bool set_last_no(int64_t no) = 0;
 		virtual bool sync(void) = 0;
+		virtual bool update_count(void) = 0;
 		virtual void reserve(size_t hash_max) {/* do nothing*/};
 		virtual ~InvertedIndex() {};
 		

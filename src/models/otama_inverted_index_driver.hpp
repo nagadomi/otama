@@ -118,12 +118,6 @@ namespace otama
 				std::string id_str;
 				std::string vec_str;
 			} tmp_t;
-			typedef struct {
-				int64_t no;
-				otama_id_t id;
-				InvertedIndex::sparse_vec_t svec;
-			} tmp2_t;
-			
 			redo = false;
 			
 			sync();
@@ -137,7 +131,7 @@ namespace otama
 			}
 
 			t = nv_clock();
-			tmp_t *tmp = new tmp_t[DBIDriver<T>::PULL_LIMIT];
+			tmp_t tmp[DBIDriver<T>::PULL_LIMIT];
 			
 			while (otama_dbi_result_next(res)) {
 				tmp[ntuples].no = otama_dbi_result_int64(res, 0);
@@ -149,7 +143,8 @@ namespace otama
 			otama_dbi_result_free(&res);
 			OTAMA_LOG_DEBUG("-- read: %dms\n", nv_clock() - t);
 			t = nv_clock();
-			tmp2_t *tmp2 = new tmp2_t[(size_t)ntuples];
+			std::vector<InvertedIndex::batch_record_t> records(ntuples);
+			
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 4)
 #endif
@@ -159,31 +154,27 @@ namespace otama
 					const char *id = tmp[i].id_str.c_str();
 					const char *vec = tmp[i].vec_str.c_str();
 					T fixed;
-					tmp2[i].no = tmp[i].no;
+					records[i].no = tmp[i].no;
 						
-					otama_id_hexstr2bin(&tmp2[i].id, id);
+					otama_id_hexstr2bin(&records[i].id, id);
 					ng = this->feature_deserialize(&fixed, vec);
 					if (ng) {
 						ret = OTAMA_STATUS_ASSERTION_FAILURE;
 						OTAMA_LOG_ERROR("invalid vector string. id(%s)", id);
 					} else {
-						feature_to_sparse_vec(tmp2[i].svec, &fixed);
+						feature_to_sparse_vec(records[i].vec, &fixed);
 					}
 				}
 			}
-			delete [] tmp;
 			OTAMA_LOG_DEBUG("-- parse: %dms\n", nv_clock() - t);
 			t = nv_clock();
-				
+			
 			if (ret == OTAMA_STATUS_OK && ntuples > 0) {
 				// sequential access
-				for (i = 0; i < (int)ntuples; ++i) {
-					m_inverted_index->set(tmp2[i].no, &tmp2[i].id, tmp2[i].svec);
-				}
+				m_inverted_index->batch_set(records);
 				m_inverted_index->set_last_no(last_no);
 				sync();
 			}
-			delete [] tmp2;
 			OTAMA_LOG_DEBUG("-- append: %dms\n", nv_clock() - t);
 			
 			if (ntuples == DBIDriver<T>::PULL_LIMIT) {
@@ -331,6 +322,7 @@ namespace otama
 				m_inverted_index->end();
 				return ret;
 			}
+			m_inverted_index->update_count();
 			m_inverted_index->end();
 			
 			return ret;

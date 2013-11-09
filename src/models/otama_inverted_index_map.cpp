@@ -337,6 +337,12 @@ InvertedIndexMap::sync(void)
 	return true;
 }
 
+bool
+InvertedIndexMap::update_count(void)
+{
+	return true;
+}
+
 int64_t
 InvertedIndexMap::hash_count(uint32_t hash)
 {

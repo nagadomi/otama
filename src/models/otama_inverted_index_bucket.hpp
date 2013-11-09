@@ -113,6 +113,7 @@ namespace otama
 		virtual bool set_last_commit_no(int64_t no);
 		virtual int64_t get_last_no(void);
 		virtual bool set_last_no(int64_t no);
+		virtual bool update_count(void);
 		virtual bool sync(void);
 		virtual ~InvertedIndexBucket();
 

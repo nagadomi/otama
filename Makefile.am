@@ -28,7 +28,13 @@ ruby-ext:
 test-ruby:
 	cd ruby; ./test.sh ; cd ..
 
-valgrind:
+otama_test:
+	cd src/tests; make otama_test
+
+check-human: all otama_test
+	cd src/tests; LD_LIBRARY_PATH=../.libs ./.libs/otama_test
+
+valgrind: all otama_test
 	cd src/tests; LD_LIBRARY_PATH=../.libs valgrind -v --tool=memcheck --leak-check=full --show-reachable=yes --log-file=./valgrind.log ./.libs/otama_test; cat ./valgrind.log; cd -
 
 if BUILDING_DEB

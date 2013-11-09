@@ -112,6 +112,7 @@ namespace otama
 		virtual int64_t get_last_no(void);
 		virtual bool set_last_no(int64_t no);
 		virtual bool sync(void);
+		virtual bool update_count(void);
 		virtual ~InvertedIndexMap();
 	};
 }
