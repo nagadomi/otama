@@ -1,7 +1,7 @@
 /*
  * This file is part of otama.
  *
- * Copyright (C) 2012 nagadomi@nurs.or.jp
+ * Copyright (C) 2013 nagadomi@nurs.or.jp
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@
 #include "leveldb/cache.h"
 #include "leveldb/comparator.h"
 #include "leveldb/write_batch.h"
-#include "leveldb/filter_policy.h"
 #include "otama_log.h"
 
 namespace otama
@@ -63,7 +62,6 @@ namespace otama
 			m_opt.write_buffer_size = 256 * 1048576;
 			m_opt.create_if_missing = true;
 			m_opt.block_cache = NULL;
-			m_opt.filter_policy = NULL;
 		}
 		
 		bool is_active(void)
@@ -96,7 +94,6 @@ namespace otama
 				leveldb::Status ret;
 				
 				m_opt.block_cache = leveldb::NewLRUCache(64 * 1048576);
-				m_opt.filter_policy = leveldb::NewBloomFilterPolicy(10);
 				ret = leveldb::DB::Open(m_opt, m_path, &m_db);
 				if (!ret.ok()) {
 					set_error(ret.ToString());
@@ -141,10 +138,6 @@ namespace otama
 				if (m_opt.block_cache) {
 					delete m_opt.block_cache;
 					m_opt.block_cache = NULL;
-				}
-				if (m_opt.filter_policy) {
-					delete m_opt.filter_policy;
-					m_opt.filter_policy = NULL;
 				}
 			}
 		}
