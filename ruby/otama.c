@@ -818,6 +818,4 @@ Init_otama(void)
 	rb_define_alloc_func(cOtamaFeatureRaw, otama_raw_rb_alloc);
 	rb_define_private_method(cOtamaFeatureRaw, "initialize", otama_raw_rb_initialize, 0);
 	rb_define_method(cOtamaFeatureRaw, "dispose", otama_raw_rb_dispose, 0);
-	
-	otama_log_set_level(OTAMA_LOG_LEVEL_ERROR);
 }

@@ -77,7 +77,9 @@ main(int argc, char **argv)
 			return 0;
 		}
 	}
-	otama_log_set_level(level);
+	if (level == OTAMA_LOG_LEVEL_DEBUG) {
+		otama_log_set_level(level);
+	}
 	
 	if (!config) {
 		print_usage();

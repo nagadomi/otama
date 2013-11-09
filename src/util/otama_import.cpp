@@ -267,8 +267,9 @@ main(int argc, char **argv)
 		return -1;
 	}
 	filename = argv[0];
-
-	otama_log_set_level(level);
+	if (level == OTAMA_LOG_LEVEL_DEBUG) {
+		otama_log_set_level(level);
+	}
 
 	if (multi_client) {
 		iret = import_multi_client(filename, config);
