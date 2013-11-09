@@ -34,8 +34,8 @@ namespace otama
 	{
 	protected:
 		otama_dbi_t *m_dbi;
-		static const int PULL_LIMIT = 20000;
-
+		static const int PULL_LIMIT = 100000;
+		
 		virtual otama_status_t
 		exists_master(bool &exists, uint64_t &seq,
 					  const otama_id_t *id)
