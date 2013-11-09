@@ -40,8 +40,8 @@ namespace otama
 		virtual otama_status_t close(void) = 0;
 		virtual bool is_active(void) = 0;
 		
-		virtual otama_status_t create_table(void) = 0;
-		virtual otama_status_t drop_table(void) = 0;
+		virtual otama_status_t create_database(void) = 0;
+		virtual otama_status_t drop_database(void) = 0;
 		
 		virtual otama_status_t feature_string(std::string &features,
 											  otama_variant_t *data) = 0;

@@ -377,7 +377,7 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		create_table(void)
+		create_database(void)
 		{
 			static otama_dbi_column_t column_def[] = {
 				{ "id", OTAMA_DBI_COLUMN_INT64_PKEY_AUTO, 0, 0, 0, NULL },
@@ -462,7 +462,7 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		drop_table(void)
+		drop_database(void)
 		{
 			int ret = 0;
 			int exist;

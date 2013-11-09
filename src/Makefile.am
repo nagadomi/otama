@@ -94,7 +94,7 @@ pkgconfig_DATA = otama.pc
 CLEANFILES = otama.pc
 
 # util
-bin_PROGRAMS = otama_pull otama_import otama_create_table otama_drop_table
+bin_PROGRAMS = otama_pull otama_import otama_create_database otama_drop_database
 bin_SCRIPTS = util/otama_lmca_train
 
 otama_pull_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvlmcaex -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
@@ -111,17 +111,17 @@ otama_import_LDFLAGS =
 otama_import_SOURCES = util/otama_import.cpp
 otama_import_LDADD = $(builddir)/libotama.la
 
-otama_create_table_CFLAGS = $(otama_pull_CFLAGS)
-otama_create_table_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_create_table_CPPFLAGS = $(otama_pull_CFLAGS)
-otama_create_table_LDFLAGS = 
-otama_create_table_SOURCES = util/otama_create_table.c
-otama_create_table_LDADD = $(builddir)/libotama.la
+otama_create_database_CFLAGS = $(otama_pull_CFLAGS)
+otama_create_database_CXXFLAGS = $(otama_pull_CFLAGS)
+otama_create_database_CPPFLAGS = $(otama_pull_CFLAGS)
+otama_create_database_LDFLAGS = 
+otama_create_database_SOURCES = util/otama_create_database.c
+otama_create_database_LDADD = $(builddir)/libotama.la
 
-otama_drop_table_CFLAGS = $(otama_pull_CFLAGS)
-otama_drop_table_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_drop_table_CPPFLAGS = $(otama_pull_CFLAGS)
-otama_drop_table_LDFLAGS = 
-otama_drop_table_SOURCES = util/otama_drop_table.c
-otama_drop_table_LDADD = $(builddir)/libotama.la
+otama_drop_database_CFLAGS = $(otama_pull_CFLAGS)
+otama_drop_database_CXXFLAGS = $(otama_pull_CFLAGS)
+otama_drop_database_CPPFLAGS = $(otama_pull_CFLAGS)
+otama_drop_database_LDFLAGS = 
+otama_drop_database_SOURCES = util/otama_drop_database.c
+otama_drop_database_LDADD = $(builddir)/libotama.la
 

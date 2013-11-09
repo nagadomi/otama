@@ -144,17 +144,17 @@ otama_close(otama_t **otama)
 }
 
 otama_status_t
-otama_create_table(otama_t *otama)
+otama_create_database(otama_t *otama)
 {
 	NV_ASSERT(otama != NULL);
-	return otama->driver->create_table();
+	return otama->driver->create_database();
 }
 
 otama_status_t
-otama_drop_table(otama_t *otama)
+otama_drop_database(otama_t *otama)
 {
 	NV_ASSERT(otama != NULL);
-	return otama->driver->drop_table();
+	return otama->driver->drop_database();
 }
 
 otama_status_t

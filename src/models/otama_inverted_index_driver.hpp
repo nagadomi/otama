@@ -329,7 +329,7 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		drop_table(void)
+		drop_database(void)
 		{
 			int ret;
 			

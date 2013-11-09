@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="otama_drop_table"
+	Name="otama_drop_database"
 	ProjectGUID="{E7086C56-AE09-484F-8665-0E64D7E4085C}"
-	RootNamespace="otama_drop_table"
+	RootNamespace="otama_drop_database"
 	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
@@ -322,7 +322,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\src\util\otama_drop_table.c"
+				RelativePath="..\src\util\otama_drop_database.c"
 				>
 			</File>
 		</Filter>

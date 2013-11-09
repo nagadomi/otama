@@ -31,8 +31,8 @@ drop_create(const char *config)
 	OTAMA_TEST_NAME;
 	
 	NV_ASSERT(otama_open(&otama, config) == OTAMA_STATUS_OK);
-	otama_drop_table(otama);
-	NV_ASSERT(otama_create_table(otama) == OTAMA_STATUS_OK);
+	otama_drop_database(otama);
+	NV_ASSERT(otama_create_database(otama) == OTAMA_STATUS_OK);
 	
 	otama_close(&otama);
 }

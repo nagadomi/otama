@@ -27,13 +27,13 @@ class OtamaTest < Test::Unit::TestCase
     
     @drop_create = lambda do
       Otama.open($driver_config) do |otama|
-        otama.drop_table
-        otama.create_table
+        otama.drop_database
+        otama.create_database
       end
     end
     begin
       Otama.open($driver_config) do |otama|
-        otama.create_table
+        otama.create_database
       end
     rescue
     end
@@ -58,17 +58,17 @@ class OtamaTest < Test::Unit::TestCase
     Otama.open($driver_config) do |otama|
       i = 0
       begin
-        otama.create_table
+        otama.create_database
         i = 1
-        otama.drop_table
-        otama.create_table
+        otama.drop_database
+        otama.create_database
         i = 2
       rescue
         if (i == 0)
-          otama.drop_table
-          otama.create_table
-          otama.drop_table
-          otama.create_table
+          otama.drop_database
+          otama.create_database
+          otama.drop_database
+          otama.create_database
           i = 2
         end
       end

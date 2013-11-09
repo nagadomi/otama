@@ -8,12 +8,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_import", "otama_impor
 		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_create_table", "otama_create_table.vcproj", "{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_create_database", "otama_create_database.vcproj", "{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_drop_table", "otama_drop_table.vcproj", "{E7086C56-AE09-484F-8665-0E64D7E4085C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_drop_database", "otama_drop_database.vcproj", "{E7086C56-AE09-484F-8665-0E64D7E4085C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
 	EndProjectSection

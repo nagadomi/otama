@@ -19,7 +19,7 @@ module OtamaInstance
       @@otama
     else
       @@otama = Otama.open(CONFIG)
-      @@otama.create_table
+      @@otama.create_database
       @@otama.pull
       @@otama
     end

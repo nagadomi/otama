@@ -26,7 +26,7 @@ static void
 print_usage(void)
 {
 	printf(
-		"otama_drop_table [OPTIONS] -c file\n"
+		"otama_drop_database [OPTIONS] -c file\n"
 		"    -h                  display this help and exit.\n"
 		"    -d                  log_level = DEBUG.\n"
 		"    -c file             path to configuration file.(config.yaml)\n"
@@ -76,14 +76,14 @@ main(int argc, char **argv)
 	}
 	ret = otama_open_opt(&otama, config);	
 	if (ret != OTAMA_STATUS_OK) {
-		printf("otama_drop_table: otama_open failed: %s\n", otama_status_message(ret));
+		printf("otama_drop_database: otama_open failed: %s\n", otama_status_message(ret));
 		otama_variant_pool_free(&pool);		
 		return -1;
 	}
 	
-	ret = otama_drop_table(otama);
+	ret = otama_drop_database(otama);
 	if (ret != OTAMA_STATUS_OK) {
-		printf("otama_drop_table: otama_drop_table failed: %s\n", otama_status_message(ret));
+		printf("otama_drop_database: otama_drop_database failed: %s\n", otama_status_message(ret));
 		otama_close(&otama);
 		otama_variant_pool_free(&pool);		
 		return -1;

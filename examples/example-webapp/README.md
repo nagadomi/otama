@@ -42,12 +42,12 @@ import.shの中身は、
     cat ./import.sh
     #!/bin/sh
     renice 19 -p $$
-    otama_create_table -c ./config.yaml
+    otama_create_database -c ./config.yaml
     otama_import -c ./config.yaml ./filelist.txt > id.txt
     otama_pull -c ./config.yaml
     ruby make-database.rb
 
-`otama_create_table`コマンドでテーブルを作って、
+`otama_create_database`コマンドでテーブルを作って、
 `otama_import`コマンドで画像を（マスタへ）インポートして、
 `otama_pull`コマンドでローカルの検索インデックスを更新します。
 

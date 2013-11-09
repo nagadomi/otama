@@ -676,7 +676,7 @@ otama_rb_pull(VALUE self)
 }
 
 static VALUE
-otama_rb_create_table(VALUE self)
+otama_rb_create_database(VALUE self)
 {
 	otama_t *otama;
 	otama_status_t ret;
@@ -684,7 +684,7 @@ otama_rb_create_table(VALUE self)
 	Data_Get_Struct(self, otama_t, otama);
 	OTAMA_CHECK_NULL(otama);
 
-	ret = otama_create_table(otama);
+	ret = otama_create_database(otama);
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
 	}
@@ -693,7 +693,7 @@ otama_rb_create_table(VALUE self)
 }
 
 static VALUE
-otama_rb_drop_table(VALUE self)
+otama_rb_drop_database(VALUE self)
 {
 	otama_t *otama;
 	otama_status_t ret;
@@ -701,7 +701,7 @@ otama_rb_drop_table(VALUE self)
 	Data_Get_Struct(self, otama_t, otama);
 	OTAMA_CHECK_NULL(otama);
 	
-	ret = otama_drop_table(otama);
+	ret = otama_drop_database(otama);
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
 	}
@@ -802,8 +802,8 @@ Init_otama(void)
 	rb_define_method(cOtama, "feature_raw", otama_rb_feature_raw, 1);
 	rb_define_method(cOtama, "remove", otama_rb_remove, 1);
 	rb_define_method(cOtama, "pull", otama_rb_pull, 0);
-	rb_define_method(cOtama, "create_table", otama_rb_create_table, 0);
-	rb_define_method(cOtama, "drop_table", otama_rb_drop_table, 0);
+	rb_define_method(cOtama, "create_database", otama_rb_create_database, 0);
+	rb_define_method(cOtama, "drop_database", otama_rb_drop_database, 0);
 
 	rb_define_method(cOtama, "active?", otama_rb_active, 0);
 	rb_define_method(cOtama, "count", otama_rb_count, 0);

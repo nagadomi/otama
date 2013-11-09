@@ -1,4 +1,5 @@
 *~
+*.trs
 *.o
 *.lo
 *.so
@@ -19,6 +20,7 @@ configure
 depcomp
 install-sh
 missing
+test-driver
 ltmain.sh
 config.log
 config.status
@@ -41,10 +43,10 @@ GTAGS
 
 Gemfile.lock
 otama_config_auto.h
-src/otama_create_table
-src/otama_create_table.exe
-src/otama_drop_table
-src/otama_drop_table.exe
+src/otama_create_database
+src/otama_create_database.exe
+src/otama_drop_database
+src/otama_drop_database.exe
 src/otama_import
 src/otama_import.exe
 src/otama_pull

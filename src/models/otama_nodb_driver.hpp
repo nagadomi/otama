@@ -85,13 +85,13 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		create_table(void)
+		create_database(void)
 		{
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}
 		
 		virtual otama_status_t
-		drop_table(void)
+		drop_database(void)
 		{
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}

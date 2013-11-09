@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="otama_create_table"
+	Name="otama_create_database"
 	ProjectGUID="{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}"
-	RootNamespace="otama_create_table"
+	RootNamespace="otama_create_database"
 	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
@@ -322,7 +322,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\src\util\otama_create_table.c"
+				RelativePath="..\src\util\otama_create_database.c"
 				>
 			</File>
 		</Filter>
