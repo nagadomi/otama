@@ -112,12 +112,14 @@ namespace otama
 			long t0 = t;
 			int64_t ntuples = 0;
 			int i;
-			
+			InvertedIndex::batch_records_t records;
 			typedef struct {
 				int64_t no;
 				std::string id_str;
 				std::string vec_str;
 			} tmp_t;
+			tmp_t *tmp;
+			
 			redo = false;
 			
 			sync();
@@ -129,10 +131,9 @@ namespace otama
 			if (res == NULL) {
 				return OTAMA_STATUS_SYSERROR;
 			}
-
 			t = nv_clock();
-			tmp_t tmp[DBIDriver<T>::PULL_LIMIT];
 			
+			tmp = new tmp_t[DBIDriver<T>::PULL_LIMIT];
 			while (otama_dbi_result_next(res)) {
 				tmp[ntuples].no = otama_dbi_result_int64(res, 0);
 				tmp[ntuples].id_str = otama_dbi_result_string(res, 1);
@@ -143,7 +144,7 @@ namespace otama
 			otama_dbi_result_free(&res);
 			OTAMA_LOG_DEBUG("-- read: %dms\n", nv_clock() - t);
 			t = nv_clock();
-			std::vector<InvertedIndex::batch_record_t> records(ntuples);
+			records.resize(ntuples);
 			
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 4)
@@ -155,7 +156,7 @@ namespace otama
 					const char *vec = tmp[i].vec_str.c_str();
 					T fixed;
 					records[i].no = tmp[i].no;
-						
+					
 					otama_id_hexstr2bin(&records[i].id, id);
 					ng = this->feature_deserialize(&fixed, vec);
 					if (ng) {
@@ -166,6 +167,7 @@ namespace otama
 					}
 				}
 			}
+			delete [] tmp;
 			OTAMA_LOG_DEBUG("-- parse: %dms\n", nv_clock() - t);
 			t = nv_clock();
 			
