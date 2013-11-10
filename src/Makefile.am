@@ -94,7 +94,7 @@ pkgconfig_DATA = otama.pc
 CLEANFILES = otama.pc
 
 # util
-bin_PROGRAMS = otama_pull otama_import otama_create_database otama_drop_database
+bin_PROGRAMS = otama_pull otama_import otama_create_database otama_drop_database otama_drop_index
 bin_SCRIPTS = util/otama_lmca_train
 
 otama_pull_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvlmcaex -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
@@ -124,4 +124,11 @@ otama_drop_database_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_drop_database_LDFLAGS = 
 otama_drop_database_SOURCES = util/otama_drop_database.c
 otama_drop_database_LDADD = $(builddir)/libotama.la
+
+otama_drop_index_CFLAGS = $(otama_pull_CFLAGS)
+otama_drop_index_CXXFLAGS = $(otama_pull_CFLAGS)
+otama_drop_index_CPPFLAGS = $(otama_pull_CFLAGS)
+otama_drop_index_LDFLAGS = 
+otama_drop_index_SOURCES = util/otama_drop_index.c
+otama_drop_index_LDADD = $(builddir)/libotama.la
 

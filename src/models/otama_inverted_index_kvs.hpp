@@ -314,7 +314,8 @@ namespace otama
 			}
 		}
 		
-		virtual otama_status_t open(void)
+		virtual otama_status_t
+		open(void)
 		{
 			otama_status_t ret = OTAMA_STATUS_OK;
 
@@ -356,7 +357,8 @@ namespace otama
 
 		}
 		
-		virtual otama_status_t close(void)
+		virtual otama_status_t
+		close(void)
 		{
 			m_inverted_index.close();
 			m_metadata.close();
@@ -365,10 +367,11 @@ namespace otama
 			return OTAMA_STATUS_OK;
 		}
 		
-		virtual otama_status_t clear(void)
+		virtual otama_status_t
+		clear(void)
 		{
 			otama_status_t ret;
-
+			
 			ret = begin_writer();
 			if (ret != OTAMA_STATUS_OK) {
 				return ret;
@@ -376,9 +379,9 @@ namespace otama
 			m_inverted_index.clear();
 			m_metadata.clear();
 			m_ids.clear();
-	
+			
 			end();
-	
+			
 			return ret;
 		}
 

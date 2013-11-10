@@ -63,7 +63,7 @@ int main(void)
 {
 	signal(SIGSEGV, handle_segv);
 	setup();
-
+	
 #if !OTAMA_MSVC
 	otama_test_dbi();
 	otama_test_vlad();

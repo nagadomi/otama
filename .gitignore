@@ -47,6 +47,8 @@ src/otama_create_database
 src/otama_create_database.exe
 src/otama_drop_database
 src/otama_drop_database.exe
+src/otama_drop_index
+src/otama_drop_index.exe
 src/otama_import
 src/otama_import.exe
 src/otama_pull

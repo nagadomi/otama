@@ -327,20 +327,32 @@ namespace otama
 			
 			return ret;
 		}
-		
+
 		virtual otama_status_t
 		drop_database(void)
 		{
-			int ret;
-			
-			ret = otama_dbi_drop_table(this->m_dbi, this->table_name().c_str());
-			if (ret == 0) {
+			otama_status_t ret;
+
+#ifdef _OPENMP
+			OMPLock lock(this->m_lock);
+#endif
+			ret = DBIDriver<T>::drop_database();
+	
+			if (ret == OTAMA_STATUS_OK) {
 				ret = m_inverted_index->clear();
-			} else {
-				return OTAMA_STATUS_SYSERROR;
 			}
-			
-			return OTAMA_STATUS_OK;
+			return ret;
+		}
+
+		virtual otama_status_t
+		drop_index(void)
+		{
+			otama_status_t ret;
+#ifdef _OPENMP
+			OMPLock lock(this->m_lock);
+#endif
+			ret = m_inverted_index->clear();
+			return ret;
 		}
 		
 		virtual otama_status_t

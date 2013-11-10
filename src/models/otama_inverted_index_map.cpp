@@ -93,6 +93,9 @@ InvertedIndexMap::clear(void)
 {
 	m_metadata.clear();
 	m_inverted_index.clear();
+	m_last_commit_no = -1;
+	m_last_no = -1;
+	
 	return OTAMA_STATUS_OK;
 }
 

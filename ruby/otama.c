@@ -710,6 +710,23 @@ otama_rb_drop_database(VALUE self)
 }
 
 static VALUE
+otama_rb_drop_index(VALUE self)
+{
+	otama_t *otama;
+	otama_status_t ret;
+	
+	Data_Get_Struct(self, otama_t, otama);
+	OTAMA_CHECK_NULL(otama);
+	
+	ret = otama_drop_index(otama);
+	if (ret != OTAMA_STATUS_OK) {
+		otama_rb_raise(ret);
+	}
+	
+	return Qnil;
+}
+
+static VALUE
 otama_rb_s_version_string(VALUE self)
 {
 	return rb_str_new2(otama_version_string());
@@ -804,6 +821,7 @@ Init_otama(void)
 	rb_define_method(cOtama, "pull", otama_rb_pull, 0);
 	rb_define_method(cOtama, "create_database", otama_rb_create_database, 0);
 	rb_define_method(cOtama, "drop_database", otama_rb_drop_database, 0);
+	rb_define_method(cOtama, "drop_index", otama_rb_drop_index, 0);
 
 	rb_define_method(cOtama, "active?", otama_rb_active, 0);
 	rb_define_method(cOtama, "count", otama_rb_count, 0);

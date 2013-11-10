@@ -123,10 +123,20 @@ namespace otama
 		void
 		clear()
 		{
+			bool reopen = false;
+			leveldb::Status ret;
+			
 			if (m_db) {
+				reopen = true;
 				close();
 			}
-			leveldb::DestroyDB(m_path, m_opt);
+			ret = leveldb::DestroyDB(m_path, m_opt);
+			if (!ret.ok()) {
+				set_error(ret.ToString());
+			}
+			if (reopen) {
+				keep_alive_open();
+			}
 		}
 		
 		void
@@ -295,7 +305,6 @@ namespace otama
 			if (old_count > 0) {
 				new_count -= 1;
 			}
-			
 			return set("_count", 6, &new_count, sizeof(new_count));
 		}
 		

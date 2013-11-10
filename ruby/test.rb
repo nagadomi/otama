@@ -96,6 +96,19 @@ class OtamaTest < Test::Unit::TestCase
       assert_equal otama.count, 2
     end
   end
+  def test_drop_index
+    @drop_create.call
+    Otama.open($driver_config) do |otama|
+      id1 = otama.insert("file" => FILE1)
+      id2 = otama.insert("file" => FILE2)
+      otama.pull
+      assert_equal otama.count, 2
+      otama.drop_index
+      assert_equal otama.count, 0
+      otama.pull
+      assert_equal otama.count, 2
+    end
+  end
   def test_file_insert_search_remove_search
     @drop_create.call
     Otama.open($driver_config) do |otama|

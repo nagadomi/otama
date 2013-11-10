@@ -96,6 +96,12 @@ namespace otama
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}
 		
+		virtual otama_status_t
+		drop_index(void)
+		{
+			return OTAMA_STATUS_NOT_IMPLEMENTED;
+		}
+		
 		virtual bool
 		is_active(void)
 		{
