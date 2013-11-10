@@ -124,7 +124,6 @@ test_drop_index(const char *config)
 	NV_ASSERT(count == 0);
 	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
-	printf("count = %d", (int)count);
 	NV_ASSERT(count == 2);
 	
 	otama_close(&otama);
