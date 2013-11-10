@@ -1,4 +1,4 @@
-EXTRA_DIST = lib/posix/otama_mmap.c lib/windows/otama_mmap.c lib/otama_config_msvc.h util/otama_lmca_train
+EXTRA_DIST = lib/posix/otama_mmap.c lib/windows/otama_mmap.c lib/otama_config_msvc.h util/otama_lmca_train  libotama-0.def
 
 SUBDIRS    = nvcolorex nvbovw nvvlad nvlmcaex
 
