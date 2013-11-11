@@ -356,6 +356,17 @@ namespace otama
 			ret = m_inverted_index->clear();
 			return ret;
 		}
+
+		virtual otama_status_t
+		vacuum_index(void)
+		{
+			otama_status_t ret;
+#ifdef _OPENMP
+			OMPLock lock(this->m_lock);
+#endif
+			ret = m_inverted_index->vacuum();
+			return ret;
+		}
 		
 		virtual otama_status_t
 		sync(void)

@@ -139,6 +139,14 @@ namespace otama
 			}
 		}
 		
+		bool
+		vacuum()
+		{
+			assert(m_db != NULL);
+			m_db->CompactRange(NULL, NULL);
+			return true;
+		}
+		
 		void
 		close()
 		{

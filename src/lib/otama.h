@@ -51,6 +51,7 @@ void otama_close(otama_t **otama);
 otama_status_t otama_create_database(otama_t *otama);
 otama_status_t otama_drop_database(otama_t *otama);
 otama_status_t otama_drop_index(otama_t *otama);
+otama_status_t otama_vacuum_index(otama_t *otama);
 	
 otama_status_t otama_pull(otama_t *otama);
 

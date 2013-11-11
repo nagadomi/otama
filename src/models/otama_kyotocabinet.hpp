@@ -129,6 +129,13 @@ namespace otama
 			m_db->clear();
 		}
 
+		bool
+		vacuum()
+		{
+			// use auto vacuum (defunit option)
+			return true;
+		}			
+
 		void close()
 		{
 			if (m_db) {

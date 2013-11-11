@@ -90,9 +90,9 @@ namespace otama
 		{
 			otama_variant_t *driver, *value;
 			
-			m_inverted_index_options = "#opts=ls#bnum=512k#dfunit=32";
-			m_metadata_options = "#bnum=1m#dfunit=32";
-	
+			m_inverted_index_options = "#opts=ls#bnum=512k#dfunit=2";
+			m_metadata_options = "#bnum=1m#dfunit=2";
+			
 			driver = otama_variant_hash_at(options, "driver");
 			if (OTAMA_VARIANT_IS_HASH(driver)) {
 				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver,

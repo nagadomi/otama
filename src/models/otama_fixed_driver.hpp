@@ -311,6 +311,11 @@ namespace otama
 			ret = m_mmap->unlink();
 			return ret;
 		}
+		virtual otama_status_t
+		vacuum_index(void)
+		{
+			return OTAMA_STATUS_OK;
+		}
 	};
 }
 

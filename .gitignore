@@ -51,6 +51,8 @@ src/otama_drop_index
 src/otama_drop_index.exe
 src/otama_search
 src/otama_search.exe
+src/otama_vacuum_index
+src/otama_vacuum_index.exe
 src/otama_import
 src/otama_import.exe
 src/otama_pull

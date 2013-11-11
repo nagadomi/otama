@@ -129,6 +129,7 @@ namespace otama
 		virtual otama_status_t open(void) = 0;
 		virtual otama_status_t close(void) = 0;
 		virtual otama_status_t clear(void) = 0;
+		virtual otama_status_t vacuum(void) = 0;
 		
 		typedef enum {
 			METHOD_COSINE,

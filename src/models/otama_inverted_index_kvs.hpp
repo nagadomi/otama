@@ -386,6 +386,32 @@ namespace otama
 		}
 
 		virtual otama_status_t
+		vacuum(void)
+		{
+			otama_status_t ret;
+			
+			ret = begin_writer();
+			if (ret != OTAMA_STATUS_OK) {
+				return ret;
+			}
+			if (!m_ids.vacuum()) {
+				end();
+				return OTAMA_STATUS_SYSERROR;
+			}
+			if (!m_metadata.vacuum()) {
+				end();
+				return OTAMA_STATUS_SYSERROR;
+			}
+			if (!m_inverted_index.vacuum()) {
+				end();
+				return OTAMA_STATUS_SYSERROR;
+			}
+			end();
+			
+			return OTAMA_STATUS_OK;
+		}
+
+		virtual otama_status_t
 		search_cosine(otama_result_t **results, int n,
 					  const sparse_vec_t &vec)
 		{

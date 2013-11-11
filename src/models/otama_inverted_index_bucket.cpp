@@ -105,6 +105,12 @@ InvertedIndexBucket::clear(void)
 }
 
 otama_status_t
+InvertedIndexBucket::vacuum(void)
+{
+	return OTAMA_STATUS_OK;
+}
+
+otama_status_t
 InvertedIndexBucket::open(void)
 {
 	begin_writer();

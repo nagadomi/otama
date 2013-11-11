@@ -94,6 +94,7 @@ namespace otama
 		virtual otama_status_t open(void);
 		virtual otama_status_t close(void);
 		virtual otama_status_t clear(void);
+		virtual otama_status_t vacuum(void);
 
 		virtual otama_status_t
 		search_cosine(otama_result_t **results, int n,

@@ -100,6 +100,12 @@ InvertedIndexMap::clear(void)
 }
 
 otama_status_t
+InvertedIndexMap::vacuum(void)
+{
+	return OTAMA_STATUS_OK;
+}
+
+otama_status_t
 InvertedIndexMap::open(void)
 {
 	begin_writer();

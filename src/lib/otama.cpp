@@ -165,6 +165,13 @@ otama_drop_index(otama_t *otama)
 }
 
 otama_status_t
+otama_vacuum_index(otama_t *otama)
+{
+	NV_ASSERT(otama != NULL);
+	return otama->driver->vacuum_index();
+}
+
+otama_status_t
 otama_pull(otama_t *otama)
 {
 	NV_ASSERT(otama != NULL);
