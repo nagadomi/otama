@@ -63,7 +63,8 @@ int main(void)
 {
 	signal(SIGSEGV, handle_segv);
 	setup();
-	
+
+	otama_test_variant();
 #if !OTAMA_MSVC
 	otama_test_dbi();
 	otama_test_vlad();
@@ -112,7 +113,7 @@ int main(void)
 #if OTAMA_WITH_LEVELDB
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb.yaml");
 #endif	
-#if !OTAMA_WINDOWS /* WindowsÇÕmmapÇÃé¿ëïè„ìØÇ∂prefixÇ™äJÇØÇ»Ç¢ */
+#if !OTAMA_WINDOWS /* does not work on WindowsOS */
 	otama_test_cluster(
 		OTAMA_TEST_CONFIG_DIR "/bovw8k_node1.yaml",
 		OTAMA_TEST_CONFIG_DIR "/bovw8k_node2.yaml");

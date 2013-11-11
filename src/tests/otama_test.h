@@ -38,7 +38,8 @@ void otama_test_api(const char *config);
 void otama_test_similarity_api(const char *config);
 void otama_test_cluster(const char *config1, const char *config2);
 void otama_test_dbi(void);
-	
+void otama_test_variant(void);
+
 #ifdef __cplusplus
 }
 #endif	
