@@ -481,9 +481,9 @@ namespace otama
 			otama_status_t ret;
 			topn_t topn;
 
-			//if (num_threads > 4) {
-			//        num_threads -= 1; // reservation for i/o
-			//}
+			if (num_threads > 2) {
+				num_threads -= 1; // reservation for other threads
+			}
 			
 			if (n < 1) {
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
