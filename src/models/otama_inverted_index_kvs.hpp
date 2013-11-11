@@ -41,9 +41,6 @@ namespace otama
 	class InvertedIndexKVS :public InvertedIndex
 	{
 	private:
-		typedef std::map<uint32_t, std::vector<uint8_t> > index_buffer_t;
-		typedef std::map<uint32_t, int64_t > last_no_buffer_t;
-		
 	protected:
 		static const int COUNT_TOPN_MIN = 128;
 		
@@ -51,6 +48,7 @@ namespace otama
 		IT m_ids;
 		VT m_inverted_index;
 		bool m_keep_alive;
+		bool m_auto_repair;
 		
 		typedef struct similarity_result {
 			int64_t no;
@@ -72,6 +70,9 @@ namespace otama
 				return no < rhs.no;
 			}
 		} similarity_temp_t;
+		
+		typedef std::map<uint32_t, std::vector<uint8_t> > index_buffer_t;
+		typedef std::map<uint32_t, int64_t > last_no_buffer_t;
 		typedef std::priority_queue<similarity_result_t, std::vector<similarity_result_t> > topn_t;
 		
 		virtual std::string id_file_name(void) = 0;
@@ -207,8 +208,7 @@ namespace otama
 		void
 		set_index_buffer(index_buffer_t &index_buffer,
 						 last_no_buffer_t &last_no_buffer,
-						 const batch_records_t &records
-						 )
+						 const batch_records_t &records)
 		{
 			batch_records_t::const_iterator j;
 
@@ -240,7 +240,7 @@ namespace otama
 				}
 			}
 		}
-		
+
 		otama_status_t
 		write_index_buffer(const index_buffer_t &index_buffer,
 						   const last_no_buffer_t &last_no_buffer,
@@ -250,23 +250,16 @@ namespace otama
 			batch_records_t::const_iterator j;
 			index_buffer_t::const_iterator i;
 			bool bret;
+			int8_t verify_index_value = 0;
 			
-			for (j = records.begin(); j != records.end(); ++j) {
-				bool bret;
-				metadata_record_t rec;
-				
-				memset(&rec, 0, sizeof(rec));
-				rec.norm = norm(j->vec);
-				rec.flag = 0;
-				
-				bret = m_ids.add(&j->no, &j->id);
-				if (!bret) {
-					OTAMA_LOG_ERROR("%s", m_ids.error_message().c_str());
-					ret = OTAMA_STATUS_SYSERROR;
-					break;
-				}
-				m_metadata.add(&j->no, &rec);
+			if (!m_metadata.set_sync("_VERIFY_INDEX", 13,
+									 &verify_index_value,
+									 sizeof(verify_index_value))) 
+			{
+				return OTAMA_STATUS_SYSERROR;
 			}
+			OTAMA_LOG_DEBUG("begin index write", 0);
+			
 			for (i = index_buffer.begin(); i != index_buffer.end(); ++i) {
 				uint32_t hash = i->first;
 				const uint64_t last_no_key = (uint64_t)hash << 32;
@@ -293,7 +286,59 @@ namespace otama
 					break;
 				}
 			}
+			for (j = records.begin(); j != records.end(); ++j) {
+				bool bret;
+				metadata_record_t rec;
+				
+				memset(&rec, 0, sizeof(rec));
+				rec.norm = norm(j->vec);
+				rec.flag = 0;
+				
+				bret = m_ids.add(&j->no, &j->id);
+				if (!bret) {
+					OTAMA_LOG_ERROR("%s", m_ids.error_message().c_str());
+					ret = OTAMA_STATUS_SYSERROR;
+					break;
+				}
+				m_metadata.add(&j->no, &rec);
+			}
+			if (ret == OTAMA_STATUS_OK) {
+				verify_index_value = 1;
+				if (!m_metadata.set_sync("_VERIFY_INDEX", 13,
+										 &verify_index_value,
+										 sizeof(verify_index_value))) 
+				{
+					ret = OTAMA_STATUS_SYSERROR;
+				}
+			}
+			m_inverted_index.sync();
+			m_ids.sync();
+			m_metadata.sync();
+			
+			OTAMA_LOG_DEBUG("end index write", 0);
+			
 			return ret;
+		}
+
+		bool
+		verify_index(void)
+		{
+			size_t sp = 0;
+			int8_t *flag = (int8_t *)m_metadata.get("_VERIFY_INDEX", 13, &sp);
+			if (flag) {
+				bool ret = false;
+				if (sp == sizeof(int8_t) && *flag == 1) {
+					ret = true;
+					OTAMA_LOG_DEBUG("verify_index 1", 0);
+				} else {
+					OTAMA_LOG_DEBUG("verify_index 0", 0);
+				}
+				m_metadata.free_value_raw(flag);
+				return ret;
+			} else {
+				OTAMA_LOG_DEBUG("verify_index null", 0);
+				return true;
+			}
 		}
 		
 	public:
@@ -303,6 +348,7 @@ namespace otama
 			otama_variant_t *driver, *value;
 			
 			m_keep_alive = true;
+			m_auto_repair = true;
 			
 			driver = otama_variant_hash_at(options, "driver");
 			if (OTAMA_VARIANT_IS_HASH(driver)) {
@@ -318,7 +364,7 @@ namespace otama
 		open(void)
 		{
 			otama_status_t ret = OTAMA_STATUS_OK;
-
+			
 			m_metadata.path(metadata_file_name());
 			m_inverted_index.path(inverted_index_file_name());
 			m_ids.path(id_file_name());
@@ -339,6 +385,12 @@ namespace otama
 									m_ids.error_message().c_str());
 					return OTAMA_STATUS_SYSERROR;
 				}
+				if (!verify_index()) {
+					OTAMA_LOG_NOTICE("indexes are corrupted. try to clear index..", 0);
+					m_inverted_index.clear();
+					m_metadata.clear();
+					m_ids.clear();
+				}
 				if (!setup()) {
 					ret = OTAMA_STATUS_SYSERROR;
 				}
@@ -346,6 +398,12 @@ namespace otama
 				ret = begin_writer();
 				if (ret != OTAMA_STATUS_OK) {
 					return ret;
+				}
+				if (!verify_index()) {
+					OTAMA_LOG_NOTICE("indexes are corrupted. try to clear index..", 0);
+					m_inverted_index.clear();
+					m_metadata.clear();
+					m_ids.clear();
 				}
 				if (!setup()) {
 					ret = OTAMA_STATUS_SYSERROR;
@@ -424,9 +482,9 @@ namespace otama
 			topn_t topn;
 
 			//if (num_threads > 4) {
-			//	num_threads -= 1; // reservation for i/o
+			//        num_threads -= 1; // reservation for i/o
 			//}
-
+			
 			if (n < 1) {
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
@@ -466,7 +524,7 @@ namespace otama
 			for (i = 1; i < num_threads; ++i) {
 				std::copy(hits[i].begin(), hits[i].end(), std::back_inserter(hits[0]));
 			}
-	
+			
 			OTAMA_LOG_DEBUG("search: inverted index search: %zd, %ldms",
 							hits[0].size(), nv_clock() - t);
 			t = nv_clock();
@@ -490,6 +548,13 @@ namespace otama
 					} else {
 						if (count > m_hit_threshold) {
 							metadata_record_t *rec = m_metadata.get(&no);
+							if (rec == NULL) {
+								OTAMA_LOG_ERROR("indexes are corrupted. try to clear index.. please rebuild index using otama_pull.", 0);
+								delete [] hits;
+								end();
+								clear();
+								return OTAMA_STATUS_SYSERROR;
+							}
 							if ((rec->flag & FLAG_DELETE) == 0) {
 								float similarity = w / (query_norm * rec->norm);
 								if (n > (int)topn.size()) {
@@ -514,6 +579,14 @@ namespace otama
 				}
 				if (count > m_hit_threshold) {
 					metadata_record_t *rec = m_metadata.get(&no);
+					if (rec == NULL) {
+						OTAMA_LOG_ERROR("indexes are corrupted. try to clear index.. please rebuild index using otama_pull.", 0);
+						delete [] hits;
+						end();
+						clear();
+						return OTAMA_STATUS_SYSERROR;
+					}
+					
 					if ((rec->flag & FLAG_DELETE) == 0) {
 						float similarity = w / (query_norm * rec->norm);
 						if (n > (int)topn.size()) {

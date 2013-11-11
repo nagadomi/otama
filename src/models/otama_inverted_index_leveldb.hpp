@@ -26,6 +26,9 @@
 #include "otama_inverted_index.hpp"
 #include "otama_inverted_index_kvs.hpp"
 #include "otama_leveldb.hpp"
+#include "leveldb/db.h"
+#include "leveldb/write_batch.h"
+
 #include <string>
 #include <queue>
 #include <algorithm>
@@ -60,6 +63,7 @@ namespace otama
 			}
 			return m_data_dir + '/' + m_prefix + "_inverted_index.ldb";
 		}
+
 		
 	public:
 		InvertedIndexLevelDB(otama_variant_t *options)

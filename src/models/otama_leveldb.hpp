@@ -41,6 +41,7 @@ namespace otama
 		leveldb::ReadOptions m_ropt;
 		leveldb::ReadOptions m_ropt_tmp;
 		leveldb::WriteOptions m_wopt;
+		leveldb::WriteOptions m_wopt_sync;
 		std::string m_last_error;
 		std::string m_path;
 		
@@ -59,9 +60,16 @@ namespace otama
 			m_db = NULL;
 			m_path = "./leveldb";
 			m_ropt_tmp.fill_cache = false;
+			m_wopt_sync.sync = false;
 			m_opt.write_buffer_size = 256 * 1048576;
 			m_opt.create_if_missing = true;
 			m_opt.block_cache = NULL;
+		}
+
+		leveldb::DB *
+		raw_db(void)
+		{
+			return m_db;
 		}
 		
 		bool is_active(void)
@@ -112,6 +120,7 @@ namespace otama
 		bool
 		sync(void)
 		{
+			// not implemented..
 			return true;
 		}
 		
@@ -187,6 +196,7 @@ namespace otama
 			
 			return value;
 		}
+		
 		inline bool
 		set(const void *key, size_t key_len,
 			const void *value, size_t value_len)
@@ -194,6 +204,21 @@ namespace otama
 			assert(m_db != NULL);
 			leveldb::Status ret;
 			ret = m_db->Put(m_wopt,
+							leveldb::Slice((const char *)key, key_len),
+							leveldb::Slice((const char *)value, value_len));
+			if (!ret.ok()) {
+				set_error(ret.ToString());
+			}
+			return ret.ok();
+		}
+		
+		inline bool
+		set_sync(const void *key, size_t key_len,
+				 const void *value, size_t value_len)
+		{
+			assert(m_db != NULL);
+			leveldb::Status ret;
+			ret = m_db->Put(m_wopt_sync,
 							leveldb::Slice((const char *)key, key_len),
 							leveldb::Slice((const char *)value, value_len));
 			if (!ret.ok()) {

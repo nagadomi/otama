@@ -189,6 +189,18 @@ namespace otama
 		}
 		
 		inline bool
+		set_sync(const void *key, size_t key_len,
+				 const void *value, size_t value_len)
+		{
+			assert(m_db != NULL);
+			bool ret;
+			ret = m_db->set((const char *)key, key_len,
+							(const char *)value, value_len);
+			m_db->synchronize();
+			return ret;
+		}
+		
+		inline bool
 		add(const KEY_TYPE *key, const VALUE_TYPE *value)
 		{
 			assert(m_db != NULL);			
