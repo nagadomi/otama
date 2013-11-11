@@ -59,7 +59,7 @@ main(int argc, char **argv)
 		case 'c':
 			config = otama_yaml_read_file(nv_getopt_optarg, pool);
 			if (config == NULL) {
-				fprintf(stderr, "otama_search: otama_yaml_read_file failed: %s: parse error or empty.", nv_getopt_optarg);
+				fprintf(stderr, "otama_search: otama_yaml_read_file failed: %s: parse error or empty.\n", nv_getopt_optarg);
 				otama_variant_pool_free(&pool);				
 				return -1;
 			}

@@ -56,7 +56,7 @@ main(int argc, char **argv)
 		case 'c':
 			config = otama_yaml_read_file(nv_getopt_optarg, pool);
 			if (config == NULL) {
-				OTAMA_LOG_ERROR("%s: parse error or empty.", nv_getopt_optarg);
+				fprintf(stderr, "otama_create_database: otama_yaml_read_file failed: %s: parse error or empty.\n", nv_getopt_optarg);
 				otama_variant_pool_free(&pool);				
 				return -1;
 			}
@@ -77,14 +77,14 @@ main(int argc, char **argv)
 	}
 	ret = otama_open_opt(&otama, config);	
 	if (ret != OTAMA_STATUS_OK) {
-		printf("otama_create_database: open: %s\n", otama_status_message(ret));
+		fprintf(stderr, "otama_create_database: open: %s\n", otama_status_message(ret));
 		otama_variant_pool_free(&pool);
 		return -1;
 	}
 	
 	ret = otama_create_database(otama);
 	if (ret != OTAMA_STATUS_OK) {
-		printf("otama_create_database: create_database: %s\n", otama_status_message(ret));
+		fprintf(stderr, "otama_create_database: create_database: %s\n", otama_status_message(ret));
 		otama_close(&otama);
 		otama_variant_pool_free(&pool);
 		return -1;

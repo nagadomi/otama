@@ -69,7 +69,8 @@ import_multi_client(const char *filename, otama_variant_t *config)
 	otama_import_format_e format = OTAMA_IMPORT_FORMAT_NORMAL;
 	
 	if (fp == NULL) {
-		OTAMA_LOG_ERROR("open failed: %s", filename);
+		fprintf(stderr, "otama_import: fopen failed: %s\n",
+				filename);
 		return -1;
 	}
 	
@@ -88,7 +89,7 @@ import_multi_client(const char *filename, otama_variant_t *config)
 		otama_status_t ret;
 		ret = otama_open_opt(&otama[i], config);
 		if (ret != OTAMA_STATUS_OK) {
-			OTAMA_LOG_ERROR("otama_open failed: %s", otama_status_message(ret));
+			fprintf(stderr, "otama_import: otama_open_opt failed\n");
 			return -1;
 		}
 	}
@@ -111,7 +112,8 @@ import_multi_client(const char *filename, otama_variant_t *config)
 		}
 		ret = otama_insert_file(otama[thread_id], &id, import_file);
 		if (ret != OTAMA_STATUS_OK) {
-			OTAMA_LOG_ERROR("%s: %s", import_file, otama_status_message(ret));
+			fprintf(stderr, "otama_import: otama_insert_file failed: %s\n",
+					import_file);
 		} else {
 			otama_id_bin2hexstr(hex, &id);
 #ifdef _OPENMP
@@ -146,12 +148,13 @@ import_parallel(const char *filename, otama_variant_t *config)
 	
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
-		OTAMA_LOG_ERROR("%s: %s\n", filename, strerror(errno));
+		fprintf(stderr, "otama_import: fopen failed: %s\n",
+				filename);
 		return -1;
 	}
 	ret = otama_open_opt(&otama, config);
 	if (ret != OTAMA_STATUS_OK) {
-		OTAMA_LOG_ERROR("otama_open: %s\n", otama_status_message(ret));
+		fprintf(stderr, "otama_import: otama_open_opt failed\n");
 		return -1;
 	}
 	
@@ -183,7 +186,8 @@ import_parallel(const char *filename, otama_variant_t *config)
 		}
 		ret = otama_insert_file(otama, &id, import_file);
 		if (ret != OTAMA_STATUS_OK) {
-			OTAMA_LOG_ERROR("%s: %s", import_file, otama_status_message(ret));
+			fprintf(stderr, "otama_import: otama_insert_file failed: %s\n",
+					import_file);
 		} else {
 			otama_id_bin2hexstr(hex, &id);
 #ifdef _OPENMP
@@ -246,7 +250,7 @@ main(int argc, char **argv)
 		case 'c':
 			config = otama_yaml_read_file(nv_getopt_optarg, pool);
 			if (config == NULL) {
-				OTAMA_LOG_ERROR("%s: parse error or empty.", nv_getopt_optarg);
+				fprintf(stderr, "otama_search: otama_yaml_read_file failed: %s: parse error or empty.\n", nv_getopt_optarg);
 				return -1;
 			}
 			break;
