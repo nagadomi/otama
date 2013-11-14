@@ -23,6 +23,7 @@
 #if OTAMA_POSIX
 #include <errno.h>
 #include <libgen.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #elif OTAMA_WINDOWS
