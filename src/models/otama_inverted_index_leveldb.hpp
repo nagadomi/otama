@@ -67,7 +67,11 @@ namespace otama
 		
 	public:
 		InvertedIndexLevelDB(otama_variant_t *options)
-		: InvertedIndexKVS(options)
+		: InvertedIndexKVS<
+		LevelDB<int64_t, InvertedIndex::metadata_record_t>,
+		LevelDB<int64_t, otama_id_t>,
+		LevelDB<uint32_t, uint8_t>
+		>(options)
 		{}
 
 	};

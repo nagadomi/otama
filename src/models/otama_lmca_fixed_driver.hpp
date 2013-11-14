@@ -51,13 +51,13 @@ namespace otama
 		virtual FT *
 		feature_new(void)
 		{
-			FT *p;
-			int ret = nv_aligned_malloc((void **)&p, 32, sizeof(FT));
+			void *p;
+			int ret = nv_aligned_malloc(&p, 32, sizeof(FT));
 			if (ret) {
 				return NULL;
 			}
 			
-			return p;
+			return (FT *)p;
 		}
 		
 		virtual void
