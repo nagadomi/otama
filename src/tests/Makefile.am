@@ -14,7 +14,6 @@ otama_test_CFLAGS = -I$(srcdir)/../models -I$(srcdir)/../lib -I$(srcdir)/../nvco
 -DNV_BOVW_PKGDATADIR=\"$(builddir)/../nvbovw\"
 
 otama_test_CXXFLAGS = $(otama_test_CFLAGS)
-otama_test_CPPFLAGS = $(otama_test_CFLAGS)
 otama_test_LDADD = $(builddir)/../libotama.la
 
 

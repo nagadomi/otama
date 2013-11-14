@@ -7,7 +7,6 @@ lib_LTLIBRARIES = libotama.la
 libotama_la_LIBADD = $(builddir)/nvcolorex/libnvcolorex.la $(builddir)/nvbovw/libnvbovw.la $(builddir)/nvvlad/libnvvlad.la $(builddir)/nvlmcaex/libnvlmcaex.la
 libotama_la_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvlmcaex -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
 libotama_la_CXXFLAGS = $(libotama_la_CFLAGS)
-libotama_la_CPPFLAGS = $(libotama_la_CFLAGS)
 libotama_la_LDFLAGS = -no-undefined -rpath "$(libdir)" -version-number @OTAMA_MAJOR@:@OTAMA_MINOR@:0
 
 libotama_la_SOURCES = \
@@ -99,49 +98,42 @@ bin_SCRIPTS = util/otama_lmca_train
 
 otama_pull_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvlmcaex -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
 otama_pull_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_pull_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_pull_LDFLAGS = 
 otama_pull_SOURCES = util/otama_pull.c
 otama_pull_LDADD = $(builddir)/libotama.la
 
 otama_import_CFLAGS = $(otama_pull_CFLAGS)
 otama_import_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_import_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_import_LDFLAGS = 
 otama_import_SOURCES = util/otama_import.cpp
 otama_import_LDADD = $(builddir)/libotama.la
 
 otama_create_database_CFLAGS = $(otama_pull_CFLAGS)
 otama_create_database_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_create_database_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_create_database_LDFLAGS = 
 otama_create_database_SOURCES = util/otama_create_database.c
 otama_create_database_LDADD = $(builddir)/libotama.la
 
 otama_drop_database_CFLAGS = $(otama_pull_CFLAGS)
 otama_drop_database_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_drop_database_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_drop_database_LDFLAGS = 
 otama_drop_database_SOURCES = util/otama_drop_database.c
 otama_drop_database_LDADD = $(builddir)/libotama.la
 
 otama_drop_index_CFLAGS = $(otama_pull_CFLAGS)
 otama_drop_index_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_drop_index_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_drop_index_LDFLAGS = 
 otama_drop_index_SOURCES = util/otama_drop_index.c
 otama_drop_index_LDADD = $(builddir)/libotama.la
 
 otama_search_CFLAGS = $(otama_pull_CFLAGS)
 otama_search_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_search_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_search_LDFLAGS = 
 otama_search_SOURCES = util/otama_search.c
 otama_search_LDADD = $(builddir)/libotama.la
 
 otama_vacuum_index_CFLAGS = $(otama_pull_CFLAGS)
 otama_vacuum_index_CXXFLAGS = $(otama_pull_CFLAGS)
-otama_vacuum_index_CPPFLAGS = $(otama_pull_CFLAGS)
 otama_vacuum_index_LDFLAGS = 
 otama_vacuum_index_SOURCES = util/otama_vacuum_index.c
 otama_vacuum_index_LDADD = $(builddir)/libotama.la
