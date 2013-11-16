@@ -141,7 +141,6 @@ test_hash(void)
 	otama_variant_t *hash = otama_variant_new(pool);
 	int i;
 	otama_variant_t *var, *keys;
-	int64_t count;
 	
 	otama_variant_set_hash(hash);
 	var = otama_variant_hash_at(hash, "hoge");
