@@ -144,7 +144,7 @@ namespace otama
 			otama_dbi_result_free(&res);
 			OTAMA_LOG_DEBUG("-- read: %dms\n", nv_clock() - t);
 			t = nv_clock();
-			records.resize(ntuples);
+			records.resize((unsigned int)ntuples);
 			
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 4)

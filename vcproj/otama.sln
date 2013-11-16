@@ -28,6 +28,21 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_test", "otama_test.vc
 		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_vacuum_index", "otama_vacuum_index.vcproj", "{1553B031-FEA9-4C25-9A42-DB31DD3EAE4E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_drop_index", "otama_drop_index.vcproj", "{5B2A608B-1B8F-428F-9466-6568595E85CD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_search", "otama_search.vcproj", "{C347D629-ADFF-475D-A8E3-6B1500A8E8C8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -58,6 +73,18 @@ Global
 		{A4A27F3C-9B8B-4488-9B68-23A066DB8663}.Debug|Win32.Build.0 = Debug|Win32
 		{A4A27F3C-9B8B-4488-9B68-23A066DB8663}.Release|Win32.ActiveCfg = Release|Win32
 		{A4A27F3C-9B8B-4488-9B68-23A066DB8663}.Release|Win32.Build.0 = Release|Win32
+		{1553B031-FEA9-4C25-9A42-DB31DD3EAE4E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1553B031-FEA9-4C25-9A42-DB31DD3EAE4E}.Debug|Win32.Build.0 = Debug|Win32
+		{1553B031-FEA9-4C25-9A42-DB31DD3EAE4E}.Release|Win32.ActiveCfg = Release|Win32
+		{1553B031-FEA9-4C25-9A42-DB31DD3EAE4E}.Release|Win32.Build.0 = Release|Win32
+		{5B2A608B-1B8F-428F-9466-6568595E85CD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5B2A608B-1B8F-428F-9466-6568595E85CD}.Debug|Win32.Build.0 = Debug|Win32
+		{5B2A608B-1B8F-428F-9466-6568595E85CD}.Release|Win32.ActiveCfg = Release|Win32
+		{5B2A608B-1B8F-428F-9466-6568595E85CD}.Release|Win32.Build.0 = Release|Win32
+		{C347D629-ADFF-475D-A8E3-6B1500A8E8C8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C347D629-ADFF-475D-A8E3-6B1500A8E8C8}.Debug|Win32.Build.0 = Debug|Win32
+		{C347D629-ADFF-475D-A8E3-6B1500A8E8C8}.Release|Win32.ActiveCfg = Release|Win32
+		{C347D629-ADFF-475D-A8E3-6B1500A8E8C8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

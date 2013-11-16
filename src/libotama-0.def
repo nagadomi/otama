@@ -3,7 +3,6 @@ EXPORTS
 otama_active
 otama_close
 otama_count
-otama_create_table
 otama_cuda_enabled
 otama_cuda_set
 otama_dbi_active
@@ -39,7 +38,6 @@ otama_dbi_rollback
 otama_dbi_sqlite3_open
 otama_dbi_table_exist
 otama_dbi_time_string
-otama_drop_table
 otama_exists
 otama_feature_raw
 otama_feature_raw_file
@@ -146,3 +144,8 @@ otama_variant_type
 otama_version_string
 otama_writeable_directory
 otama_yaml_read_file
+otama_create_database
+otama_drop_database
+otama_drop_index
+otama_vacuum_index
+otama_invoke
