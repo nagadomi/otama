@@ -1,5 +1,4 @@
 EXTRA_DIST = config
-TESTS = otama_test
 
 check_PROGRAMS = otama_test
 otama_test_CFLAGS = -I$(srcdir)/../models -I$(srcdir)/../lib -I$(srcdir)/../nvcolorex -I$(srcdir)/../nvbovw -I$(srcdir)/../nvvlad  \
@@ -41,6 +40,7 @@ check-local:
 	$(MKDIR_P) ./data
 	$(MKDIR_P) ./data/node1
 	$(MKDIR_P) ./data/node2
+	$(builddir)/otama_test$(EXEEXT)
 
 all-local:
 	$(MKDIR_P) ./data
