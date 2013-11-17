@@ -84,11 +84,19 @@ AX_ARG_ENABLE(debug,
 	[CFLAGS="$CFLAGS -g "],
         [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -DNDEBUG "])
 
+otama_native=0
 AX_ARG_ENABLE(native,
         AS_HELP_STRING([--disable-native],[disable -march=native]), [yes],
-        [CFLAGS=" $CFLAGS -march=native "],
+        [otama_native=1
+	CFLAGS=" $CFLAGS -march=native "],
         [])
-        
+
+otama_sse2=0	
+AX_ARG_ENABLE(sse2,
+        AS_HELP_STRING([--disable-sse2],[disable -msse2]), [yes],
+        [otama_sse2=1],
+        [])
+
 otama_kc=0        
 AC_LANG_PUSH([C++])
 AX_ARG_ENABLE(kyotocabinet,
@@ -225,10 +233,23 @@ case $host in
     ;;
 esac
 
+case $host in
+  i?86-*)
+    if test $otama_sse2 = 1 -a $otama_native != 1; then
+      echo "Note: set -msse2 flag. (--enable-sse2)"
+      CFLAGS=" $CFLAGS -msse -msse2 "
+    fi
+    ;;
+  *)
+    ;;
+esac
+
 CXXFLAGS=$CFLAGS
 
 AM_CONDITIONAL([BUILDING_DEB], [$TEST $otama_deb = 1])
 AC_SUBST(DPKG_FLAGS)
+AC_SUBST(otama_native)
+AC_SUBST(otama_sse2)
 AC_SUBST(otama_kc)
 AC_SUBST(otama_leveldb)
 AC_SUBST(otama_lzo)
