@@ -3,9 +3,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(otama, 0.6.0, nagadomi@nurs.or.jp)
+AC_INIT(otama, 0.7.0, nagadomi@nurs.or.jp)
 OTAMA_MAJOR=0
-OTAMA_MINOR=6
+OTAMA_MINOR=7
+OTAMA_REVISION=0
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADER([src/config.h:src/config.h.in])
@@ -41,15 +42,9 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_MKDIR_P
 #AC_OPENMP
+AC_CHECK_PROG(RUBY, [ruby], [ruby], [no])
 
-AC_PATH_PROG([DEBUILD], [debuild], [notfound])
-AC_PATH_PROG([TEST], [test], [notfound])
-AC_PATH_PROG([ECHO], [echo], [notfound])
-AC_PATH_PROG([CP], [cp], [notfound])
-AC_PATH_PROG([MV], [mv], [notfound])
-AC_PATH_PROG([TAR], [tar], [notfound])
-
-AC_CHECK_PROG(GZIP,gzip,gzip,no)
+AC_CHECK_PROG(GZIP, [gzip], [gzip], [no])
 if test "$GZIP" = no ; then
    AC_MSG_ERROR(*** gzip command not found. please install gzip command.)]
 fi
@@ -61,22 +56,6 @@ LT_INIT([win32-dll])
 
 AC_CHECK_LIB(m, main)
 AC_CHECK_LIB(stdc++, main)
-
-otama_deb=0
-otama_debsign=0
-DPKG_FLAGS=""
-AX_ARG_ENABLE(deb,
-        AC_HELP_STRING([--enable-deb], [build debian package. ]), [no],
-	[otama_deb=1],
-        [])
-AX_ARG_ENABLE(debsrc,
-        AC_HELP_STRING([--enable-debsrc], [build debian source package. ]), [no],
-	[otama_deb=1;DPKG_FLAGS=" $DPKG_FLAGS -S -sa "],
-        [])
-AX_ARG_ENABLE(sign,
-        AC_HELP_STRING([--enable-sign], [build signed debian package. ]), [no],
-	[otama_deb=1],
-        [DPKG_FLAGS=" $DPKG_FLAGS -uc -us "])
 
 AX_ARG_ENABLE(debug,
         AS_HELP_STRING([--enable-debug], [enable assert and -g ]), [no],
@@ -128,16 +107,6 @@ AC_CHECK_HEADER(tr1/unordered_map,[otama_unordered_map_tr1=1],[])
 AC_CHECK_HEADER(unordered_map,[otama_unordered_map=1],[])
 
 AC_LANG_POP([C++])
-
-otama_lzo=0
-AX_ARG_ENABLE(lzo,
-        AS_HELP_STRING([--enable-lzo], [enable lzo compress.]), [no],
-	[AC_CHECK_HEADERS([lzo/lzo1x.h],
-		[otama_lzo=1
-        AC_CHECK_LIB(lzo2, main)
-		],
-		[AC_MSG_ERROR(*** liblzo2 not found. please install liblzo2-dev.)])],
-        [])
 
 AX_ARG_ENABLE(popcnt,
         AS_HELP_STRING([--enable-popcnt], [enable popcnt]), [no],
@@ -200,6 +169,22 @@ AC_ARG_WITH(pkgconfigdir,
 	[pkgconfigdir='${libdir}/pkgconfig'])
 AC_MSG_NOTICE([pkgconfig directory is ${pkgconfigdir}])	
 
+AC_ARG_WITH(ruby,
+	AS_HELP_STRING([--with-ruby],
+	[use the specified ruby command (default is ruby)]),
+	[RUBY=${withval}],
+	[])
+
+if test "$RUBY" = no ; then
+   AC_MSG_WARN(*** ruby command not found. ruby extension does not compile.)
+else
+   if $RUBY -rmkmf -e ""; then
+      AC_MSG_NOTICE(ruby is ${RUBY})
+   else
+      AC_MSG_ERROR(*** $RUBY -rmkmf failed. please install ruby-dev or use --without-ruby option.)
+   fi
+fi
+
 AC_C_CONST
 AC_TYPE_INT64_T
 AC_HEADER_STDBOOL
@@ -246,13 +231,12 @@ esac
 
 CXXFLAGS=$CFLAGS
 
-AM_CONDITIONAL([BUILDING_DEB], [$TEST $otama_deb = 1])
-AC_SUBST(DPKG_FLAGS)
+AM_CONDITIONAL([BUILDING_RUBY], [test $RUBY != "no"])
+AC_SUBST(RUBY)
 AC_SUBST(otama_native)
 AC_SUBST(otama_sse2)
 AC_SUBST(otama_kc)
 AC_SUBST(otama_leveldb)
-AC_SUBST(otama_lzo)
 AC_SUBST(otama_sqlite3)
 AC_SUBST(otama_pgsql)
 AC_SUBST(otama_mysql)
@@ -260,6 +244,7 @@ AC_SUBST(otama_unordered_map_tr1)
 AC_SUBST(otama_unordered_map)
 AC_SUBST(OTAMA_MAJOR)
 AC_SUBST(OTAMA_MINOR)
+AC_SUBST(OTAMA_REVISION)
 AC_SUBST(pkgconfigdir)
 
 AC_CONFIG_FILES([

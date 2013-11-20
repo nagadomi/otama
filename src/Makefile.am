@@ -7,7 +7,7 @@ lib_LTLIBRARIES = libotama.la
 libotama_la_LIBADD = $(builddir)/nvcolorex/libnvcolorex.la $(builddir)/nvbovw/libnvbovw.la $(builddir)/nvvlad/libnvvlad.la $(builddir)/nvlmcaex/libnvlmcaex.la
 libotama_la_CFLAGS = -I$(srcdir)/models -I$(srcdir)/lib -I$(srcdir)/nvcolorex -I$(srcdir)/nvbovw -I$(srcdir)/nvlmcaex -I$(srcdir)/nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"
 libotama_la_CXXFLAGS = $(libotama_la_CFLAGS)
-libotama_la_LDFLAGS = -no-undefined -rpath "$(libdir)" -version-number @OTAMA_MAJOR@:@OTAMA_MINOR@:0
+libotama_la_LDFLAGS = -no-undefined -rpath "$(libdir)" -version-number @OTAMA_MAJOR@:@OTAMA_MINOR@:@OTAMA_REVISION@
 
 libotama_la_SOURCES = \
 lib/otama_internal.h \

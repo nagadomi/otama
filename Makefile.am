@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = autogen.sh COPYING docs .gitignore README.md \
+EXTRA_DIST = autogen.sh COPYING README.md \
 ruby/bovw2k.yaml \
 ruby/bovw8k.yaml \
 ruby/bovw512k.yaml \
@@ -13,53 +13,36 @@ ruby/test.sh
 
 SUBDIRS    = src src/tests vcproj examples image
 
-bovw-benchmark:
-	cd src; ./nvbovw/nv_bovw_benchmark; cd ..;
+bovw-benchmark: all
+	cd src && ./nvbovw/nv_bovw_benchmark
 
-pqh-benchmark:
-	cd src; ./nvpqh/nv_pqh_benchmark; cd ..;
+vlad-benchmark: all
+	cd src && ./nvvlad/nv_vlad_benchmark
 
-vlad-benchmark:
-	cd src; ./nvvlad/nv_vlad_benchmark; cd ..;
+otama_test: all
+	cd src/tests && $(MAKE) $(AM_MAKEFLAGS) otama_test
 
-ruby-ext:
-	cd ruby; ruby exconf.rb; make; cd ..;
+valgrind: otama_test
+	cd src/tests && \
+	LD_LIBRARY_PATH=../.libs valgrind -v --tool=memcheck --leak-check=full --show-reachable=yes --log-file=./valgrind.log ./.libs/otama_test; \
+	cat ./valgrind.log
 
-test-ruby:
-	cd ruby; ./test.sh ; cd ..
+if BUILDING_RUBY
+all-local: 
+	cd ruby; \
+	if test ! -e otama.$(OBJEXT); then \
+		$(RUBY) extconf.rb --with-otama-include=$(abs_top_srcdir)/src/lib --with-otama-lib=$(abs_top_srcdir)/src/.libs && $(MAKE) all; \
+	fi
 
-otama_test:
-	cd src/tests; make otama_test
+check-local:
+	cd ruby; \
+	LD_LIBRARY_PATH=$(abs_top_srcdir)/src/.libs ./test.sh $(RUBY)
 
-valgrind: all otama_test
-	cd src/tests; LD_LIBRARY_PATH=../.libs valgrind -v --tool=memcheck --leak-check=full --show-reachable=yes --log-file=./valgrind.log ./.libs/otama_test; cat ./valgrind.log; cd -
+install-exec-hook:
+	cd ruby; \
+	$(MAKE) install
 
-if BUILDING_DEB
-DEBSOURCEPKG=$(PACKAGE)_$(VERSION).orig.tar.gz
-DEBSOURCEDIR=$(PACKAGE)-$(VERSION)
-DEBIANDIR=packages/debian
-deb: dist
-	@$(ECHO) "Building Debian package..."; \
-	if $(TEST) ! -d $(DEBIANDIR); then \
-		$(ECHO) "The files needed for building a Debian package are not" \
-		"included by default in the distribution. To build a package, check" \
-		"out the project from source control."; \
-		exit 1; \
-	fi; \
-	$(MV) $(PACKAGE)-$(VERSION).tar.gz $(DEBSOURCEPKG) && \
-	$(TAR) --extract --gunzip --file $(DEBSOURCEPKG) && \
-	$(MKDIR_P) $(DEBSOURCEDIR)/debian && \
-	$(CP) -r $(DEBIANDIR)/ $(DEBSOURCEDIR) && \
-	cd $(DEBSOURCEDIR) && \
-	$(DEBUILD) $(DPKG_FLAGS); \
-	cd ..;
-else
-deb:
-	@$(ECHO) \
-	"To build a Debian package, you must run configure with --enable-deb."; \
-	exit 1
-endif
 clean-local:
-	-rm -rf $(DEBSOURCEDIR)
-
-CLEANFILES = *.deb *.debian.tar.gz *.dsc *.changes *.build *.upload $(DEBSOURCEPKG)
+	cd ruby; \
+	$(MAKE) clean
+endif
