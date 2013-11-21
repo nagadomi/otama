@@ -52,7 +52,6 @@ otama_id_bin2hexstr
 otama_id_data
 otama_id_file
 otama_id_hexstr2bin
-otama_id_s
 otama_image_crop
 otama_image_data
 otama_image_free

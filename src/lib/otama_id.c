@@ -23,14 +23,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-const char *
-otama_id_s(const otama_id_t *id)
-{
-	static char hex[OTAMA_ID_HEXSTR_LEN];
-	otama_id_bin2hexstr(hex, id);
-	return hex;
-}
-
 otama_status_t
 otama_id_file(otama_id_t *id,
 			  const char *image_filename)

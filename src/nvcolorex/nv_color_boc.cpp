@@ -172,8 +172,8 @@ nv_color_boc(nv_color_boc_t *boc,
 	nv_free(vq);
 }
 
-static int nv_color_sboc_norm_e[4] = { 9 * 4, 13 * 4, 15 * 4, 16 * 4};
-static float nv_color_sboc_w[4] = { 0.4f, 0.25f, 0.15f, 0.2f };
+static const int nv_color_sboc_norm_e[4] = { 9 * 4, 13 * 4, 15 * 4, 16 * 4};
+static const float nv_color_sboc_w[4] = { 0.4f, 0.25f, 0.15f, 0.2f };
 #define NV_COLOR_SBOC_LEVEL (int)(sizeof(nv_color_sboc_norm_e) / sizeof(int))
 
 static inline float

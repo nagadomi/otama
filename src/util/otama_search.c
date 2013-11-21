@@ -111,12 +111,14 @@ main(int argc, char **argv)
 	}
 	puts("[");
 	for (i = 0; i < otama_result_count(results); ++i) {
+		char hex[OTAMA_ID_HEXSTR_LEN];
 		const otama_id_t *id = otama_result_id(results, i);
 		otama_variant_t *value = otama_result_value(results, i);
 		if (i != 0) {
 			puts(",");
 		}
-		printf("\t{ \"id\": \"%s\", \"value\": %s }", otama_id_s(id), otama_variant_to_string(value));
+		otama_id_bin2hexstr(hex, id);
+		printf("\t{ \"id\": \"%s\", \"value\": %s }", hex, otama_variant_to_string(value));
 	}
 	puts("\n]");
 	otama_result_free(&results);

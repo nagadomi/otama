@@ -379,7 +379,7 @@ namespace otama
 		virtual otama_status_t
 		create_database(void)
 		{
-			static otama_dbi_column_t column_def[] = {
+			static const otama_dbi_column_t column_def[] = {
 				{ "id", OTAMA_DBI_COLUMN_INT64_PKEY_AUTO, 0, 0, 0, NULL },
 				{ "otama_id", OTAMA_DBI_COLUMN_CHAR, 40, 0, 0, NULL },
 				{ "vector", OTAMA_DBI_COLUMN_TEXT, 0, 0, 1, NULL },

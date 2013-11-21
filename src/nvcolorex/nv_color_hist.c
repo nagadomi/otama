@@ -80,7 +80,7 @@ nv_color_shist(nv_matrix_t *hist, int hist_j, const nv_matrix_t *image)
 		16 * (NV_COLOR_HIST_COLOR)
 	};
 	static const float nv_color_sboc_w[4] = { 0.4f, 0.25f, 0.15f, 0.2f };
-	static int sboc_level = (int)(sizeof(nv_color_sboc_norm_e) / sizeof(int));
+	static const int sboc_level = (int)(sizeof(nv_color_sboc_norm_e) / sizeof(int));
 	const float step = 2.0f;
 	float cell_width = NV_MAX(((float)image->cols / NV_COLOR_HIST_IMG_SIZE * step), 1.0f);
 	float cell_height = NV_MAX(((float)image->rows / NV_COLOR_HIST_IMG_SIZE * step), 1.0f);
