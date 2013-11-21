@@ -96,7 +96,12 @@ otama_test_vlad_main(void)
 	similarity1 = ctx.similarity(vlad, 0, vlad, 3);
 	printf("%E == 1.0f\n", similarity1);
 	NV_ASSERT(OTAMA_TEST_EQ1(similarity1));
-	
+
+	nv_free(s1);
+	nv_free(s2);
+	nv_free(p1);
+	nv_free(p2);
+	nv_free(p3);
 	nv_matrix_free(&vlad);
 }
 
