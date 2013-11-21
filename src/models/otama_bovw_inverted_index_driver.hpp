@@ -182,7 +182,6 @@ namespace otama
 			}
 			OTAMA_LOG_DEBUG("begin idf_print, stopword_th: %d", stopword_th);
 			
-			this->m_inverted_index->begin_reader();
 			count = this->m_inverted_index->count();
 			
 			nv_matrix_zero(freq);
@@ -201,7 +200,6 @@ namespace otama
 			OTAMA_LOG_DEBUG("stop word count %d", stopword_count);
 			
 			nv_matrix_free(&freq);
-			this->m_inverted_index->end();
 		}
 		
 	public:

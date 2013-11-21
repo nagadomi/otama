@@ -35,29 +35,12 @@ namespace otama
 	protected:
 		DB_TYPE *m_db;
 		std::string m_path;
-		uint32_t m_mode;
-		bool m_keep_alive;
-		
-		bool
-		begin(uint32_t mode)
-		{
-			bool ret = true;
-			if (!m_keep_alive) {
-				assert(m_db == NULL);
-				m_db = new DB_TYPE;
-				ret = m_db->open(m_path, mode);
-			} else {
-			}
-			return ret;
-		}
 		
 	public:
 		KyotoCabinet(void)
 		{
 			m_db = NULL;
 			m_path = ":";
-			m_keep_alive = false;
-			m_mode = 0;
 		}
 
 		bool is_active(void)
@@ -76,49 +59,21 @@ namespace otama
 		{
 			return m_path;
 		}
-
-		bool
-		begin_reader(void)
-		{
-			return begin(kyotocabinet::BasicDB::OREADER);
-		}
 		
-		bool
-		begin_writer(void)
-		{
-			return begin(kyotocabinet::BasicDB::OWRITER
-						 | kyotocabinet::BasicDB::OCREATE);
-		}
-
 		bool
 		sync(void)
 		{
 			return m_db->synchronize();
 		}
 		
-		void
-		end(bool sync = false)
-		{
-			if (!m_keep_alive) {
-				assert(m_db != NULL);
-				close();
-			} else {
-				if (sync) {
-					m_db->synchronize();
-				}
-			}
-		}
-		
 		bool
-		keep_alive_open(uint32_t mode = kyotocabinet::BasicDB::OWRITER | kyotocabinet::BasicDB::OCREATE)
+		open()
 		{
 			bool ret = true;
 
-			if (!m_keep_alive) {
-				m_keep_alive = true;
+			if (!m_db) {
 				m_db = new DB_TYPE;
-				ret = m_db->open(m_path, mode);
-				m_mode = mode;
+				ret = m_db->open(m_path, kyotocabinet::BasicDB::OWRITER | kyotocabinet::BasicDB::OCREATE);
 			}
 			return ret;
 		}

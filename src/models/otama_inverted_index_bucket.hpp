@@ -102,11 +102,7 @@ namespace otama
 
 		virtual int64_t hash_count(uint32_t hash);
 		virtual int64_t count(void);
-		virtual otama_status_t begin_writer(void);
-		virtual otama_status_t begin_reader(void);
-		virtual otama_status_t end(void);
 		
-		/* begin_writer required */
 		virtual otama_status_t set(int64_t no, const otama_id_t *id,
 								   const InvertedIndex::sparse_vec_t &hash);
 		virtual otama_status_t set_flag(int64_t no, uint8_t flag);

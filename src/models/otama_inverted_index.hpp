@@ -142,11 +142,7 @@ namespace otama
 		
 		virtual int64_t hash_count(uint32_t hash) = 0;
 		virtual int64_t count(void) = 0;
-		virtual otama_status_t begin_writer(void) = 0;
-		virtual otama_status_t begin_reader(void) = 0;
-		virtual otama_status_t end(void) = 0;
 		
-		/* begin_writer required */
 		virtual otama_status_t set(int64_t no, const otama_id_t *id,
 								   const sparse_vec_t &hash) = 0;
 		virtual otama_status_t

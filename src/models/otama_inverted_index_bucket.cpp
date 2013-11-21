@@ -50,33 +50,6 @@ InvertedIndexBucket::reserve(size_t hash_max)
 }
 
 otama_status_t
-InvertedIndexBucket::begin_writer(void)
-{
-#ifdef _OPENMP
-	omp_set_nest_lock(&m_lock);
-#endif
-	
-	return OTAMA_STATUS_OK;
-}
-
-otama_status_t
-InvertedIndexBucket::begin_reader(void)
-{
-#ifdef _OPENMP
-	omp_set_nest_lock(&m_lock);
-#endif
-	return OTAMA_STATUS_OK;
-}
-
-otama_status_t InvertedIndexBucket::end(void)
-{
-#ifdef _OPENMP
-	omp_unset_nest_lock(&m_lock);
-#endif
-	return OTAMA_STATUS_OK;	
-}
-
-otama_status_t
 InvertedIndexBucket::set_flag(int64_t no, uint8_t flag)
 {
 	otama_status_t ret = OTAMA_STATUS_OK;
@@ -113,12 +86,8 @@ InvertedIndexBucket::vacuum(void)
 otama_status_t
 InvertedIndexBucket::open(void)
 {
-	begin_writer();
-	{
-		m_metadata.clear();
-		m_inverted_index.clear();
-	}
-	end();
+	m_metadata.clear();
+	m_inverted_index.clear();
 	
 	return OTAMA_STATUS_OK;
 }
@@ -126,12 +95,8 @@ InvertedIndexBucket::open(void)
 otama_status_t
 InvertedIndexBucket::close(void)
 {
-	begin_writer();
-	{
-		m_metadata.clear();
-		m_inverted_index.clear();
-	}
-	end();
+	m_metadata.clear();
+	m_inverted_index.clear();
 
 	return OTAMA_STATUS_OK;
 }
@@ -210,15 +175,10 @@ InvertedIndexBucket::search_cosine(
 	int num_threads  = nv_omp_procs();
 	std::vector<std::vector<similarity_temp_t> > hits;
 	size_t c;
-	otama_status_t ret;
 	topn_t topn;
 	
 	if (n < 1) {
 		return OTAMA_STATUS_INVALID_ARGUMENTS;
-	}
-	ret = begin_reader();
-	if (ret != OTAMA_STATUS_OK) {
-		return ret;
 	}
 	hits.resize(num_threads);
 	t = nv_clock();
@@ -330,7 +290,6 @@ InvertedIndexBucket::search_cosine(
 	}
 	otama_result_set_count(*results, result_max);
 	
-	end();
 	OTAMA_LOG_DEBUG("search: ranking: %ldms", nv_clock() - t);	
 
 	return OTAMA_STATUS_OK;

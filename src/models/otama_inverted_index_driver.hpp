@@ -303,31 +303,17 @@ namespace otama
 				return ret;
 			}
 			do {
-				ret = m_inverted_index->begin_writer();
-				if (ret != OTAMA_STATUS_OK) {
-					m_inverted_index->end();
-					return ret;
-				}
 				ret = pull_records(redo, max_id);
 				if (ret != OTAMA_STATUS_OK) {
-					m_inverted_index->end();
 					return ret;
 				}
-				m_inverted_index->end();
 			} while (redo);
 
-			ret = m_inverted_index->begin_writer();
-			if (ret != OTAMA_STATUS_OK) {
-				m_inverted_index->end();
-				return ret;
-			}
 			ret = pull_flags(max_commit_id);
 			if (ret != OTAMA_STATUS_OK) {
-				m_inverted_index->end();
 				return ret;
 			}
 			m_inverted_index->update_count();
-			m_inverted_index->end();
 			
 			return ret;
 		}

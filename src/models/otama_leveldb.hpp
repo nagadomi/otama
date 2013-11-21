@@ -32,16 +32,14 @@
 
 namespace otama
 {
-	template<class KEY_TYPE, class VALUE_TYPE>
+	template<class KEY_TYPE, class VALUE_TYPE,
+			 size_t READ_CACHE_SIZE,
+			 size_t WRITE_CACHE_SIZE>
 	class LevelDB
 	{
 	protected:
 		leveldb::DB *m_db;
 		leveldb::Options m_opt;
-		leveldb::ReadOptions m_ropt;
-		leveldb::ReadOptions m_ropt_tmp;
-		leveldb::WriteOptions m_wopt;
-		leveldb::WriteOptions m_wopt_sync;
 		std::string m_last_error;
 		std::string m_path;
 		
@@ -51,7 +49,9 @@ namespace otama
 #ifdef _OPENMP
 #pragma omp critical
 #endif
-			m_last_error = error_message;
+			{
+				m_last_error = error_message;
+			}
 		}
 		
 	public:
@@ -59,19 +59,13 @@ namespace otama
 		{
 			m_db = NULL;
 			m_path = "./leveldb";
-			m_ropt_tmp.fill_cache = false;
-			m_wopt_sync.sync = false;
-			m_opt.write_buffer_size = 256 * 1048576;
+			if (WRITE_CACHE_SIZE > 0) {
+				m_opt.write_buffer_size = WRITE_CACHE_SIZE;
+			}
 			m_opt.create_if_missing = true;
 			m_opt.block_cache = NULL;
 		}
 
-		leveldb::DB *
-		raw_db(void)
-		{
-			return m_db;
-		}
-		
 		bool is_active(void)
 		{
 			return m_db != NULL;
@@ -90,18 +84,13 @@ namespace otama
 		}
 		
 		bool
-		keep_alive_open()
-		{
-			return begin_writer();
-		}
-		
-		bool
-		begin_writer(void)
+		open()
 		{
 			if (!m_db) {
 				leveldb::Status ret;
-				
-				m_opt.block_cache = leveldb::NewLRUCache(64 * 1048576);
+				if (READ_CACHE_SIZE > 0) {
+					m_opt.block_cache = leveldb::NewLRUCache(READ_CACHE_SIZE);
+				}
 				ret = leveldb::DB::Open(m_opt, m_path, &m_db);
 				if (!ret.ok()) {
 					set_error(ret.ToString());
@@ -112,21 +101,10 @@ namespace otama
 		}
 		
 		bool
-		begin_reader(void)
-		{
-			return begin_writer();
-		}
-		
-		bool
 		sync(void)
 		{
 			// not implemented..
 			return true;
-		}
-		
-		void
-		end(bool sync = false)
-		{
 		}
 		
 		void
@@ -144,7 +122,7 @@ namespace otama
 				set_error(ret.ToString());
 			}
 			if (reopen) {
-				keep_alive_open();
+				open();
 			}
 		}
 		
@@ -182,7 +160,7 @@ namespace otama
 			leveldb::Status ret;
 			char *value;
 
-			ret = m_db->Get(m_ropt,
+			ret = m_db->Get(leveldb::ReadOptions(),
 							leveldb::Slice((const char *)key,
 										   key_len),
 							&db_value);
@@ -203,7 +181,7 @@ namespace otama
 		{
 			assert(m_db != NULL);
 			leveldb::Status ret;
-			ret = m_db->Put(m_wopt,
+			ret = m_db->Put(leveldb::WriteOptions(),
 							leveldb::Slice((const char *)key, key_len),
 							leveldb::Slice((const char *)value, value_len));
 			if (!ret.ok()) {
@@ -218,7 +196,10 @@ namespace otama
 		{
 			assert(m_db != NULL);
 			leveldb::Status ret;
-			ret = m_db->Put(m_wopt_sync,
+			leveldb::WriteOptions opt;
+			
+			opt.sync = true;
+			ret = m_db->Put(opt,
 							leveldb::Slice((const char *)key, key_len),
 							leveldb::Slice((const char *)value, value_len));
 			if (!ret.ok()) {
@@ -234,15 +215,17 @@ namespace otama
 			std::string db_value;
 			leveldb::Slice db_key((const char *)key, sizeof(KEY_TYPE));
 			leveldb::Status ret;
+			leveldb::ReadOptions opt;
 			
 			assert(m_db != NULL);
-			ret = m_db->Get(m_ropt_tmp, db_key, &db_value);
+			opt.fill_cache = false;
+			ret = m_db->Get(opt, db_key, &db_value);
 			if (!ret.ok() && !ret.IsNotFound()) {
 				set_error(ret.ToString());
 				return false;
 			}
 			db_value.append((const char *)value, sizeof(VALUE_TYPE) * n);
-			ret = m_db->Put(m_wopt, db_key, db_value);
+			ret = m_db->Put(leveldb::WriteOptions(), db_key, db_value);
 			if (!ret.ok()) {
 				set_error(ret.ToString());
 			}
@@ -284,16 +267,23 @@ namespace otama
 		inline VALUE_TYPE *
 		get(const KEY_TYPE *key)
 		{
-			size_t sp = 0;
-			VALUE_TYPE *ret = (VALUE_TYPE*)get(key, sizeof(KEY_TYPE), &sp);
-			if (ret) {
-				if (sp != sizeof(VALUE_TYPE)) {
-					OTAMA_LOG_ERROR("mismatch value size", 0);
-					free_value(ret);
-					return NULL;
-				}
+			assert(m_db != NULL);
+			std::string db_value;
+			leveldb::Status ret;
+			char *value;
+
+			ret = m_db->Get(leveldb::ReadOptions(),
+							leveldb::Slice((const char *)key,
+										   sizeof(KEY_TYPE)),
+							&db_value);
+			if (!ret.ok()) {
+				set_error(ret.ToString());
+				return NULL;
 			}
-			return ret;
+			value = new char[db_value.size()];
+			memcpy(value, db_value.data(), db_value.size());
+			
+			return (VALUE_TYPE *)value;
 		}
 		
 		void free_value_raw(void *p)
@@ -330,7 +320,7 @@ namespace otama
 			int64_t old_count = count();
 			int64_t new_count = 0;
 			
-			leveldb::Iterator *i = m_db->NewIterator(m_ropt);
+			leveldb::Iterator *i = m_db->NewIterator(leveldb::ReadOptions());
 			for (i->SeekToFirst(); i->Valid(); i->Next()) {
 				++new_count;
 			}

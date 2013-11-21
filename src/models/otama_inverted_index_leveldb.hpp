@@ -36,9 +36,9 @@
 namespace otama
 {
 	class InvertedIndexLevelDB: public InvertedIndexKVS<
-		LevelDB<int64_t, InvertedIndex::metadata_record_t>,
-		LevelDB<int64_t, otama_id_t>,
-		LevelDB<uint32_t, uint8_t>
+		LevelDB<int64_t, InvertedIndex::metadata_record_t, 16 * 1048576, 0>,
+		LevelDB<int64_t, otama_id_t, 16 * 1048576, 0>,
+		LevelDB<uint32_t, uint8_t, 0, 64 * 1048576>
 		>
 	{
 	protected:
@@ -68,9 +68,9 @@ namespace otama
 	public:
 		InvertedIndexLevelDB(otama_variant_t *options)
 		: InvertedIndexKVS<
-		LevelDB<int64_t, InvertedIndex::metadata_record_t>,
-		LevelDB<int64_t, otama_id_t>,
-		LevelDB<uint32_t, uint8_t>
+		LevelDB<int64_t, InvertedIndex::metadata_record_t, 16 * 1048576, 0>,
+		LevelDB<int64_t, otama_id_t, 16 * 1048576, 0>,
+		LevelDB<uint32_t, uint8_t, 0, 64 * 1048576>
 		>(options)
 		{}
 

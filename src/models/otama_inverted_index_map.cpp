@@ -45,33 +45,6 @@ InvertedIndexMap::InvertedIndexMap(otama_variant_t *options)
 }
 
 otama_status_t
-InvertedIndexMap::begin_writer(void)
-{
-#ifdef _OPENMP
-	omp_set_nest_lock(&m_lock);
-#endif
-	
-	return OTAMA_STATUS_OK;
-}
-
-otama_status_t
-InvertedIndexMap::begin_reader(void)
-{
-#ifdef _OPENMP
-	omp_set_nest_lock(&m_lock);
-#endif
-	return OTAMA_STATUS_OK;
-}
-
-otama_status_t InvertedIndexMap::end(void)
-{
-#ifdef _OPENMP
-	omp_unset_nest_lock(&m_lock);
-#endif
-	return OTAMA_STATUS_OK;	
-}
-
-otama_status_t
 InvertedIndexMap::set_flag(int64_t no, uint8_t flag)
 {
 	otama_status_t ret = OTAMA_STATUS_OK;
@@ -108,12 +81,8 @@ InvertedIndexMap::vacuum(void)
 otama_status_t
 InvertedIndexMap::open(void)
 {
-	begin_writer();
-	{
-		m_metadata.clear();
-		m_inverted_index.clear();
-	}
-	end();
+	m_metadata.clear();
+	m_inverted_index.clear();
 	
 	return OTAMA_STATUS_OK;
 }
@@ -121,13 +90,9 @@ InvertedIndexMap::open(void)
 otama_status_t
 InvertedIndexMap::close(void)
 {
-	begin_writer();
-	{
-		m_metadata.clear();
-		m_inverted_index.clear();
-	}
-	end();
-
+	m_metadata.clear();
+	m_inverted_index.clear();
+	
 	return OTAMA_STATUS_OK;
 }
 
@@ -203,15 +168,10 @@ InvertedIndexMap::search_cosine(
 	int num_threads  = nv_omp_procs();
 	std::vector<std::vector<similarity_temp_t> > hits;
 	size_t c;
-	otama_status_t ret;
 	topn_t topn;
 	
 	if (n < 1) {
 		return OTAMA_STATUS_INVALID_ARGUMENTS;
-	}
-	ret = begin_reader();
-	if (ret != OTAMA_STATUS_OK) {
-		return ret;
 	}
 	hits.resize(num_threads);
 	
@@ -326,11 +286,8 @@ InvertedIndexMap::search_cosine(
 	}
 	otama_result_set_count(*results, result_max);
 	
-	end();
 	OTAMA_LOG_DEBUG("search: ranking: %ldms", nv_clock() - t);	
 	
-	//delete [] hits;
-
 	return OTAMA_STATUS_OK;
 }
 

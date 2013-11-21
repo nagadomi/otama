@@ -41,14 +41,17 @@ namespace otama
 	class InvertedIndexKVS :public InvertedIndex
 	{
 	private:
+		typedef struct {
+			int64_t no;
+			float w;
+		} hit_tmp_t;
+		
 	protected:
 		static const int COUNT_TOPN_MIN = 128;
 		
 		MT m_metadata;
 		IT m_ids;
 		VT m_inverted_index;
-		bool m_keep_alive;
-		bool m_auto_repair;
 		
 		typedef struct similarity_result {
 			int64_t no;
@@ -258,7 +261,7 @@ namespace otama
 			{
 				return OTAMA_STATUS_SYSERROR;
 			}
-			OTAMA_LOG_DEBUG("begin index write", 0);
+			OTAMA_LOG_DEBUG("begin index writer", 0);
 			
 			for (i = index_buffer.begin(); i != index_buffer.end(); ++i) {
 				uint32_t hash = i->first;
@@ -315,7 +318,7 @@ namespace otama
 			m_ids.sync();
 			m_metadata.sync();
 			
-			OTAMA_LOG_DEBUG("end index write", 0);
+			OTAMA_LOG_DEBUG("end index writer", 0);
 			
 			return ret;
 		}
@@ -345,19 +348,6 @@ namespace otama
 		InvertedIndexKVS(otama_variant_t *options)
 		: InvertedIndex(options)
 		{
-			otama_variant_t *driver, *value;
-			
-			m_keep_alive = true;
-			m_auto_repair = true;
-			
-			driver = otama_variant_hash_at(options, "driver");
-			if (OTAMA_VARIANT_IS_HASH(driver)) {
-				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver,
-																		 "keep_alive")))
-				{
-					m_keep_alive = otama_variant_to_bool(value);
-				}
-			}
 		}
 		
 		virtual otama_status_t
@@ -369,46 +359,29 @@ namespace otama
 			m_inverted_index.path(inverted_index_file_name());
 			m_ids.path(id_file_name());
 
-			if (m_keep_alive) {
-				if (!m_inverted_index.keep_alive_open()) {
-					OTAMA_LOG_ERROR("%s: %s\n", m_inverted_index.path().c_str(),
-									m_inverted_index.error_message().c_str());
-					return OTAMA_STATUS_SYSERROR;
-				}
-				if (!m_metadata.keep_alive_open()) {
-					OTAMA_LOG_ERROR("%s: %s\n", m_metadata.path().c_str(),
-									m_metadata.error_message().c_str());
-					return OTAMA_STATUS_SYSERROR;
-				}
-				if (!m_ids.keep_alive_open()) {
-					OTAMA_LOG_ERROR("%s: %s\n", m_ids.path().c_str(),
-									m_ids.error_message().c_str());
-					return OTAMA_STATUS_SYSERROR;
-				}
-				if (!verify_index()) {
-					OTAMA_LOG_NOTICE("indexes are corrupted. try to clear index..", 0);
-					m_inverted_index.clear();
-					m_metadata.clear();
-					m_ids.clear();
-				}
-				if (!setup()) {
-					ret = OTAMA_STATUS_SYSERROR;
-				}
-			} else {
-				ret = begin_writer();
-				if (ret != OTAMA_STATUS_OK) {
-					return ret;
-				}
-				if (!verify_index()) {
-					OTAMA_LOG_NOTICE("indexes are corrupted. try to clear index..", 0);
-					m_inverted_index.clear();
-					m_metadata.clear();
-					m_ids.clear();
-				}
-				if (!setup()) {
-					ret = OTAMA_STATUS_SYSERROR;
-				}
-				end();
+			if (!m_inverted_index.open()) {
+				OTAMA_LOG_ERROR("%s: %s\n", m_inverted_index.path().c_str(),
+								m_inverted_index.error_message().c_str());
+				return OTAMA_STATUS_SYSERROR;
+			}
+			if (!m_metadata.open()) {
+				OTAMA_LOG_ERROR("%s: %s\n", m_metadata.path().c_str(),
+								m_metadata.error_message().c_str());
+				return OTAMA_STATUS_SYSERROR;
+			}
+			if (!m_ids.open()) {
+				OTAMA_LOG_ERROR("%s: %s\n", m_ids.path().c_str(),
+								m_ids.error_message().c_str());
+				return OTAMA_STATUS_SYSERROR;
+			}
+			if (!verify_index()) {
+				OTAMA_LOG_NOTICE("indexes are corrupted. try to clear index..", 0);
+				m_inverted_index.clear();
+				m_metadata.clear();
+				m_ids.clear();
+			}
+			if (!setup()) {
+				ret = OTAMA_STATUS_SYSERROR;
 			}
 	
 			return ret;
@@ -428,43 +401,25 @@ namespace otama
 		virtual otama_status_t
 		clear(void)
 		{
-			otama_status_t ret;
-			
-			ret = begin_writer();
-			if (ret != OTAMA_STATUS_OK) {
-				return ret;
-			}
 			m_inverted_index.clear();
 			m_metadata.clear();
 			m_ids.clear();
 			
-			end();
-			
-			return ret;
+			return OTAMA_STATUS_OK;
 		}
 
 		virtual otama_status_t
 		vacuum(void)
 		{
-			otama_status_t ret;
-			
-			ret = begin_writer();
-			if (ret != OTAMA_STATUS_OK) {
-				return ret;
-			}
 			if (!m_ids.vacuum()) {
-				end();
 				return OTAMA_STATUS_SYSERROR;
 			}
 			if (!m_metadata.vacuum()) {
-				end();
 				return OTAMA_STATUS_SYSERROR;
 			}
 			if (!m_inverted_index.vacuum()) {
-				end();
 				return OTAMA_STATUS_SYSERROR;
 			}
-			end();
 			
 			return OTAMA_STATUS_OK;
 		}
@@ -478,8 +433,7 @@ namespace otama
 			int num_threads  = nv_omp_procs();
 			std::vector<std::vector<similarity_temp_t> >hits;
 			size_t c;
-			otama_status_t ret;
-			topn_t topn;
+			std::vector<topn_t> topn;
 
 			if (num_threads > 2) {
 				num_threads -= 1; // reservation for other threads
@@ -488,12 +442,9 @@ namespace otama
 			if (n < 1) {
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
-	
-			ret = begin_reader();
-			if (ret != OTAMA_STATUS_OK) {
-				return ret;
-			}
+			topn.resize(num_threads);
 			hits.resize(num_threads);
+			
 			t = nv_clock();
 			c = count();
 			hits[0].reserve(1 + c * 3);
@@ -537,8 +488,10 @@ namespace otama
 				float w = 0.0f;
 				float query_norm = norm(vec);
 				int count = 0;
-		
-				for (typename std::vector<similarity_temp_t>::iterator j = hits[0].begin();
+				std::vector<hit_tmp_t> hit_tmp;
+				bool has_error = false;
+				
+				for (typename std::vector<similarity_temp_t>::const_iterator j = hits[0].begin();
 					 j != hits[0].end(); ++j)
 				{
 					if (j->no == no) {
@@ -546,29 +499,10 @@ namespace otama
 						++count;
 					} else {
 						if (count > m_hit_threshold) {
-							metadata_record_t *rec = m_metadata.get(&no);
-							if (rec == NULL) {
-								OTAMA_LOG_ERROR("indexes are corrupted. try to clear index.. please rebuild index using otama_pull.", 0);
-								end();
-								clear();
-								return OTAMA_STATUS_SYSERROR;
-							}
-							if ((rec->flag & FLAG_DELETE) == 0) {
-								float similarity = w / (query_norm * rec->norm);
-								if (n > (int)topn.size()) {
-									similarity_result_t t;
-									t.no = no;
-									t.similarity = similarity;
-									topn.push(t);
-								} else if (topn.top().similarity < similarity) {
-									similarity_result_t t;
-									t.no = no;
-									t.similarity = similarity;
-									topn.push(t);
-									topn.pop();
-								}
-							}
-							m_metadata.free_value(rec);
+							hit_tmp_t tmp;
+							tmp.no = no;
+							tmp.w = w;
+							hit_tmp.push_back(tmp);
 						}
 						no = j->no;
 						w = j->w;
@@ -576,79 +510,94 @@ namespace otama
 					}
 				}
 				if (count > m_hit_threshold) {
-					metadata_record_t *rec = m_metadata.get(&no);
+					hit_tmp_t tmp;
+					tmp.no = no;
+					tmp.w = w;
+					hit_tmp.push_back(tmp);
+				}
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(num_threads) shared(has_error) schedule(dynamic, 16)
+#endif
+				for (i = 0; i < (int)hit_tmp.size(); ++i) {
+					int thread_id = nv_omp_thread_id();
+					metadata_record_t *rec = m_metadata.get(&hit_tmp[i].no);
 					if (rec == NULL) {
-						OTAMA_LOG_ERROR("indexes are corrupted. try to clear index.. please rebuild index using otama_pull.", 0);
-						end();
-						clear();
-						return OTAMA_STATUS_SYSERROR;
-					}
-					
-					if ((rec->flag & FLAG_DELETE) == 0) {
-						float similarity = w / (query_norm * rec->norm);
-						if (n > (int)topn.size()) {
-							similarity_result_t t;
-							t.no = no;
-							t.similarity = similarity;
-							topn.push(t);
-						} else if (topn.top().similarity < similarity) {
-							similarity_result_t t;
-							t.no = no;
-							t.similarity = similarity;
-							topn.push(t);
-							topn.pop();
+#ifdef _OPENMP
+#pragma omp critical (otama_inverted_index_kvs_search_error)
+#endif
+						{
+							if (!has_error) {
+								OTAMA_LOG_ERROR("indexes are corrupted. try to clear index.. please rebuild index using otama_pull.", 0);
+								clear();
+								has_error = true;
+							}
 						}
+					} else {
+						if ((rec->flag & FLAG_DELETE) == 0) {
+							float similarity = hit_tmp[i].w / (query_norm * rec->norm);
+							if (n > (int)topn[thread_id].size()) {
+								similarity_result_t t;
+								t.no = hit_tmp[i].no;
+								t.similarity = similarity;
+								topn[thread_id].push(t);
+							} else if (topn[thread_id].top().similarity < similarity) {
+								similarity_result_t t;
+								t.no = hit_tmp[i].no;
+								t.similarity = similarity;
+								topn[thread_id].push(t);
+								topn[thread_id].pop();
+							}
+						}
+						m_metadata.free_value(rec);
 					}
-					m_metadata.free_value(rec);
+				}
+				if (has_error) {
+					return OTAMA_STATUS_SYSERROR;
+				}
+				for (i = 1; i < num_threads; ++i) {
+					while (!topn[i].empty()) {
+						topn[0].push(topn[i].top());
+						topn[i].pop();
+					}
+				}
+				while (topn[0].size() > n) {
+					topn[0].pop();
 				}
 			}
 	
 			*results = otama_result_alloc(n);
-			result_max = NV_MIN(n, (int)topn.size());
+			result_max = NV_MIN(n, (int)topn[0].size());
 	
 			for (l = result_max - 1; l >= 0; --l) {
-				const similarity_result_t &p = topn.top();
+				const similarity_result_t &p = topn[0].top();
 				otama_id_t *id = m_ids.get(&p.no);
 		
 				set_result(*results, l, id, p.similarity);
 				m_ids.free_value(id);
-				topn.pop();
+				topn[0].pop();
 			}
 			otama_result_set_count(*results, result_max);
-	
-			end();
-	
+			
 			OTAMA_LOG_DEBUG("search: ranking: %ldms", nv_clock() - t);
-
+			
 			return OTAMA_STATUS_OK;
 		}
 		
-		virtual int64_t count(void)
+		virtual int64_t
+		count(void)
 		{
 			int64_t count;
-			bool b = false;
 	
-			if (!m_ids.is_active()) {
-				b = true;
-				if (!m_ids.begin_reader()) {
-					OTAMA_LOG_ERROR("%s: %s\n", m_ids.path().c_str(),
-									m_ids.error_message().c_str());
-					m_ids.end();
-					return -1;
-				}
-			}
 			count = m_ids.count();
-			if (b) {
-				m_ids.end();
-			}
-	
 			if (count < 0) {
 				count = 0;
 			}
 	
 			return count;
 		}
-		virtual bool sync(void)
+		
+		virtual bool
+		sync(void)
 		{
 			if (m_metadata.is_active()) {
 				m_metadata.sync();
@@ -661,117 +610,32 @@ namespace otama
 			}
 			return true;
 		}
-		virtual bool update_count(void)
+		
+		virtual bool
+		update_count(void)
 		{
-			bool b = false;
 			bool ret;
 			
-			if (!m_ids.is_active()) {
-				b = true;
-				if (!m_ids.begin_writer()) {
-					OTAMA_LOG_ERROR("%s: %s\n", m_ids.path().c_str(),
-									m_ids.error_message().c_str());
-					m_ids.end();
-					return 0;
-				}
-			}
 			ret = m_ids.update_count();
 			if (!ret) {
 				OTAMA_LOG_ERROR("%s: %s\n", m_ids.path().c_str(),
 								m_ids.error_message().c_str());
-				m_ids.end();
 				return 0;
-			}
-			if (b) {
-				m_ids.end();
 			}
 			return true;
 		}
-		virtual int64_t hash_count(uint32_t hash)
+		
+		virtual int64_t
+		hash_count(uint32_t hash)
 		{
-			bool b = false;
-	
-			if (!m_inverted_index.is_active()) {
-				b = true;
-				if (!m_inverted_index.begin_reader()) {
-					OTAMA_LOG_ERROR("%s: %s\n", m_inverted_index.path().c_str(),
-									m_inverted_index.error_message().c_str());
-					m_inverted_index.end();
-					return 0;
-				}
-			}
 			std::vector<int64_t> nos;
 			decode_vbc(hash, nos);
-	
-			if (b) {
-				m_inverted_index.end();
-			}
-	
 			return (int64_t)nos.size();
 		}
 		
-		virtual otama_status_t begin_writer(void)
-		{
-			if (!m_ids.begin_writer()) {
-				OTAMA_LOG_ERROR("%s: %s\n", m_ids.path().c_str(),
-								m_ids.error_message().c_str());
-				return OTAMA_STATUS_SYSERROR;
-			}
-			if (!m_metadata.begin_writer()) {
-				OTAMA_LOG_ERROR("%s: %s\n", m_metadata.path().c_str(),
-								m_metadata.error_message().c_str());
-				m_ids.end();
-				return OTAMA_STATUS_SYSERROR;
-			}
-			if (!m_inverted_index.begin_writer()) {
-				OTAMA_LOG_ERROR("%s: %s\n", m_inverted_index.path().c_str(),
-								m_inverted_index.error_message().c_str());
-				m_ids.end();
-				m_metadata.end();
-		
-				return OTAMA_STATUS_SYSERROR;
-			}
-	
-			return OTAMA_STATUS_OK;
-
-		}
-		virtual otama_status_t begin_reader(void)
-		{
-			if (!m_ids.begin_reader()) {
-				OTAMA_LOG_ERROR("%s: %s\n", m_ids.path().c_str(),
-								m_ids.error_message().c_str());
-				return OTAMA_STATUS_SYSERROR;
-			}
-			if (!m_metadata.begin_reader()) {
-				OTAMA_LOG_ERROR("%s: %s\n", m_metadata.path().c_str(),
-								m_metadata.error_message().c_str());
-				m_ids.end();
-				return OTAMA_STATUS_SYSERROR;
-			}
-			if (!m_inverted_index.begin_reader()) {
-				OTAMA_LOG_ERROR("%s: %s\n", m_inverted_index.path().c_str(),
-								m_inverted_index.error_message().c_str());
-				m_ids.end();
-				m_metadata.end();
-		
-				return OTAMA_STATUS_SYSERROR;
-			}
-	
-			return OTAMA_STATUS_OK;
-
-		}
-		virtual otama_status_t end(void)
-		{
-			m_ids.end();
-			m_metadata.end();
-			m_inverted_index.end();
-			
-			return OTAMA_STATUS_OK;
-		}
-		
-		/* begin_writer required */
-		virtual otama_status_t set(int64_t no, const otama_id_t *id,
-								   const sparse_vec_t &vec)
+		virtual otama_status_t
+		set(int64_t no, const otama_id_t *id,
+			const sparse_vec_t &vec)
 		{
 			otama_status_t ret = OTAMA_STATUS_OK;
 			bool bret;
@@ -808,7 +672,8 @@ namespace otama
 			return ret;
 		}
 		
-		virtual otama_status_t set_flag(int64_t no, uint8_t flag)
+		virtual otama_status_t
+		set_flag(int64_t no, uint8_t flag)
 		{
 			metadata_record_t *rec;
 			otama_status_t ret = OTAMA_STATUS_OK;
@@ -831,7 +696,8 @@ namespace otama
 			return ret;
 
 		}
-		virtual int64_t get_last_commit_no(void)
+		virtual int64_t
+		get_last_commit_no(void)
 		{
 			size_t sp;
 			int64_t last_modified = 0;
@@ -847,7 +713,8 @@ namespace otama
 	
 			return last_modified;
 		}
-		virtual bool set_last_commit_no(int64_t no)
+		virtual bool
+		set_last_commit_no(int64_t no)
 		{
 			bool ret = m_metadata.set("_LAST_COMMIT_NO", 15, &no, sizeof(no));
 			if (!ret) {
@@ -856,7 +723,8 @@ namespace otama
 			}
 			return ret;
 		}
-		virtual int64_t get_last_no(void)
+		virtual int64_t
+		get_last_no(void)
 		{
 			size_t sp;
 			int64_t no;
@@ -870,7 +738,8 @@ namespace otama
 	
 			return no;
 		}
-		virtual bool set_last_no(int64_t no)
+		virtual bool
+		set_last_no(int64_t no)
 		{
 			bool ret;
 
