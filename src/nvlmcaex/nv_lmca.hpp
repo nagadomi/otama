@@ -481,7 +481,7 @@ public:
 		int threads = nv_omp_procs();
 		topn_t topn;
 		float *sim_min = nv_alloc_type(float, threads);
-		topn_t *topn_temp = new topn_t[threads];
+		std::vector<topn_t> topn_temp(threads);
 		
 #ifdef _OPENMP
 #pragma omp parallel for num_threads(threads)
@@ -532,7 +532,6 @@ public:
 			results[i] = topn.top();
 			topn.pop();
 		}
-		delete [] topn_temp;
 		nv_free(sim_min);
 		
 		return (int)imax;

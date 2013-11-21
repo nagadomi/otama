@@ -35,6 +35,14 @@ namespace otama
 	{
 	protected:
 		IV *m_inverted_index;
+		typedef struct db_record{
+			int64_t no;
+			std::string id_str;
+			std::string vec_str;
+			db_record(int64_t no, const std::string &id_str, const std::string &vec_str)
+				: no(no), id_str(id_str), vec_str(vec_str){}
+			~db_record(){}
+		} db_record_t;
 		
 		virtual void
 		feature_to_sparse_vec(InvertedIndex::sparse_vec_t &svec,// must be sort
@@ -110,15 +118,9 @@ namespace otama
 			int64_t last_no = -1;
 			long t = nv_clock();
 			long t0 = t;
-			int64_t ntuples = 0;
 			int i;
 			InvertedIndex::batch_records_t records;
-			typedef struct {
-				int64_t no;
-				std::string id_str;
-				std::string vec_str;
-			} tmp_t;
-			tmp_t *tmp;
+			std::vector<db_record_t> db_records;
 			
 			redo = false;
 			
@@ -133,29 +135,30 @@ namespace otama
 			}
 			t = nv_clock();
 			
-			tmp = new tmp_t[DBIDriver<T>::PULL_LIMIT];
 			while (otama_dbi_result_next(res)) {
-				tmp[ntuples].no = otama_dbi_result_int64(res, 0);
-				tmp[ntuples].id_str = otama_dbi_result_string(res, 1);
-				tmp[ntuples].vec_str = otama_dbi_result_string(res, 2);
-				last_no = tmp[ntuples].no;
-				++ntuples;
+				last_no = otama_dbi_result_int64(res, 0);
+				db_records.push_back(
+					db_record_t(
+						last_no,
+						otama_dbi_result_string(res, 1),
+						otama_dbi_result_string(res, 2))
+					);
 			}
 			otama_dbi_result_free(&res);
 			OTAMA_LOG_DEBUG("-- read: %dms\n", nv_clock() - t);
 			t = nv_clock();
-			records.resize((unsigned int)ntuples);
+			records.resize(db_records.size());
 			
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 4)
 #endif
-			for (i = 0; i < (int)ntuples; ++i) {
+			for (i = 0; i < (int)db_records.size(); ++i) {
 				if (ret == OTAMA_STATUS_OK) {
 					int ng;
-					const char *id = tmp[i].id_str.c_str();
-					const char *vec = tmp[i].vec_str.c_str();
+					const char *id = db_records[i].id_str.c_str();
+					const char *vec = db_records[i].vec_str.c_str();
 					T fixed;
-					records[i].no = tmp[i].no;
+					records[i].no = db_records[i].no;
 					
 					otama_id_hexstr2bin(&records[i].id, id);
 					ng = this->feature_deserialize(&fixed, vec);
@@ -167,11 +170,10 @@ namespace otama
 					}
 				}
 			}
-			delete [] tmp;
 			OTAMA_LOG_DEBUG("-- parse: %dms\n", nv_clock() - t);
 			t = nv_clock();
 			
-			if (ret == OTAMA_STATUS_OK && ntuples > 0) {
+			if (ret == OTAMA_STATUS_OK && db_records.size() > 0) {
 				// sequential access
 				m_inverted_index->batch_set(records);
 				m_inverted_index->set_last_no(last_no);
@@ -179,7 +181,7 @@ namespace otama
 			}
 			OTAMA_LOG_DEBUG("-- append: %dms\n", nv_clock() - t);
 			
-			if (ntuples == DBIDriver<T>::PULL_LIMIT) {
+			if (db_records.size() == DBIDriver<T>::PULL_LIMIT) {
 				redo = true;
 			}
 			OTAMA_LOG_DEBUG("pull_records: %ldms\n",  nv_clock() - t0);

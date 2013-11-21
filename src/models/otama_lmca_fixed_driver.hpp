@@ -41,8 +41,8 @@ namespace otama
 		float m_color_threshold;
 		float m_color_weight;
 		
-		static const float DEFAULT_COLOR_THRESHOLD() { return 0.7f; }
-		static const float DEFAULT_COLOR_WEIGHT() { return 0.5f; }
+		static inline float DEFAULT_COLOR_THRESHOLD() { return 0.7f; }
+		static inline float DEFAULT_COLOR_WEIGHT() { return 0.5f; }
 		static const typename T::color_method_e DEFAULT_COLOR_METHOD = T::COLOR_METHOD_LINEAR;
 		
 		typename T::color_method_e m_color_method;

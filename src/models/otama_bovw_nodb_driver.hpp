@@ -35,7 +35,7 @@ namespace otama
 		typedef typename T::dense_t FT;
 		
 		static const int COLOR_NN = 3;
-		static const float DEFAULT_COLOR_WEIGHT() { return 0.2f; }
+		static inline float DEFAULT_COLOR_WEIGHT() { return 0.32f; }
 		
 		float m_color_weight;
 		nv_bovw_rerank_method_t m_rerank_method;

@@ -51,7 +51,7 @@ template <nv_vlad_word_e K>
 class nv_vlad_ctx {
 public:
 	static const int DIM = K * NV_KEYPOINT_DESC_N;
-	static const float IMG_SIZE() {return  512.0f; }
+	static inline float IMG_SIZE() {return  512.0f; }
 	static const int KEYPOINTS = 3000;
 	static const int KP = K / 2;
 private:

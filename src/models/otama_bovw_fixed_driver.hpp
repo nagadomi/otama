@@ -37,8 +37,8 @@ namespace otama
 		
 		static const int CLUSTER_K = 16;
 		static const int COLOR_NN = 3;
-		static const float OVERFIT_TH() { return 0.8f; }
-		static const float DEFAULT_COLOR_WEIGHT() { return 0.32f; }
+		static inline float OVERFIT_TH() { return 0.8f; }
+		static inline float DEFAULT_COLOR_WEIGHT() { return 0.32f; }
 		
 		bool m_strip;
 		float m_color_weight;

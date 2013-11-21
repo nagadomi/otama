@@ -69,7 +69,7 @@ public:
 	static const int BIT = N;
 	static const int TOP_VQ = 2048; /* NV_BOVW_KMT_POSI()->dim[0] * 2 */
 	static const int INT_BLOCKS = N / 64;
-	static inline const float IMG_SIZE() { return 512.0f; };
+	static inline float IMG_SIZE() { return 512.0f; };
 	static const int POSI_N = N / 2;
 	static const int COLOR_SIZE = sizeof(((C *)NULL)->color);
 	static const int COLOR_INT_BLOCKS = COLOR_SIZE == sizeof(nv_bovw_dummy_color_t) ?
@@ -238,7 +238,7 @@ private:
 		int desc_m;
 		int i;
 		int procs = nv_omp_procs();
-		std::set<uint32_t> *tmp = new std::set<uint32_t>[procs];
+		std::vector<std::set<uint32_t> >tmp(procs);
 		std::set<uint32_t> tmp2;
 		std::set<uint32_t>::const_iterator it;
 		
@@ -270,7 +270,6 @@ private:
 		}
 		std::copy(tmp2.begin(), tmp2.end(), std::back_inserter(vec));
 		
-		delete [] tmp;
 		nv_matrix_free(&desc_vec);
 		nv_matrix_free(&key_vec);
 	}
@@ -469,9 +468,9 @@ public:
 		int64_t j;
 		int64_t jmax;
 		int_fast8_t threads = nv_omp_procs();
-		topn_t *topn_first = new topn_t[threads];
+		std::vector<topn_t> topn_first(threads);
+		std::vector<float> cosine_min(threads);
 		topn_t topn;
-		float *cosine_min = nv_alloc_type(float, threads);
 		const int k_first = NV_MAX(k * SEARCH_FIRST_SCALE, 100);
 		const float bovw_weight = 1.0f - color_weight;
 		std::vector<nv_bovw_result_t> topn_second;
@@ -592,9 +591,6 @@ public:
 			results[j].similarity = results[j].similarity;
 			topn.pop();
 		}
-		
-		delete [] topn_first;
-		nv_free(cosine_min);
 		
 		return (int)jmax;
 	}

@@ -201,7 +201,7 @@ InvertedIndexMap::search_cosine(
 	int l, result_max, i;
 	long t;
 	int num_threads  = nv_omp_procs();
-	std::vector<similarity_temp_t> *hits;
+	std::vector<std::vector<similarity_temp_t> > hits;
 	size_t c;
 	otama_status_t ret;
 	topn_t topn;
@@ -213,8 +213,8 @@ InvertedIndexMap::search_cosine(
 	if (ret != OTAMA_STATUS_OK) {
 		return ret;
 	}
-
-	hits = new std::vector<similarity_temp_t>[num_threads];
+	hits.resize(num_threads);
+	
 	t = nv_clock();
 	c = (size_t)count();
 	hits[0].reserve(c * 3);
@@ -329,7 +329,7 @@ InvertedIndexMap::search_cosine(
 	end();
 	OTAMA_LOG_DEBUG("search: ranking: %ldms", nv_clock() - t);	
 	
-	delete [] hits;
+	//delete [] hits;
 
 	return OTAMA_STATUS_OK;
 }

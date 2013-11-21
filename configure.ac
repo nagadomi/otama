@@ -30,8 +30,9 @@ if test "" = "$LDFLAGS"; then
     LDFLAGS=" "
 fi
 
-CFLAGS=" $CFLAGS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -Wall "
-CFLAGS=" $CFLAGS -D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security "
+CFLAGS=" $CFLAGS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS "
+CFLAGS=" $CFLAGS -Wall -Wextra -Wformat=2 -Werror=format-security -Wunsafe-loop-optimizations -Wdisabled-optimization -Winline -Wno-unused-parameter "
+CFLAGS=" $CFLAGS -D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 "
 
 # Checks for programs.
 AC_PROG_CC
@@ -61,7 +62,7 @@ AX_ARG_ENABLE(debug,
         AS_HELP_STRING([--enable-debug], [enable assert and -g ]), [no],
 #	[CFLAGS="$CFLAGS -g -D_GLIBCXX_DEBUG "], # bug
 	[CFLAGS="$CFLAGS -g "],
-        [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -DNDEBUG "])
+        [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -funsafe-loop-optimizations -DNDEBUG "])
 
 otama_native=0
 AX_ARG_ENABLE(native,

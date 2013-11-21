@@ -357,7 +357,8 @@ namespace otama
 				 uint64_t seq,
 				 T *vec)
 		{
-			index_t key = {0};
+			index_t key;
+			memset(&key, 0, sizeof(key));
 			
 			key.seq = seq;
 			index_t *rec = (index_t *)

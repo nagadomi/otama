@@ -476,7 +476,7 @@ namespace otama
 			int l, result_max, i;
 			long t;
 			int num_threads  = nv_omp_procs();
-			std::vector<similarity_temp_t> *hits;
+			std::vector<std::vector<similarity_temp_t> >hits;
 			size_t c;
 			otama_status_t ret;
 			topn_t topn;
@@ -493,8 +493,7 @@ namespace otama
 			if (ret != OTAMA_STATUS_OK) {
 				return ret;
 			}
-	
-			hits = new std::vector<similarity_temp_t>[num_threads];
+			hits.resize(num_threads);
 			t = nv_clock();
 			c = count();
 			hits[0].reserve(1 + c * 3);
@@ -550,7 +549,6 @@ namespace otama
 							metadata_record_t *rec = m_metadata.get(&no);
 							if (rec == NULL) {
 								OTAMA_LOG_ERROR("indexes are corrupted. try to clear index.. please rebuild index using otama_pull.", 0);
-								delete [] hits;
 								end();
 								clear();
 								return OTAMA_STATUS_SYSERROR;
@@ -581,7 +579,6 @@ namespace otama
 					metadata_record_t *rec = m_metadata.get(&no);
 					if (rec == NULL) {
 						OTAMA_LOG_ERROR("indexes are corrupted. try to clear index.. please rebuild index using otama_pull.", 0);
-						delete [] hits;
 						end();
 						clear();
 						return OTAMA_STATUS_SYSERROR;
@@ -623,10 +620,7 @@ namespace otama
 	
 			OTAMA_LOG_DEBUG("search: ranking: %ldms", nv_clock() - t);
 
-			delete [] hits;	
-	
 			return OTAMA_STATUS_OK;
-
 		}
 		
 		virtual int64_t count(void)
