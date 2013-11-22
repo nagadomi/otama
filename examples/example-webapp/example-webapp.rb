@@ -118,7 +118,7 @@ class ExampleWebApp < Sinatra::Base
   def search_by_id(image_id)
     file = image_filename(image_id)
     begin
-      query = {:file => file}
+      query = {:id => image_id}
       if (color_weight = get_color_weight)
         query[:color_weight] = color_weight
       end

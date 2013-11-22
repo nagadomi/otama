@@ -1,4 +1,4 @@
-<% option_query = @color_weight ? "?color_weight=#{sprintf('%.2f', @color_weight)}" : "" %>
+<% option_query = (color_weight_support? && !@color_weight.nil?) ? "?color_weight=#{sprintf('%.2f', @color_weight)}" : "" %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
 	  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html>
@@ -57,6 +57,7 @@
             upload_ui.hide();
             $("#upload-switch").click(function() {$("#upload-ui").toggle()});
          }
+         <% if color_weight_support? %>
          $("#color_weight").slider({
              min: 0.0,
              max: 1.0,
@@ -69,6 +70,7 @@
              slide: function(event, ui) { $("#color_weight_text").text(ui.value); },
              disabled: <%= request.path =~ /action/ ? "true" : "false" %>
          });
+	 <% end %>
       });
     </script>
   </head>
@@ -131,15 +133,15 @@
           <form action="<%= request.path %>" method="get" id="color_weight_change">
 	    <input type="hidden" name="color_weight" value="<%= sprintf("%.2f", @color_weight) %>" id="color_weight_value"/>
           </form>
-	<% end %>	  
+	<% end %>
+	<div style="float:left;margin-right:1em;">
+	  color weight
+	</div>
+	<div id="color_weight" style="float:left;width: 200px;"></div>
+	<div id="color_weight_text" style="float:left;margin-left:1em;">
+	  <%= sprintf("%f", @color_weight) %>
+	</div>
       <% end %>
-      <div style="float:left;margin-right:1em;">
-	color weight
-      </div>
-      <div id="color_weight" style="float:left;width: 200px;"></div>
-      <div id="color_weight_text" style="float:left;margin-left:1em;">
-	<%= sprintf("%f", @color_weight) %>
-      </div>
       <div style="clear:both"></div>
     </div>
     <% if (@query_id.nil? && @query_url.nil?) %>
