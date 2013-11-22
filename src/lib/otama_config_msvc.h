@@ -20,9 +20,7 @@
 #ifndef OTAMA_CONFIG_MSVC_H
 #define OTAMA_CONFIG_MSVC_H
 
-#define OTAMA_WITH_KC      0
 #define OTAMA_WITH_LEVELDB 0
-#define OTAMA_WITH_LZO     0
 #define OTAMA_WITH_PGSQL   0
 #define OTAMA_WITH_SQLITE3 1
 #define OTAMA_WITH_MYSQL   0

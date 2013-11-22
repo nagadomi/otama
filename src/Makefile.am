@@ -49,7 +49,6 @@ models/otama_kyotocabinet.hpp \
 models/otama_leveldb.hpp \
 models/otama_fixed_strage.hpp \
 models/otama_inverted_index.hpp \
-models/otama_inverted_index_kc.hpp \
 models/otama_inverted_index_leveldb.hpp \
 models/otama_inverted_index_kvs.hpp \
 models/otama_inverted_index_bucket.hpp \

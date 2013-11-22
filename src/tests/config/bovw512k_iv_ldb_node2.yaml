@@ -2,8 +2,9 @@
 namespace: test
 
 driver:
-  name: bovw512k_iv_kc
-  data_dir: ./data
+  name: bovw512k_iv_ldb
+  data_dir: ./data/node2
+  shard: 8-f
   
 database:
   driver: sqlite3

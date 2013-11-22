@@ -85,9 +85,6 @@ int main(void)
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_hsv.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_colorcode.yaml");
 	
-#if OTAMA_WITH_KC
-	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
-#endif
 #if OTAMA_WITH_LEVELDB
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb.yaml");
 #endif
@@ -107,9 +104,6 @@ int main(void)
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_hsv.yaml");
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_colorcode.yaml");
 
-#if OTAMA_WITH_KC
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
-#endif
 #if OTAMA_WITH_LEVELDB
 	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb.yaml");
 #endif	
@@ -117,10 +111,10 @@ int main(void)
 	otama_test_cluster(
 		OTAMA_TEST_CONFIG_DIR "/bovw8k_node1.yaml",
 		OTAMA_TEST_CONFIG_DIR "/bovw8k_node2.yaml");
-#  if OTAMA_WITH_KC
+#  if OTAMA_WITH_LEVELDB
 	otama_test_cluster(
-		OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc_node1.yaml",
-		OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc_node2.yaml");
+		OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb_node1.yaml",
+		OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb_node2.yaml");
 #  endif
 #endif
 	return 0;

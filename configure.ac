@@ -77,17 +77,6 @@ AX_ARG_ENABLE(sse2,
         [otama_sse2=1],
         [])
 
-otama_kc=0        
-AC_LANG_PUSH([C++])
-AX_ARG_ENABLE(kyotocabinet,
-        AS_HELP_STRING([--enable-kyotocabinet], [enable kyotocabinet.]), [no],
-	[AC_CHECK_HEADERS([kcpolydb.h],
-		[otama_kc=1
-		AC_CHECK_LIB(kyotocabinet, main)
-		],
-		[AC_MSG_ERROR(*** libkyotocabinet not found. please install kyotocabinet.)])],
-        [])
-
 otama_leveldb=0
 AC_LANG_PUSH([C++])
 AX_ARG_ENABLE(leveldb,
@@ -236,7 +225,6 @@ AM_CONDITIONAL([BUILDING_RUBY], [test $RUBY != "no"])
 AC_SUBST(RUBY)
 AC_SUBST(otama_native)
 AC_SUBST(otama_sse2)
-AC_SUBST(otama_kc)
 AC_SUBST(otama_leveldb)
 AC_SUBST(otama_sqlite3)
 AC_SUBST(otama_pgsql)

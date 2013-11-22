@@ -26,7 +26,6 @@
 #include "otama_vlad_nodb_driver.hpp"
 #include "otama_sboc_nodb_driver.hpp"
 #include "otama_sboc_fixed_driver.hpp"
-#include "otama_inverted_index_kc.hpp"
 #include "otama_inverted_index_leveldb.hpp"
 #include "otama_inverted_index_bucket.hpp"
 
@@ -151,12 +150,6 @@ otama::createDriver(otama_variant_t *config)
 	{
 		return new BOVWInvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexBucket>(config);
 	}
-#if OTAMA_WITH_KC
-	else if (strcmp(driver_name, "bovw512k_iv_kc") == 0)
-	{
-		return new BOVWInvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexKC>(config);
-	}
-#endif
 #if OTAMA_WITH_LEVELDB
 	else if (strcmp(driver_name, "bovw512k_iv_ldb") == 0)
 	{
