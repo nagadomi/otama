@@ -120,10 +120,12 @@ test_array(void)
 	NV_ASSERT(otama_variant_to_int(var) == -100);
 	NV_ASSERT(otama_variant_to_float(var) == -100.5f);
 	NV_ASSERT(strcmp(otama_variant_to_string(var), "-100.5") == 0);
-
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif	
 	for (i = 0; i < 100; ++i) {
-		var = otama_variant_array_at(array, i);
-		otama_variant_set_int(var, i);
+		otama_variant_t *v = otama_variant_array_at(array, i);
+		otama_variant_set_int(v, i);
 	}
 	NV_ASSERT(otama_variant_array_count(array) == 100);
 	for (i = 0; i < 100; ++i) {
@@ -172,11 +174,15 @@ test_hash(void)
 	NV_ASSERT(otama_variant_hash_exist(hash, "hoge") == 0);
 	NV_ASSERT(otama_variant_hash_exist(hash, "piyo") == 0);
 	
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
 	for (i = 0; i < 100; ++i) {
 		otama_variant_t *key = otama_variant_new(pool);
+		otama_variant_t *v;
 		otama_variant_set_int(key, i);
-		var = otama_variant_hash_at2(hash, key);
-		otama_variant_set_int(var, i);
+		v = otama_variant_hash_at2(hash, key);
+		otama_variant_set_int(v, i);
 	}
 	NV_ASSERT(otama_variant_array_count(otama_variant_hash_keys(hash)) == 100);
 	for (i = 0; i < 100; ++i) {
