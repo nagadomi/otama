@@ -55,6 +55,23 @@ namespace otama
 		}
 		
 	public:
+		class Result {
+		private:
+			std::string *m_data;
+		public:
+			Result(std::string *m_data)
+			{
+			}
+			const void *data(void)
+			{
+				return m_data->data();
+			}
+			~Result()
+			{
+				delete m_data;
+				m_data = 0;
+			}
+		};
 		LevelDB(void)
 		{
 			m_db = NULL;
@@ -174,6 +191,23 @@ namespace otama
 			
 			return value;
 		}
+
+		inline bool
+		get(const void *key, size_t key_len, std::string &buff)
+		{
+			assert(m_db != NULL);
+			leveldb::Status ret;
+
+			ret = m_db->Get(leveldb::ReadOptions(),
+							leveldb::Slice((const char *)key,
+										   key_len),
+							&buff);
+			if (!ret.ok()) {
+				set_error(ret.ToString());
+				return false;
+			}
+			return true;
+		}
 		
 		inline bool
 		set(const void *key, size_t key_len,
@@ -280,6 +314,7 @@ namespace otama
 				set_error(ret.ToString());
 				return NULL;
 			}
+			// warning: will not use VALUE_TYPE constructor
 			value = new char[db_value.size()];
 			memcpy(value, db_value.data(), db_value.size());
 			
