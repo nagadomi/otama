@@ -319,7 +319,7 @@ namespace otama
 					return OTAMA_STATUS_INVALID_ARGUMENTS;
 				}
 				has_id = true;
-				if (try_load(id, fixed) != OTAMA_STATUS_OK) {
+				if (try_load(id, fixed, true) != OTAMA_STATUS_OK) {
 					has_feature = false;
 				} else {
 					exist = true;
@@ -331,7 +331,7 @@ namespace otama
 				}
 				memcpy(id, otama_variant_to_binary_ptr(vid), sizeof(*id));
 				has_id = true;
-				if (try_load(id, fixed) != OTAMA_STATUS_OK) {
+				if (try_load(id, fixed, true) != OTAMA_STATUS_OK) {
 					has_feature = false;
 				} else {
 					exist = true;
@@ -346,19 +346,19 @@ namespace otama
 
 		otama_status_t
 		try_load(otama_id_t *id,
-				 T *fixed)
+				 T *fixed,
+				 bool force = false)
 		{
 			uint64_t seq;
 			bool e;
 			otama_status_t sret;
-
-			if (m_load_fv) {
+			
+			if (m_load_fv || force) {
 				sret = exists_master(e, seq, id);
 				
 				if (sret != OTAMA_STATUS_OK) {
 					return sret;
 				}
-	
 				if (e) {
 					sret = try_load_local(id, seq, fixed);
 					if (sret != OTAMA_STATUS_OK) {
