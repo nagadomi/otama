@@ -419,10 +419,6 @@ InvertedIndexLevelDB::search_cosine(otama_result_t **results, int n,
 	size_t c;
 	std::vector<topn_t> topn;
 
-	if (num_threads > 2) {
-		num_threads -= 1; // reservation for other threads
-	}
-	
 	if (n < 1) {
 		return OTAMA_STATUS_INVALID_ARGUMENTS;
 	}
