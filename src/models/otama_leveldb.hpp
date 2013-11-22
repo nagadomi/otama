@@ -47,7 +47,7 @@ namespace otama
 		set_error(std::string error_message)
 		{
 #ifdef _OPENMP
-#pragma omp critical
+#pragma omp critical (otama_leveldb_set_error)
 #endif
 			{
 				m_last_error = error_message;
@@ -371,7 +371,7 @@ namespace otama
 		{
 			std::string ret;
 #ifdef _OPENMP
-#pragma omp critical
+#pragma omp critical (otama_leveldb_set_error)
 #endif
 			ret = m_last_error;
 			

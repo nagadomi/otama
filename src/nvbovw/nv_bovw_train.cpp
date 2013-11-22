@@ -119,7 +119,7 @@ void extract_keypoints(std::vector<std::string> &files,
 			desc_m = nv_keypoint_ex(s_ctx, key_vec, desc_vec, smooth, 0);
 
 #ifdef _OPENMP
-#pragma omp critical (extract_keypoints)
+#pragma omp critical (nv_bovw_extract_keypoints)
 #endif
 			{
 				int l;
@@ -494,7 +494,7 @@ make_pairwise_data(const char *base, int n)
 					continue;
 				} else if ((j_label == k_label && j_label != l_label)) {
 #ifdef _OPENMP
-#pragma omp critical
+#pragma omp critical (nv_bovw_make_pairwise_data)
 #endif
 					{
 						bovw::nv_bovw_rank_feature(k_j_vec, 0, &bovws[j], idf, 0, &bovws[k_j]);
@@ -527,7 +527,7 @@ make_pairwise_data(const char *base, int n)
 					}
 				} else  {
 #ifdef _OPENMP
-#pragma omp critical
+#pragma omp critical (nv_bovw_make_pairwise_data)
 #endif
 					{
 						//(j_label != k_label

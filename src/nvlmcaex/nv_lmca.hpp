@@ -774,7 +774,7 @@ private:
 				
 				desc_m = nv_keypoint_ex(ctx, key_vec, desc_vec, smooth, 0);
 #ifdef _OPENMP
-#pragma omp critical (vq_extract)
+#pragma omp critical (nv_lmca_vq_extract)
 #endif
 				{
 					int l;
