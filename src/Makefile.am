@@ -42,7 +42,6 @@ lib/otama_image.h \
 lib/otama_dbi.h \
 lib/otama_dbi_internal.h \
 lib/otama_image_internal.h \
-models/otama_inverted_index_map.cpp \
 models/otama_inverted_index_bucket.cpp \
 models/otama_driver_factory.cpp \
 models/otama_variable_byte_code_vector.hpp \
@@ -53,7 +52,6 @@ models/otama_inverted_index.hpp \
 models/otama_inverted_index_kc.hpp \
 models/otama_inverted_index_leveldb.hpp \
 models/otama_inverted_index_kvs.hpp \
-models/otama_inverted_index_map.hpp \
 models/otama_inverted_index_bucket.hpp \
 models/otama_omp_lock.hpp \
 models/otama_driver.hpp \

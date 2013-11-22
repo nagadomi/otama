@@ -28,7 +28,6 @@
 #include "otama_sboc_fixed_driver.hpp"
 #include "otama_inverted_index_kc.hpp"
 #include "otama_inverted_index_leveldb.hpp"
-#include "otama_inverted_index_map.hpp"
 #include "otama_inverted_index_bucket.hpp"
 
 using namespace otama;
