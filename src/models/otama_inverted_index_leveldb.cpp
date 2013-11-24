@@ -67,21 +67,17 @@ InvertedIndexLevelDB::set_vbc(int64_t no, const sparse_vec_t &vec)
 {
 	sparse_vec_t::const_iterator i;
 	otama_status_t ret = OTAMA_STATUS_OK;
+	std::string db_value;
 
 	for (i = vec.begin(); i != vec.end(); ++i) {
 		uint32_t hash = *i;
 		const uint64_t last_no_key = (uint64_t)hash << 32;
-		size_t sp = 0;
-		int64_t *last_no_v = (int64_t *)m_inverted_index.get(&last_no_key,
-															 sizeof(last_no_key), &sp);
 		bool bret;
 		int64_t last_no = 0;
 		uint64_t a;
 		std::vector<uint8_t> append_value;
-		
-		if (last_no_v) {
-			last_no = *last_no_v;
-			m_inverted_index.free_value_raw(last_no_v);
+		if (m_inverted_index.get(&last_no_key, sizeof(last_no_key), db_value)) {
+			last_no = *(const int64_t *)db_value.data();
 		}
 		
 		NV_ASSERT(last_no < no);
@@ -150,10 +146,10 @@ InvertedIndexLevelDB::init_index_buffer(index_buffer_t &index_buffer,
 										const batch_records_t &records)
 {
 	batch_records_t::const_iterator i;
-			
+	std::string db_value;
 	index_buffer.clear();
 	last_no_buffer.clear();
-			
+	
 	for (i = records.begin(); i != records.end(); ++i) {
 		sparse_vec_t::const_iterator j;
 		for (j = i->vec.begin(); j != i->vec.end(); ++j) {
@@ -161,18 +157,14 @@ InvertedIndexLevelDB::init_index_buffer(index_buffer_t &index_buffer,
 			last_no_buffer_t::const_iterator no = last_no_buffer.find(hash);
 			if (no == last_no_buffer.end()) {
 				const uint64_t last_no_key = (uint64_t)hash << 32;
-				size_t sp = 0;
-				int64_t *last_no_v = (int64_t *)m_inverted_index.get(&last_no_key,
-																	 sizeof(last_no_key), &sp);
 				int64_t last_no;
 						
-				if (last_no_v) {
-					last_no = *last_no_v;
-					m_inverted_index.free_value_raw(last_no_v);
+				if (m_inverted_index.get(&last_no_key, sizeof(last_no_key), db_value)) {
+					last_no = *(const int64_t *)db_value.data();
 				} else {
 					last_no = 0;
 				}
-						
+				
 				std::vector<uint8_t> empty_rec;
 				last_no_buffer.insert(
 					std::make_pair<uint32_t, int64_t>(
@@ -275,7 +267,7 @@ InvertedIndexLevelDB::write_index_buffer(const index_buffer_t &index_buffer,
 		memset(&rec, 0, sizeof(rec));
 		rec.norm = norm(j->vec);
 		rec.flag = 0;
-				
+		
 		bret = m_ids.add(&j->no, &j->id);
 		if (!bret) {
 			OTAMA_LOG_ERROR("%s", m_ids.error_message().c_str());
@@ -298,31 +290,28 @@ InvertedIndexLevelDB::write_index_buffer(const index_buffer_t &index_buffer,
 	m_metadata.sync();
 			
 	OTAMA_LOG_DEBUG("end index writer", 0);
-			
+	
 	return ret;
 }
 
 bool
 InvertedIndexLevelDB::verify_index(void)
 {
-	size_t sp = 0;
-	int8_t *flag = (int8_t *)m_metadata.get("_VERIFY_INDEX", 13, &sp);
-	if (flag) {
+	std::string db_value;
+	if (m_metadata.get("_VERIFY_INDEX", 13, db_value)) {
 		bool ret = false;
-		if (sp == sizeof(int8_t) && *flag == 1) {
+		if (db_value.size() == sizeof(int8_t) && *(const int8_t *)db_value.data() == 1) {
 			ret = true;
 			OTAMA_LOG_DEBUG("verify_index 1", 0);
 		} else {
 			OTAMA_LOG_DEBUG("verify_index 0", 0);
 		}
-		m_metadata.free_value_raw(flag);
 		return ret;
 	} else {
 		OTAMA_LOG_DEBUG("verify_index null", 0);
 		return true;
 	}
 }
-
 
 InvertedIndexLevelDB::InvertedIndexLevelDB(otama_variant_t *options)
 	: InvertedIndex(options)
@@ -500,8 +489,8 @@ InvertedIndexLevelDB::search_cosine(otama_result_t **results, int n,
 #endif
 		for (i = 0; i < (int)hit_tmp.size(); ++i) {
 			int thread_id = nv_omp_thread_id();
-			metadata_record_t *rec = m_metadata.get(&hit_tmp[i].no);
-			if (rec == NULL) {
+			std::string db_value;
+			if (!m_metadata.get(&hit_tmp[i].no, sizeof(hit_tmp[i].no), db_value)) {
 #ifdef _OPENMP
 #pragma omp critical (otama_inverted_index_leveldb_search_error)
 #endif
@@ -513,6 +502,7 @@ InvertedIndexLevelDB::search_cosine(otama_result_t **results, int n,
 					}
 				}
 			} else {
+				const metadata_record_t *rec = (const metadata_record_t *)db_value.data();
 				if ((rec->flag & FLAG_DELETE) == 0) {
 					float similarity = hit_tmp[i].w / (query_norm * rec->norm);
 					if (n > (int)topn[thread_id].size()) {
@@ -528,7 +518,6 @@ InvertedIndexLevelDB::search_cosine(otama_result_t **results, int n,
 						topn[thread_id].pop();
 					}
 				}
-				m_metadata.free_value(rec);
 			}
 		}
 		if (has_error) {
@@ -550,10 +539,16 @@ InvertedIndexLevelDB::search_cosine(otama_result_t **results, int n,
 	
 	for (l = result_max - 1; l >= 0; --l) {
 		const similarity_result_t &p = topn[0].top();
-		otama_id_t *id = m_ids.get(&p.no);
-		
-		set_result(*results, l, id, p.similarity);
-		m_ids.free_value(id);
+		std::string db_value;
+		if (m_ids.get(&p.no, sizeof(p.no), db_value)) {
+			const otama_id_t *id = (const otama_id_t *)db_value.data();
+			set_result(*results, l, id, p.similarity);
+		} else {
+			OTAMA_LOG_ERROR("indexes are corrupted. try to clear index.. please rebuild index using otama_pull.", 0);
+			clear();
+			otama_result_free(results);
+			return OTAMA_STATUS_SYSERROR;
+		}
 		topn[0].pop();
 	}
 	otama_result_set_count(*results, result_max);
@@ -655,19 +650,17 @@ InvertedIndexLevelDB::batch_set(const batch_records_t records)
 otama_status_t
 InvertedIndexLevelDB::set_flag(int64_t no, uint8_t flag)
 {
-	metadata_record_t *rec;
 	otama_status_t ret = OTAMA_STATUS_OK;
 	bool bret;
-			
-	rec = m_metadata.get(&no);
-	if (rec) {
-		rec->flag = flag;
-		bret = m_metadata.set(&no, rec);
+	std::string db_value;
+	if (m_metadata.get(&no, sizeof(no), db_value) && db_value.size() == sizeof(metadata_record_t)) {
+		metadata_record_t rec = *(const metadata_record_t *)db_value.data();
+		rec.flag = flag;
+		bret = m_metadata.set(&no, &rec);
 		if (!bret) {
 			OTAMA_LOG_ERROR("%s", m_metadata.error_message().c_str());
 			ret = OTAMA_STATUS_SYSERROR;
 		}
-		m_metadata.free_value(rec);
 	} else {
 		OTAMA_LOG_ERROR("record not found(%"PRId64")", no);
 		ret = OTAMA_STATUS_NODATA;
@@ -680,14 +673,11 @@ InvertedIndexLevelDB::set_flag(int64_t no, uint8_t flag)
 int64_t
 InvertedIndexLevelDB::get_last_commit_no(void)
 {
-	size_t sp;
-	int64_t last_modified = 0;
-	int64_t *p = (int64_t *)m_metadata.get("_LAST_COMMIT_NO", 15, &sp);
-	if (p) {
-		if (sp == sizeof(last_modified)) {
-			last_modified = *p;
-		}
-		m_metadata.free_value_raw(p);
+	int64_t last_modified;
+	std::string db_value;
+	
+	if (m_metadata.get("_LAST_COMMIT_NO", 15, db_value) && db_value.size() == sizeof(last_modified)) {
+		last_modified = *(const int64_t *)db_value.data();
 	} else {
 		last_modified = -1;
 	}
@@ -708,12 +698,11 @@ InvertedIndexLevelDB::set_last_commit_no(int64_t no)
 int64_t
 InvertedIndexLevelDB::get_last_no(void)
 {
-	size_t sp;
 	int64_t no;
-	int64_t *p = (int64_t *)m_metadata.get("_LAST_NO", 8, &sp);
-	if (p) {
-		no = *p;
-		m_metadata.free_value_raw(p);
+	std::string db_value;
+	
+	if (m_metadata.get("_LAST_NO", 8, db_value) && db_value.size() == sizeof(no)) {
+		no = *(const int64_t *)db_value.data();
 	} else {
 		no = -1;
 	}
