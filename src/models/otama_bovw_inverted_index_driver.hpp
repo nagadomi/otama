@@ -212,10 +212,11 @@ namespace otama
 		}
 		
 		BOVWInvertedIndexDriver(otama_variant_t *options)
-			: InvertedIndexDriver<InvertedIndex::sparse_vec_t, IV>(options)
+		: InvertedIndexDriver<InvertedIndex::sparse_vec_t, IV>(options)
 		{
 			otama_variant_t *driver, *value;
 			
+			m_ctx = NULL;
 			m_rerank_method = NV_BOVW_RERANK_IDF;
 			
 			driver = otama_variant_hash_at(options, "driver");
@@ -239,17 +240,33 @@ namespace otama
 				OTAMA_LOG_DEBUG("driver[rerank_method] => %s", "none");
 				break;
 			}
-			m_ctx = new T;
-			m_ctx->open();
-			
 			m_idf_w.rerank_method = m_rerank_method;
-			m_idf_w.ctx = m_ctx;
+			m_idf_w.ctx = NULL;
+			
 			// bucket.reserve
 			this->m_inverted_index->reserve((size_t)BIT);
 		}
 		~BOVWInvertedIndexDriver()
 		{
 			delete m_ctx;
+		}
+		
+		virtual otama_status_t
+		open(void)
+		{
+			otama_status_t ret;
+			
+			ret = InvertedIndexDriver<InvertedIndex::sparse_vec_t, IV>::open();
+			if (ret != OTAMA_STATUS_OK) {
+				return ret;
+			}
+			m_ctx = new T;
+			if (m_ctx->open() != 0) {
+				return OTAMA_STATUS_SYSERROR;
+			}
+			m_idf_w.ctx = m_ctx;
+			
+			return OTAMA_STATUS_OK;
 		}
 		
 		virtual otama_status_t

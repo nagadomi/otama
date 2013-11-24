@@ -290,6 +290,7 @@ namespace otama
 			m_color_weight = DEFAULT_COLOR_WEIGHT();
 			m_strip = false;
 			m_rerank_method = NV_BOVW_RERANK_IDF;
+			m_ctx = NULL;
 			
 			driver = otama_variant_hash_at(options, "driver");
 			if (OTAMA_VARIANT_IS_HASH(driver)) {
@@ -321,12 +322,26 @@ namespace otama
 				OTAMA_LOG_DEBUG("driver[rerank_method] => %s", "none");
 				break;
 			}
-			m_ctx = new T;
-			m_ctx->open();
 		}
 		~BOVWFixedDriver() {
 			nv_matrix_free(&m_color);
 			delete m_ctx;
+		}
+
+		virtual otama_status_t
+		open(void)
+		{
+			otama_status_t ret;
+			
+			ret = FixedDriver<FT>::open();
+			if (ret != OTAMA_STATUS_OK) {
+				return ret;
+			}
+			m_ctx = new T;
+			if (m_ctx->open() != 0) {
+				return OTAMA_STATUS_SYSERROR;
+			}
+			return OTAMA_STATUS_OK;
 		}
 
 		virtual otama_status_t
