@@ -1,5 +1,5 @@
 EXTRA_DIST = config.yaml example-webapp.rb make-database.rb add-images.rb \
-template.html.erb import.sh README.md Gemfile config.ru
+views/template.erb import.sh README.md Gemfile config.ru
 
 all-local:
 	$(MKDIR_P) ./data
