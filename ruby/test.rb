@@ -16,8 +16,8 @@ else
 end
 
 class OtamaTest < Test::Unit::TestCase
-  FILE1  = "../image/lena.jpg"
-  FILE2  = "../image/lena-nega.jpg"
+  FILE1  = File.join(File.dirname(__FILE__), "../image/lena.jpg")
+  FILE2  = File.join(File.dirname(__FILE__), "../image/lena-nega.jpg")
   
   puts "#{__FILE__} #{Otama.version_string}"
   

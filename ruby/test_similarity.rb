@@ -16,8 +16,8 @@ else
 end
 
 class OtamaScoreTest < Test::Unit::TestCase
-  FILE1  = "../image/lena.jpg"
-  FILE2  = "../image/lena-nega.jpg"
+  FILE1  = File.join(File.dirname(__FILE__), "../image/lena.jpg")
+  FILE2  = File.join(File.dirname(__FILE__), "../image/lena-nega.jpg")
   
   def setup
     #Otama.log_level = Otama::LOG_LEVEL_DEBUG
