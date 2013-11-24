@@ -63,7 +63,10 @@ int main(void)
 {
 	signal(SIGSEGV, handle_segv);
 	setup();
-
+	
+#if OTAMA_WITH_LEVELDB
+	otama_test_kvs();
+#endif
 	otama_test_variant();
 #if !OTAMA_MSVC
 	otama_test_dbi();

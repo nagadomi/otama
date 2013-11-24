@@ -54,7 +54,7 @@ int otama_dbi_open(otama_dbi_t *dbi);
 int otama_dbi_active(otama_dbi_t *dbi);
 void otama_dbi_close(otama_dbi_t **dbi);
 
-const char *otama_dbi_escape(otama_dbi_t *dbi, char *esc, size_t len, const char *s);
+const char *otama_dbi_escape(otama_dbi_t *dbi, char *esc, size_t esc_max, const char *src);
 int otama_dbi_table_exist(otama_dbi_t *dbi, int *exist, const char *table_name);
 
 int otama_dbi_exec(otama_dbi_t *dbi, const char *sql);
@@ -66,15 +66,15 @@ int otama_dbi_commit(otama_dbi_t *dbi);
 int otama_dbi_rollback(otama_dbi_t *dbi);
 
 int otama_dbi_result_next(otama_dbi_result_t *res);
-int otama_dbi_result_seek(otama_dbi_result_t *res, int64_t j);
+int otama_dbi_result_seek(otama_dbi_result_t *res, int64_t row);
 
-int64_t otama_dbi_result_int64(otama_dbi_result_t *res, int i);
-int otama_dbi_result_is_null(otama_dbi_result_t *res, int i);	
-int32_t otama_dbi_result_int(otama_dbi_result_t *res, int i);
-float otama_dbi_result_float(otama_dbi_result_t *res, int i);
-time_t otama_dbi_result_time(otama_dbi_result_t *res, int i);
-int otama_dbi_result_bool(otama_dbi_result_t *res, int i);
-const char *otama_dbi_result_string(otama_dbi_result_t *res, int i);
+int64_t otama_dbi_result_int64(otama_dbi_result_t *res, int column_no);
+int otama_dbi_result_is_null(otama_dbi_result_t *res, int column_no);
+int32_t otama_dbi_result_int(otama_dbi_result_t *res, int column_no);
+float otama_dbi_result_float(otama_dbi_result_t *res, int column_no);
+time_t otama_dbi_result_time(otama_dbi_result_t *res, int column_no);
+int otama_dbi_result_bool(otama_dbi_result_t *res, int column_no);
+const char *otama_dbi_result_string(otama_dbi_result_t *res, int column_no);
 void otama_dbi_result_free(otama_dbi_result_t **res);
 
 const char *otama_dbi_time_string(char *s, const time_t *t);
@@ -120,7 +120,7 @@ typedef enum {
 
 int otama_dbi_create_table(otama_dbi_t *dbi,
 						   const char *table_name,
-						   const otama_dbi_column_t *columns, int n);
+						   const otama_dbi_column_t *columns, int num_columns);
 
 int otama_dbi_drop_table(otama_dbi_t *dbi,
 						 const char *table_name);
@@ -129,7 +129,7 @@ int otama_dbi_drop_table(otama_dbi_t *dbi,
 int otama_dbi_create_index(otama_dbi_t *dbi,
 						   const char *table_name,
 						   otama_dbi_unique_e unique,
-						   const otama_dbi_column_t *columns, int n);
+						   const otama_dbi_column_t *columns, int num_columns);
 
 #ifdef __cplusplus
 }

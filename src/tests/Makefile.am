@@ -23,7 +23,8 @@ otama_test_api.c \
 otama_test_similarity_api.c \
 otama_test_cluster.c \
 otama_test_dbi.c \
-otama_test_variant.c
+otama_test_variant.c \
+otama_test_kvs.c
 
 noinst_DATA = config/lmca_vlad.mat config/lmca_hsv.mat config/lmca_vladhsv.mat
 

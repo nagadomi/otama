@@ -24,6 +24,7 @@ lib/otama_dbi.cpp \
 lib/otama_dbi_pgsql.c \
 lib/otama_dbi_sqlite3.c \
 lib/otama_dbi_mysql.c \
+lib/otama_kvs.cpp \
 lib/otama.cpp \
 lib/otama.h \
 lib/otama_feature_raw.h \
@@ -42,10 +43,10 @@ lib/otama_image.h \
 lib/otama_dbi.h \
 lib/otama_dbi_internal.h \
 lib/otama_image_internal.h \
+lib/otama_kvs.h \
 models/otama_inverted_index_bucket.cpp \
 models/otama_driver_factory.cpp \
 models/otama_variable_byte_code_vector.hpp \
-models/otama_kyotocabinet.hpp \
 models/otama_leveldb.hpp \
 models/otama_fixed_strage.hpp \
 models/otama_inverted_index.hpp \
@@ -82,6 +83,7 @@ lib/otama_variant.h \
 lib/otama_result.h \
 lib/otama_yaml.h \
 lib/otama_dbi.h \
+lib/otama_kvs.h \
 lib/otama_image.h
 
 pkgconfigdir = @pkgconfigdir@

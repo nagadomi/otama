@@ -22,6 +22,9 @@ vlad-benchmark: all
 otama_test: all
 	cd src/tests && $(MAKE) $(AM_MAKEFLAGS) otama_test
 
+gdb: otama_test
+	cd src/tests && LD_LIBRARY_PATH=../.libs gdb ./.libs/otama_test
+
 valgrind: otama_test
 	cd src/tests && \
 	LD_LIBRARY_PATH=../.libs valgrind -v --tool=memcheck --leak-check=full --show-reachable=yes --log-file=./valgrind.log ./.libs/otama_test; \
