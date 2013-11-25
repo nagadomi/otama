@@ -77,9 +77,15 @@ class OtamaKVSTest < Test::Unit::TestCase
       kvs["1"] = "2"
       kvs["2"] = "4"
       kvs["3"] = "6"
+      ksum = 0
+      vsum = 0
       kvs.each do |k, v|
         assert_equal k.to_i * 2, v.to_i
+        ksum += k
+        vsum += v
       end
+      assert_equal ksum, 6
+      assert_equal vsum, 12
     ensure
       kvs.close
     end
