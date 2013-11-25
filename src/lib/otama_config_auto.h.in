@@ -26,6 +26,7 @@
 #define OTAMA_WITH_MYSQL   @otama_mysql@
 #define OTAMA_WITH_UNORDERED_MAP_TR1 @otama_unordered_map_tr1@
 #define OTAMA_WITH_UNORDERED_MAP @otama_unordered_map@
+#define OTAMA_HAS_KVS      OTAMA_WITH_LEVELDB
 
 #define OTAMA_PACKAGE "@PACKAGE@"
 #define OTAMA_VERSION "@VERSION@"

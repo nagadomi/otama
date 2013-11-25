@@ -18,6 +18,7 @@
  */
 
 #include "otama.h"
+#include "otama_kvs.h"
 #include <ruby.h>
 #include <errno.h>
 
@@ -30,6 +31,9 @@ static VALUE cOtama,
 	cOtamaNotImplemented,
 	cOtamaRecord,
 	cOtamaFeatureRaw;
+#if OTAMA_HAS_KVS
+static VALUE cOtamaKVS;
+#endif
 
 static void
 otama_rb_raise(otama_status_t ret)
@@ -209,10 +213,12 @@ otama_rb_initialize(VALUE self, VALUE options)
 	} else if (TYPE(options) == T_STRING) {
 		ret = otama_open(&otama, StringValueCStr(options));
 	} else {
-		rb_raise(cOtamaArgumentError, "wrong option type"); 
+		rb_raise(cOtamaArgumentError, "wrong option type");
+		return Qnil;
 	}
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
+		return Qnil;
 	}
 	DATA_PTR(self) = otama;
 	
@@ -298,6 +304,7 @@ otama_rb_count(VALUE self)
 	ret = otama_count(otama, &count);
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
+		return Qnil;
 	}
 	return INT2FIX(count);
 }
@@ -316,11 +323,13 @@ otama_rb_exists(VALUE self, VALUE id)
 	ret = otama_id_hexstr2bin(&otama_id, StringValuePtr(id));
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
+		return Qnil;
 	}
 	
 	ret = otama_exists(otama, &result, &otama_id);
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
+		return Qnil;
 	}
 	
 	return result == 0 ? Qfalse: Qtrue;
@@ -411,6 +420,7 @@ otama_rb_s_id(VALUE self, VALUE query)
 	}
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
+		return Qnil;
 	}
 	otama_id_bin2hexstr(hexid, &id);
 	
@@ -438,7 +448,7 @@ otama_rb_set(VALUE self, VALUE key, VALUE value)
 	if (ret != OTAMA_STATUS_OK) {
 		otama_variant_pool_free(&pool);
 		otama_rb_raise(ret);
-		return Qfalse;
+		return Qnil;
 	}
 	otama_variant_pool_free(&pool);
 	
@@ -458,7 +468,7 @@ otama_rb_unset(VALUE self, VALUE key)
 	ret = otama_unset(otama, RSTRING_PTR(key));
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
-		return Qfalse;
+		return Qnil;
 	}
 	
 	return Qtrue;
@@ -481,7 +491,7 @@ otama_rb_get(VALUE self, VALUE key)
 	if (ret != OTAMA_STATUS_OK) {
 		otama_variant_pool_free(&pool);
 		otama_rb_raise(ret);
-		return Qfalse;
+		return Qnil;
 	}
 	value = variant2rubyobj(var);
 	otama_variant_pool_free(&pool);	
@@ -508,7 +518,7 @@ otama_rb_invoke(VALUE self, VALUE method, VALUE input)
 	if (ret != OTAMA_STATUS_OK) {
 		otama_variant_pool_free(&pool);
 		otama_rb_raise(ret);
-		return Qfalse;
+		return Qnil;
 	}
 	output = variant2rubyobj(output_var);
 	otama_variant_pool_free(&pool);	
@@ -648,6 +658,7 @@ otama_rb_remove(VALUE self, VALUE id)
 	ret = otama_id_hexstr2bin(&remove_id, StringValuePtr(id));
 	if (ret != OTAMA_STATUS_OK) {
 		otama_rb_raise(ret);
+		return Qnil;
 	}
 	
 	ret = otama_remove(otama, &remove_id);
@@ -783,6 +794,184 @@ otama_raw_rb_dispose(VALUE self)
 	return Qnil;
 }
 
+#if OTAMA_HAS_KVS
+static void
+otama_kvs_rb_free(otama_kvs_t *kvs)
+{
+    if (kvs) {
+		otama_kvs_close(&kvs);
+    }
+}
+
+static VALUE
+otama_kvs_rb_alloc(VALUE klass)
+{
+	return Data_Wrap_Struct(klass, 0, otama_kvs_rb_free, NULL);
+}
+
+static VALUE
+otama_kvs_rb_initialize(VALUE self, VALUE path)
+{
+	otama_kvs_t *kvs = NULL;
+	otama_status_t ret = OTAMA_STATUS_OK;
+	
+	Check_Type(path, T_STRING);
+	StringValue(path);
+	ret = otama_kvs_open(&kvs, StringValuePtr(path));
+	if (ret != OTAMA_STATUS_OK) {
+		otama_rb_raise(ret);
+		return Qnil;
+	}
+	DATA_PTR(self) = kvs;
+	
+	return self;
+}
+
+static VALUE
+otama_kvs_rb_close(VALUE self)
+{
+	otama_kvs_t *kvs = NULL;
+	
+	Data_Get_Struct(self, otama_kvs_t, kvs);
+	OTAMA_CHECK_NULL(kvs);
+	otama_kvs_close(&kvs);
+	DATA_PTR(self) = NULL;
+	
+	return Qnil;
+}
+
+static VALUE
+otama_kvs_rb_s_open(VALUE self, VALUE path)
+{
+    VALUE obj = Data_Wrap_Struct(self, 0, otama_kvs_rb_free, 0);
+
+    if (NIL_P(otama_kvs_rb_initialize(obj, path))) {
+		return Qnil;
+    }
+    if (rb_block_given_p()) {
+        return rb_ensure(rb_yield, obj, otama_kvs_rb_close, obj);
+    }
+	
+	return obj;
+}
+
+static VALUE
+otama_kvs_rb_delete(VALUE self, VALUE key)
+{
+	otama_kvs_t *kvs = NULL;
+	otama_status_t ret;
+	
+	Data_Get_Struct(self, otama_kvs_t, kvs);
+	OTAMA_CHECK_NULL(kvs);
+	Check_Type(key, T_STRING);
+	StringValue(key);
+	ret = otama_kvs_delete(kvs,
+						   RSTRING_PTR(key), RSTRING_LEN(key));
+	if (ret != OTAMA_STATUS_OK) {
+		otama_rb_raise(ret);
+	}
+	return Qnil;
+}
+
+static VALUE
+otama_kvs_rb_set(VALUE self, VALUE key, VALUE value)
+{
+	otama_kvs_t *kvs = NULL;
+	otama_status_t ret;
+
+	if (NIL_P(value)) {
+		return otama_kvs_rb_delete(self, key);
+	}
+	Data_Get_Struct(self, otama_kvs_t, kvs);
+	OTAMA_CHECK_NULL(kvs);
+	Check_Type(key, T_STRING);
+	Check_Type(value, T_STRING);
+	StringValue(key);
+	StringValue(value);
+	ret = otama_kvs_set(kvs,
+						RSTRING_PTR(key), RSTRING_LEN(key),
+						RSTRING_PTR(value), RSTRING_LEN(value));
+	if (ret != OTAMA_STATUS_OK) {
+		otama_rb_raise(ret);
+	}
+	return Qnil;
+}
+
+static VALUE
+otama_kvs_rb_get(VALUE self, VALUE key)
+{
+	otama_kvs_t *kvs = NULL;
+	otama_kvs_value_t *value;
+	otama_status_t ret;
+	VALUE rb_value;
+
+	Data_Get_Struct(self, otama_kvs_t, kvs);
+	OTAMA_CHECK_NULL(kvs);
+	Check_Type(key, T_STRING);
+	StringValue(key);
+	
+	value = otama_kvs_value_alloc();
+	ret = otama_kvs_get(kvs,
+						RSTRING_PTR(key), RSTRING_LEN(key),
+						value);
+	if (ret != OTAMA_STATUS_OK) {
+		if (ret != OTAMA_STATUS_NODATA) {
+			otama_rb_raise(ret);
+		}
+		return Qnil;
+	}
+	rb_value = rb_str_new(otama_kvs_value_ptr(value),
+						  otama_kvs_value_size(value));
+	otama_kvs_value_free(&value);
+	
+	OBJ_TAINT(rb_value);
+	return rb_value;
+}
+
+static int
+kvs_foreach_func(void *user_data,
+				 const void *key, size_t key_len,
+				 const void *value, size_t value_len)
+{
+	rb_yield(rb_assoc_new(rb_str_new((const char *)key, key_len),
+						  rb_str_new((const char *)value, value_len)));
+	return 0;
+}
+
+static VALUE
+otama_kvs_rb_each_pair(VALUE self)
+{
+	otama_kvs_t *kvs = NULL;
+	otama_status_t ret;
+
+	Data_Get_Struct(self, otama_kvs_t, kvs);
+	OTAMA_CHECK_NULL(kvs);
+
+	RETURN_ENUMERATOR(self, 0, 0);
+	ret = otama_kvs_foreach(kvs, kvs_foreach_func, NULL);
+	if (ret != OTAMA_STATUS_OK) {
+		otama_rb_raise(ret);
+		return Qnil;
+	}
+	return self;
+}
+
+static VALUE
+otama_kvs_rb_clear(VALUE self)
+{
+	otama_kvs_t *kvs = NULL;
+	otama_status_t ret;
+	
+	Data_Get_Struct(self, otama_kvs_t, kvs);
+	OTAMA_CHECK_NULL(kvs);
+	ret = otama_kvs_clear(kvs);
+	if (ret != OTAMA_STATUS_OK) {
+		otama_rb_raise(ret);
+	}
+	return Qnil;
+}
+#endif // OTAMA_HAS_KVS
+
 void
 Init_otama(void)
 {
@@ -831,6 +1020,21 @@ Init_otama(void)
 	rb_define_private_method(cOtamaRecord, "initialize", otama_record_rb_initialize, 2);
 	rb_define_method(cOtamaRecord, "id", otama_record_rb_id, 0);
 	rb_define_method(cOtamaRecord, "value", otama_record_rb_value, 0);
+	
+#if OTAMA_HAS_KVS
+	cOtamaKVS = rb_define_class_under(cOtama, "KVS", rb_cObject);
+	rb_define_alloc_func(cOtamaKVS, otama_kvs_rb_alloc);
+	rb_define_singleton_method(cOtamaKVS, "open", otama_kvs_rb_s_open, 1);
+	rb_define_private_method(cOtamaKVS, "initialize", otama_kvs_rb_initialize, 1);
+	rb_define_method(cOtamaKVS, "set", otama_kvs_rb_set, 2);
+	rb_define_method(cOtamaKVS, "get", otama_kvs_rb_get, 1);
+	rb_define_method(cOtamaKVS, "[]=", otama_kvs_rb_set, 2);
+	rb_define_method(cOtamaKVS, "[]", otama_kvs_rb_get, 1);
+	rb_define_method(cOtamaKVS, "each", otama_kvs_rb_each_pair, 0);
+	rb_define_method(cOtamaKVS, "delete", otama_kvs_rb_delete, 1);
+	rb_define_method(cOtamaKVS, "clear", otama_kvs_rb_clear, 0);
+	rb_define_method(cOtamaKVS, "close", otama_kvs_rb_close, 0);
+#endif
 	
 	cOtamaFeatureRaw = rb_define_class_under(cOtama, "FeatureRaw", rb_cObject);
 	rb_define_alloc_func(cOtamaFeatureRaw, otama_raw_rb_alloc);

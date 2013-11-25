@@ -13,4 +13,5 @@ $RUBY $SRCDIR/test.rb $SRCDIR/bovw8k.yaml && \
 $RUBY $SRCDIR/test.rb $SRCDIR/bovw512k.yaml && \
 $RUBY $SRCDIR/test.rb $SRCDIR/bovw512k_iv.yaml && \
 $RUBY $SRCDIR/test_similarity.rb $SRCDIR/bovw512k_nodb.yaml && \
-$RUBY $SRCDIR/test_similarity.rb $SRCDIR/vlad_nodb.yaml
+$RUBY $SRCDIR/test_similarity.rb $SRCDIR/vlad_nodb.yaml && \
+$RUBY $SRCDIR/test_kvs.rb 

@@ -64,7 +64,7 @@ int main(void)
 	signal(SIGSEGV, handle_segv);
 	setup();
 	
-#if OTAMA_WITH_LEVELDB
+#if OTAMA_HAS_KVS
 	otama_test_kvs();
 #endif
 	otama_test_variant();

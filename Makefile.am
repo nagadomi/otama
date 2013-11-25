@@ -9,6 +9,7 @@ ruby/vlad_nodb.yaml \
 ruby/extconf.rb \
 ruby/otama.c \
 ruby/test_similarity.rb \
+ruby/test_kvs.rb \
 ruby/test.rb \
 ruby/test.sh
 

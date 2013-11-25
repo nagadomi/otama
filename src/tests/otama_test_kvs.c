@@ -19,7 +19,7 @@
 
 #undef NDEBUG
 #include "otama.h"
-#if OTAMA_WITH_LEVELDB
+#if OTAMA_HAS_KVS
 #include "otama_kvs.h"
 #include "otama_test.h"
 #include "nv_core.h"
