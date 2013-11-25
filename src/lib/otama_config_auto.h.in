@@ -20,7 +20,6 @@
 #ifndef OTAMA_CONFIG_AUTO_H
 #define OTAMA_CONFIG_AUTO_H
 
-#define OTAMA_WITH_KC      @otama_kc@
 #define OTAMA_WITH_LEVELDB @otama_leveldb@
 #define OTAMA_WITH_PGSQL   @otama_pgsql@
 #define OTAMA_WITH_SQLITE3 @otama_sqlite3@
