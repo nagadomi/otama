@@ -131,13 +131,18 @@ test_setget(void)
 	otama_kvs_value_free(&db_value);
 }
 
+typedef struct {
+	int ksum;
+	int vsum;
+} kv_sum_t;
+
 int
-test_foreach_func(void *user_data,
-				  const void *key, size_t key_len,
-				  const void *value, size_t value_len)
+test_each_pair_func(void *user_data,
+					const void *key, size_t key_len,
+					const void *value, size_t value_len)
 {
 	const int *kp, *vp;
-	int *sum = (int *)user_data;
+	kv_sum_t *sum = (kv_sum_t *)user_data;
 	
 	NV_ASSERT(sum != NULL);
 	NV_ASSERT(key_len == sizeof(int));
@@ -145,33 +150,62 @@ test_foreach_func(void *user_data,
 	kp = (const int *)key;
 	vp = (const int *)value;
 	NV_ASSERT(*kp * 11 == *vp);
-	*sum += *vp;
+	sum->ksum += *kp;
+	sum->vsum += *vp;
+	
+	return 0;
+}
 
+int
+test_each_single_func(void *user_data,
+					  const void *p, size_t len)
+{
+	const int *vp;
+	int *sum = (int *)user_data;
+	
+	NV_ASSERT(sum != NULL);
+	NV_ASSERT(len == sizeof(int));
+	vp = (const int *)p;
+	*sum += *vp;
+	
 	return 0;
 }
 
 void
-test_foreach(void)
+test_each(void)
 {
 	otama_kvs_t *kvs;
-	int i, sum, a;
+	int i, ksum, vsum;
+	kv_sum_t kv_sum;
+	int sum;
 	
 	delete_db();
 	NV_ASSERT(otama_kvs_open(&kvs, DB_PATH) == OTAMA_STATUS_OK);
-	
-	a = 0;
+
+	ksum = vsum = 0;
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+:a)
+#pragma omp parallel for reduction(+: ksum, vsum)
 #endif
 	for (i = 0; i < 100; ++i) {
 		int value = i * 11;
 		NV_ASSERT(otama_kvs_set(kvs, &i, sizeof(i),
 								&value, sizeof(value)) == OTAMA_STATUS_OK);
-		a += value;
+		ksum += i;
+		vsum += value;
 	}
+	kv_sum.ksum = kv_sum.vsum = 0;
+	NV_ASSERT(otama_kvs_each_pair(kvs, test_each_pair_func, &kv_sum) == OTAMA_STATUS_OK);
+	NV_ASSERT(kv_sum.ksum == ksum);
+	NV_ASSERT(kv_sum.vsum == vsum);
+	
 	sum = 0;
-	NV_ASSERT(otama_kvs_foreach(kvs, test_foreach_func, &sum) == OTAMA_STATUS_OK);
-	NV_ASSERT(sum == a);
+	NV_ASSERT(otama_kvs_each_key(kvs, test_each_single_func, &sum) == OTAMA_STATUS_OK);
+	NV_ASSERT(sum == ksum);
+
+	sum = 0;
+	NV_ASSERT(otama_kvs_each_value(kvs, test_each_single_func, &sum) == OTAMA_STATUS_OK);
+	NV_ASSERT(sum == vsum);
+	
 	otama_kvs_close(&kvs);
 }
 
@@ -231,7 +265,7 @@ otama_test_kvs(void)
 	OTAMA_TEST_NAME;
 
 	test_setget();
-	test_foreach();
+	test_each();
 	test_vacuum();
 	test_clear();
 }

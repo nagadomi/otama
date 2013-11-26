@@ -29,9 +29,13 @@ extern "C" {
 
 typedef struct otama_kvs otama_kvs_t;
 typedef struct otama_kvs_value otama_kvs_value_t;
-typedef int (*otama_kvs_callback_f)(void *user_data,
-									const void *key_ptr, size_t key_len,
-									const void *value_ptr, size_t value_len);
+typedef int (*otama_kvs_each_pair_f)(void *user_data,
+									 const void *key_ptr, size_t key_len,
+									 const void *value_ptr, size_t value_len);
+typedef int (*otama_kvs_each_key_f)(void *user_data,
+									const void *key_ptr, size_t key_len);
+typedef int (*otama_kvs_each_value_f)(void *user_data,
+									  const void *value_ptr, size_t value_len);
 
 otama_status_t otama_kvs_open(otama_kvs_t **kvs, const char *filename);
 void otama_kvs_close(otama_kvs_t **kvs);
@@ -46,9 +50,15 @@ otama_status_t otama_kvs_delete(otama_kvs_t *kvs,
 otama_status_t otama_kvs_clear(otama_kvs_t *kvs);
 otama_status_t otama_kvs_vacuum(otama_kvs_t *kvs);
 
-otama_status_t otama_kvs_foreach(otama_kvs_t *kvs,
-								 otama_kvs_callback_f func,
-								 void *user_data);
+otama_status_t otama_kvs_each_pair(otama_kvs_t *kvs,
+								   otama_kvs_each_pair_f func,
+								   void *user_data);
+otama_status_t otama_kvs_each_key(otama_kvs_t *kvs,
+								  otama_kvs_each_key_f func,
+								  void *user_data);
+otama_status_t otama_kvs_each_value(otama_kvs_t *kvs,
+									otama_kvs_each_value_f func,
+									void *user_data);
 
 const void *otama_kvs_value_ptr(otama_kvs_value_t *value);
 size_t otama_kvs_value_size(otama_kvs_value_t *value);

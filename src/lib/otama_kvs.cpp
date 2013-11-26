@@ -151,11 +151,15 @@ otama_kvs_vacuum(otama_kvs_t *kvs)
 }
 
 otama_status_t
-otama_kvs_foreach(otama_kvs_t *kvs,
-				  otama_kvs_callback_f func,
-				  void *user_data)
+otama_kvs_each_pair(otama_kvs_t *kvs,
+					otama_kvs_each_pair_f func,
+					void *user_data)
 {
-	leveldb::Iterator *i = kvs->db->NewIterator(leveldb::ReadOptions());
+	leveldb::ReadOptions ropt;
+	leveldb::Iterator *i;
+	
+	ropt.snapshot = kvs->db->GetSnapshot();
+	i = kvs->db->NewIterator(ropt);
 	for (i->SeekToFirst(); i->Valid(); i->Next()) {
 		leveldb::Slice key = i->key();
 		leveldb::Slice value = i->value();
@@ -167,6 +171,52 @@ otama_kvs_foreach(otama_kvs_t *kvs,
 		}
 	}
 	delete i;
+	kvs->db->ReleaseSnapshot(ropt.snapshot);
+	
+	return OTAMA_STATUS_OK;
+}
+
+otama_status_t
+otama_kvs_each_key(otama_kvs_t *kvs,
+					otama_kvs_each_key_f func,
+					void *user_data)
+{
+	leveldb::ReadOptions ropt;
+	leveldb::Iterator *i;
+	
+	ropt.snapshot = kvs->db->GetSnapshot();
+	i = kvs->db->NewIterator(ropt);
+	for (i->SeekToFirst(); i->Valid(); i->Next()) {
+		leveldb::Slice key = i->key();
+		if ((*func)(user_data, key.data(), key.size())) {
+			break;
+		}
+	}
+	delete i;
+	kvs->db->ReleaseSnapshot(ropt.snapshot);
+	
+	return OTAMA_STATUS_OK;
+}
+
+otama_status_t
+otama_kvs_each_value(otama_kvs_t *kvs,
+					otama_kvs_each_value_f func,
+					void *user_data)
+{
+	leveldb::ReadOptions ropt;
+	leveldb::Iterator *i;
+	
+	ropt.snapshot = kvs->db->GetSnapshot();
+	i = kvs->db->NewIterator(ropt);
+	for (i->SeekToFirst(); i->Valid(); i->Next()) {
+		leveldb::Slice value = i->value();
+		if ((*func)(user_data, value.data(), value.size())) {
+			break;
+		}
+	}
+	delete i;
+	kvs->db->ReleaseSnapshot(ropt.snapshot);
+	
 	return OTAMA_STATUS_OK;
 }
 
