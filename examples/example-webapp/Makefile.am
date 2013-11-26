@@ -1,4 +1,5 @@
-EXTRA_DIST = config.yaml example-webapp.rb make-database.rb add-images.rb \
+EXTRA_DIST = config.yaml example-webapp.rb example-webapp.yaml \
+make-database.rb add-images.rb \
 views/template.erb import.sh README.md Gemfile config.ru
 
 all-local:

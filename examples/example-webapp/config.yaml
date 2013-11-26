@@ -5,7 +5,7 @@ driver:
   name: sim
 #  name: id  
   data_dir: ./data
-  color_weight: 0.35
+#  load_fv: false
 
 database:
   driver: sqlite3

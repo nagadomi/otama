@@ -79,7 +79,7 @@
     <div class="error">
       <%= CGI.escapeHTML(@error_message ? @error_message : "") %>
     </div>
-    <% if (ExampleWebApp::ENABLE_UPLOAD_SEARCH || ExampleWebApp::ENABLE_CREATE) %>
+    <% if (settings.enable_upload_search || settings.enable_insert) %>
     <div>
       <a href="#" id="upload-switch">+ Upload</a>
     </div>
@@ -105,10 +105,10 @@
 	  <tr>
 	    <td></td>
 	    <td>
-	      <% if ExampleWebApp::ENABLE_UPLOAD_SEARCH %>
+	      <% if settings.enable_upload_search %>
 		<input type="submit" value="Search" name="search"/>
 	      <% end %>
-	      <% if ExampleWebApp::ENABLE_CREATE %>
+	      <% if settings.enable_insert %>
 		<input type="submit" value="Add" name="add" onclick="return window.confirm('Are you sure?')"/>
 	      <% end %>
 	    </td>
@@ -152,13 +152,13 @@
 	      <img src="/thumb/<%= CGI.escapeHTML(image_id) %>.jpg"/>
 	    </a>
 	  </div>
-	  <% if (i + 1) % COLUMNS == 0 %>
+	  <% if (i + 1) % settings.columns == 0 %>
 	    <div style="clear:both"></div>
 	  <% end %>
 	<% end %>
       </div>
     <% else %>
-      <% if ExampleWebApp::ENABLE_UPLOAD_SEARCH %>
+      <% if settings.enable_upload_search %>
 	<% if (@query_id) %>
           <h2>query</h2>
 	  <div class="box">
@@ -177,7 +177,7 @@
       <h2>results</h2>
       <div>
 	<% @results.each_with_index do |result, i| %>
-	  <div class="box images" style="background-color: #<%= sprintf("%02x", 255 - (51 - ((i / COLUMNS).to_f / COLUMNS * 51).to_i)) * 3 %>">
+	  <div class="box images" style="background-color: #<%= sprintf("%02x", 255 - (51 - ((i / settings.columns).to_f / settings.columns * 51).to_i)) * 3 %>">
             <div>
 	      <%= sprintf('%f', result.value[:similarity]) %>
 	    </div>
@@ -187,7 +187,7 @@
               </a>
 	    </div>
 	  </div>
-	  <% if (i + 1) % COLUMNS == 0 %>
+	  <% if (i + 1) % settings.columns == 0 %>
 	    <div style="clear:both"></div>
 	  <% end %>
 	<% end %>

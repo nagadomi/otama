@@ -1,0 +1,9 @@
+---
+upload_dir: ./upload
+thumb_dir: ./public/thumb
+enable_upload_search: true
+enable_insert: true
+columns: 6
+rows: 5
+max_upload_size: 10485760
+url_timeout: 10

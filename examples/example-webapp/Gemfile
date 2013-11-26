@@ -1,8 +1,8 @@
 source 'http://rubygems.org'
 
-gem 'gdbm'
 gem 'ffi'
 gem 'sinatra'
+gem 'thin'
 gem 'rmagick'
 gem 'ruby-filemagic'
 
