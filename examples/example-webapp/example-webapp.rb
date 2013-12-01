@@ -34,18 +34,25 @@ class ExampleWebApp < Sinatra::Base
   THUMB_DIR = File.join(ROOT, 'public/thumb')
   MAX_UPLOAD_SIZE = 10 * 1024 * 1024
   URL_TIMEOUT = 10
-  
+
+  def self.get_config(value, default_value)
+    if (value.nil?)
+      default_value
+    else
+      value
+    end
+  end
   def self.load_config
     config = YAML.load_file(APP_CONFIG)
-    set :enable_upload_search, config['enable_upload_search'] || ENABLE_UPLOAD_SEARCH
-    set :enable_insert, config['enable_insert'] || ENABLE_INSERT
-    set :columns, config['columns'] || COLUMNS
-    set :rows, config['rows'] || ROWS
+    set :enable_upload_search, get_config(config['enable_upload_search'],ENABLE_UPLOAD_SEARCH)
+    set :enable_insert, get_config(config['enable_insert'], ENABLE_INSERT)
+    set :columns, get_config(config['columns'], COLUMNS)
+    set :rows, get_config(config['rows'], ROWS)
     set :thumb_size, THUMB_SIZE
-    set :upload_dir, config['upload_dir'] || UPLOAD_DIR
-    set :thumb_dir, config['thumb_dir'] || THUMB_DIR
-    set :max_upload_size, config['max_upload_size'] || MAX_UPLOAD_SIZE
-    set :url_timeout, config['url_timeout'] || URL_TIMEOUT
+    set :upload_dir, get_config(config['upload_dir'], UPLOAD_DIR)
+    set :thumb_dir, get_config(config['thumb_dir'], THUMB_DIR)
+    set :max_upload_size, get_config(config['max_upload_size'], MAX_UPLOAD_SIZE)
+    set :url_timeout, get_config(config['url_timeout'], URL_TIMEOUT)
     set :result_max, settings.columns * settings.rows
   end
   def color_weight_support?
