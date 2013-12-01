@@ -134,6 +134,24 @@ rubyobj2variant_pair(VALUE pair, otama_variant_t *var)
 	return Qnil;
 }
 
+// need better implementation
+static int
+is_binary_string(VALUE str)
+{
+	const char *p;
+	size_t len;
+	
+	p = RSTRING_PTR(str);
+	len = RSTRING_LEN(str);
+	if (rb_str_capacity(str) > len && p[len] != '\0') {
+		return 1;
+	}
+	if (strnlen(p, len) != len) {
+		return 1;
+	}
+	return 0;
+}
+
 static void
 rubyobj2variant(VALUE value, otama_variant_t *var)
 {
@@ -158,10 +176,10 @@ rubyobj2variant(VALUE value, otama_variant_t *var)
 		break;
 	case T_STRING:
 		StringValue(value);
-		if ((int)strlen(RSTRING_PTR(value)) == RSTRING_LEN(value)) {
-			otama_variant_set_string(var, RSTRING_PTR(value));
-		} else {
+		if (is_binary_string(value)) {
 			otama_variant_set_binary(var, RSTRING_PTR(value), RSTRING_LEN(value));
+		} else {
+			otama_variant_set_string(var, RSTRING_PTR(value));
 		}
 		break;
 	case T_SYMBOL:
