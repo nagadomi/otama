@@ -22,6 +22,7 @@
 #include "nv_core.h"
 #include "nv_num.h"
 #include "otama_log.h"
+#include "otama_util.h"
 #include "otama_dbi.h"
 #include "otama_omp_lock.hpp"
 #include "otama_inverted_index_leveldb.hpp"
@@ -316,13 +317,69 @@ InvertedIndexLevelDB::verify_index(void)
 InvertedIndexLevelDB::InvertedIndexLevelDB(otama_variant_t *options)
 	: InvertedIndex(options)
 {
+	otama_variant_t *driver, *value;
+	
+	m_preheat_cache = true;
+	
+	driver = otama_variant_hash_at(options, "driver");
+	if (OTAMA_VARIANT_IS_HASH(driver)) {
+		if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver, "preheat_cache"))) {
+			m_preheat_cache = otama_variant_to_bool(value);
+		}
+	}
+	OTAMA_LOG_DEBUG("driver[preheat_cache] => %s",
+					m_preheat_cache ? "true" : "false");
+}
+
+static int
+heat_file(void *user_data, const char *path)
+{
+	FILE *fp;
+	long len;
+	char *buff;
+
+	fp = fopen(path, "rb");
+	if (fp == NULL) {
+		return 0;
+	}
+	fseek(fp, 0, SEEK_END);
+	len = ftell(fp);
+	buff = nv_alloc_type(char, len);
+	rewind(fp);
+	while (fread(buff, 1, len, fp) > 0) {}
+	fclose(fp);
+	nv_free(buff);
+	
+	return 0;
+}
+
+void
+InvertedIndexLevelDB::preheat_cache_dir(const std::string &dir)
+{
+	otama_file_each(dir.c_str(), heat_file, NULL);
+}
+
+void
+InvertedIndexLevelDB::preheat_cache(void)
+{
+	long t = nv_clock();
+	
+	preheat_cache_dir(metadata_file_name());
+	preheat_cache_dir(inverted_index_file_name());
+	preheat_cache_dir(id_file_name());
+	
+	OTAMA_LOG_DEBUG("preheat_cache %ldms", nv_clock() - t);
 }
 
 otama_status_t
 InvertedIndexLevelDB::open(void)
 {
 	otama_status_t ret = OTAMA_STATUS_OK;
-			
+
+	if (m_preheat_cache) {
+		preheat_cache();
+	}
+	
 	m_metadata.path(metadata_file_name());
 	m_inverted_index.path(inverted_index_file_name());
 	m_ids.path(id_file_name());
@@ -353,7 +410,6 @@ InvertedIndexLevelDB::open(void)
 	}
 	
 	return ret;
-
 }
 		
 otama_status_t

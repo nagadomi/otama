@@ -38,7 +38,7 @@ namespace otama
 	{
 	protected:
 		static const int COUNT_TOPN_MIN = 128;
-		
+		bool m_preheat_cache;
 		LevelDB<int64_t, InvertedIndex::metadata_record_t, 16 * 1048576, 0> m_metadata;
 		LevelDB<int64_t, otama_id_t, 16 * 1048576, 0> m_ids;
 		LevelDB<uint32_t, uint8_t, 0, 64 * 1048576> m_inverted_index;
@@ -86,7 +86,9 @@ namespace otama
 										  const batch_records_t &records);
 
 		bool verify_index(void);
-
+		void preheat_cache(void);
+		void preheat_cache_dir(const std::string &dir);
+		
 	public:
 		InvertedIndexLevelDB(otama_variant_t *options);
 		virtual otama_status_t open(void);

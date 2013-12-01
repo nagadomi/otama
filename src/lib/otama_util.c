@@ -21,15 +21,16 @@
 #include "otama_config.h"
 #include "otama_util.h"
 #if OTAMA_POSIX
-#include <errno.h>
-#include <libgen.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#  include <errno.h>
+#  include <libgen.h>
+#  include <sys/stat.h>
+#  include <sys/types.h>
+#  include <unistd.h>
+#  include <dirent.h>
 #elif OTAMA_WINDOWS
-#include <windows.h>
-#include <process.h>
-#include <direct.h>
+#  include <windows.h>
+#  include <process.h>
+#  include <direct.h>
 #endif
 #include <stdlib.h>
 #include <string.h>
@@ -195,11 +196,112 @@ otama_split_path(char *dir,
 	return 0;
 }
 
-int otama_mkdir(const char *dir)
+int
+otama_mkdir(const char *dir)
 {
 #if OTAMA_POSIX
 	return mkdir(dir, 0755);
 #elif OTAMA_WINDOWS
 	return _mkdir(dir);
+#else
+# error "not implemented"
+#endif
+}
+
+int
+otama_file_each(const char *dir_, otama_file_each_f func, void *user_data)
+{
+#if OTAMA_POSIX
+	DIR *dirp;
+	char path[PATH_MAX];
+	char dir[PATH_MAX];
+	size_t len;
+	struct dirent *ent;
+	int syserror = 0, ret;
+	
+	strncpy(dir, dir_, sizeof(dir));
+	len = strlen(dir);
+	if (len > 1 && dir[len] == '/') {
+		dir[len] = '\0';
+	}
+	
+	dirp = opendir(dir);
+	if (dirp == NULL) {
+		return -1;
+	}
+	while ((ent = readdir(dirp)) != NULL) {
+		if (ent->d_type == DT_REG) {
+			nv_snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
+			ret = (*func)(user_data, path);
+			if (ret != 0) {
+				break;
+			}
+		} else if (ent->d_type == DT_DIR
+				   && strcmp(ent->d_name, ".") != 0 
+				   && strcmp(ent->d_name, "..") != 0)
+		{
+			nv_snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
+			ret = otama_file_each(path, func, user_data);
+			if (ret != 0) {
+				syserror = ret;
+				break;
+			}
+		} else {
+			// ignore symlinks
+		}
+	}
+	closedir(dirp);
+	
+	return syserror;
+	
+#elif OTAMA_WINDOWS
+// temporary implement
+// have not been tested
+#if 0	
+	struct _finddata_t ent;
+	int syserror = 0, ret;
+	intptr_t dirp;
+	size_t len;
+	char path[_MAX_PATH];
+	char spec[_MAX_PATH + 4];
+	char dir[PATH_MAX];
+	
+	strncpy(dir, dir_, sizeof(dir));
+	len = strlen(dir);
+	if (len > 1 && (dir[len] == '/' || dir[len] == '\\')) {
+		dir[len] = '\0';
+	}
+	nv_snprintf(spec, sizeof(spec), "%s\\*", dir);
+	
+    dirp = _findfirst(spec, &ent);
+    if (dirp == -1) {
+		return -1;
+	}
+    do {
+		if ((ent.attrib & _A_SUBDIR)
+			&& strcmp(ent.name, ".") != 0 
+			&& strcmp(ent.name, "..") != 0)
+		{
+			nv_snprintf(path, sizeof(path), "%s\\%s", dir, ent.name);
+			ret = otama_file_each(path, func, user_data);
+			if (ret != 0) {
+				syserror = ret;
+				break;
+			}
+		} else if (ent.attrib & _A_NORMAL) {
+			nv_snprintf(path, sizeof(path), "%s\\%s", dir, ent.name);
+			ret = (*func)(user_data, path);
+			if (ret != 0) {
+				break;
+			}
+		}
+    } while (_findnext(dirp, &ent) == 0);
+    _findclose(dirp);
+	
+	return syserror;
+#endif
+	return 0;
+#else
+# error "not implemented"
 #endif
 }
