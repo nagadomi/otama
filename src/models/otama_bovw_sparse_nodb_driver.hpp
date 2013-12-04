@@ -35,7 +35,7 @@ namespace otama
 		typedef nv_bovw_ctx<BIT, nv_bovw_dummy_color_t> T;
 		nv_bovw_rerank_method_t m_rerank_method;
 		T *m_ctx;
-		class IdfW: public InvertedIndex::ScoreFunction {
+		class IdfW: public InvertedIndex::WeightFunction {
 		public:
 			T *ctx;
 			nv_bovw_rerank_method_t rerank_method;
@@ -128,8 +128,8 @@ namespace otama
 			return ret;
 		}
 
-		virtual InvertedIndex::ScoreFunction *
-		feature_similarity_func(void)
+		virtual InvertedIndex::WeightFunction *
+		feature_weight_func(void)
 		{
 			return &m_idf_w;
 		}
@@ -139,7 +139,7 @@ namespace otama
 						   const FT *fv2,
 						   otama_variant_t *options)
 		{
-			InvertedIndex::ScoreFunction *score_func = this->feature_similarity_func();
+			InvertedIndex::WeightFunction *weight_func = this->feature_weight_func();
 			InvertedIndex::sparse_vec_t intersection;
 			InvertedIndex::sparse_vec_t::const_iterator it;
 			float norm1 = 0.0f, norm2 = 0.0f, dot = 0.0f;
@@ -149,15 +149,15 @@ namespace otama
 								  std::back_inserter(intersection));
 			
 			for (it = fv1->begin(); it != fv1->end(); ++it) {
-				float w = (*score_func)(*it);
+				float w = (*weight_func)(*it);
 				norm1 += w * w;
 			}
 			for (it = fv2->begin(); it != fv2->end(); ++it) {
-				float w = (*score_func)(*it);				
+				float w = (*weight_func)(*it);				
 				norm2 += w * w;
 			}
 			for (it = intersection.begin(); it != intersection.end(); ++it) {
-				float w = (*score_func)(*it);
+				float w = (*weight_func)(*it);
 				dot += w * w;
 			}
 			

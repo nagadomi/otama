@@ -491,7 +491,7 @@ InvertedIndexLevelDB::search(otama_result_t **results, int n,
 		for (j = 0; j < (int)v.size(); ++j) {
 			similarity_temp_t hi;
 			hi.no = v[j];
-			hi.w = (*m_similarity_func)(h);
+			hi.w = (*m_weight_func)(h);
 			hi.w *= hi.w;
 			hit.push_back(hi);
 		}

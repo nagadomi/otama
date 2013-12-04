@@ -67,7 +67,7 @@ namespace otama
 			*to = *from;
 		}
 		
-		virtual InvertedIndex::ScoreFunction *feature_similarity_func(void) = 0;
+		virtual InvertedIndex::WeightFunction *feature_weight_func(void) = 0;
 
 		virtual float
 		feature_similarity(const T *fv1,
@@ -226,7 +226,7 @@ namespace otama
 			if (ret != OTAMA_STATUS_OK) {
 				return ret;
 			}
-			m_inverted_index->similarity_func(this->feature_similarity_func());
+			m_inverted_index->weight_func(this->feature_weight_func());
 			m_inverted_index->prefix(this->name());
 			ret = m_inverted_index->open();
 			

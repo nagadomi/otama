@@ -203,7 +203,7 @@ InvertedIndexBucket::search(
 			for (j = nos.begin(); j != nos.end(); ++j) {
 				similarity_temp_t hi;
 				hi.no = *j;
-				hi.w = (*m_similarity_func)(hash);
+				hi.w = (*m_weight_func)(hash);
 				hi.w *= hi.w;
 				hit.push_back(hi);
 			}

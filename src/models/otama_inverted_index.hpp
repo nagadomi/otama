@@ -32,7 +32,7 @@ namespace otama
 	class InvertedIndex
 	{
 	public:
-		class ScoreFunction {
+		class WeightFunction {
 		public:
 			virtual float operator ()(uint32_t x)
 			{
@@ -57,7 +57,7 @@ namespace otama
 		std::string m_data_dir;
 		std::string m_prefix;
 		int m_hit_threshold;
-		ScoreFunction *m_similarity_func;
+		WeightFunction *m_weight_func;
 		
 		static inline void
 		set_result(otama_result_t *results, int i,
@@ -78,7 +78,7 @@ namespace otama
 			float dot = 0.0f;
 			sparse_vec_t::const_iterator i;
 			for (i = vec.begin(); i != vec.end(); ++i) {
-				float w = (*m_similarity_func)(*i);
+				float w = (*m_weight_func)(*i);
 				dot += w * w;
 			}
 			return sqrtf(dot);
@@ -123,7 +123,7 @@ namespace otama
 				}
 			}
 		}
-		void similarity_func(ScoreFunction *func) { m_similarity_func = func; }
+		void weight_func(WeightFunction *func) { m_weight_func = func; }
 		void prefix(const std::string &prefix) { m_prefix = prefix; }
 		
 		virtual otama_status_t open(void) = 0;

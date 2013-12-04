@@ -36,7 +36,7 @@ namespace otama
 		typedef nv_bovw_ctx<BIT, nv_bovw_dummy_color_t> T;
 		nv_bovw_rerank_method_t m_rerank_method;
 		
-		class IdfW: public InvertedIndex::ScoreFunction {
+		class IdfW: public InvertedIndex::WeightFunction {
 		public:
 			T *ctx;
 			nv_bovw_rerank_method_t rerank_method;
@@ -126,8 +126,8 @@ namespace otama
 			return ret;
 		}
 
-		virtual InvertedIndex::ScoreFunction *
-		feature_similarity_func(void)
+		virtual InvertedIndex::WeightFunction *
+		feature_weight_func(void)
 		{
 			return &m_idf_w;
 		}
@@ -137,7 +137,7 @@ namespace otama
 						   const FT *fv2,
 						   otama_variant_t *options)
 		{
-			InvertedIndex::ScoreFunction *score_func = this->feature_similarity_func();
+			InvertedIndex::WeightFunction *score_func = this->feature_weight_func();
 			InvertedIndex::sparse_vec_t intersection;
 			InvertedIndex::sparse_vec_t::const_iterator it;
 			float norm1 = 0.0f, norm2 = 0.0f, dot = 0.0f;
