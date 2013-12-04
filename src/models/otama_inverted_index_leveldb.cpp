@@ -454,8 +454,8 @@ typedef struct {
 } hit_tmp_t;
 
 otama_status_t
-InvertedIndexLevelDB::search_cosine(otama_result_t **results, int n,
-									const sparse_vec_t &vec)
+InvertedIndexLevelDB::search(otama_result_t **results, int n,
+							 const sparse_vec_t &vec)
 {
 	int l, result_max, i;
 	long t;

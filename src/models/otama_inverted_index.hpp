@@ -137,8 +137,8 @@ namespace otama
 		} search_method_e;
 		
 		virtual otama_status_t
-		search_cosine(otama_result_t **results, int n,
-					  const sparse_vec_t &vec) = 0;
+		search(otama_result_t **results, int n,
+			   const sparse_vec_t &vec) = 0;
 		
 		virtual int64_t hash_count(uint32_t hash) = 0;
 		virtual int64_t count(void) = 0;

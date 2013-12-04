@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_BOVW_FIXED_TABLE_HPP
-#define OTAMA_BOVW_FIXED_TABLE_HPP
+#ifndef OTAMA_BOVW_FIXED_DRIVER_HPP
+#define OTAMA_BOVW_FIXED_DRIVER_HPP
 
 #include "otama_fixed_driver.hpp"
 #include "nv_bovw.hpp"

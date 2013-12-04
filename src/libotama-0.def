@@ -69,6 +69,7 @@ otama_log_get_level
 otama_log_set_file
 otama_log_set_level
 otama_mkdir
+otama_file_each
 otama_mmap_close
 otama_mmap_create
 otama_mmap_extend
@@ -148,3 +149,17 @@ otama_drop_database
 otama_drop_index
 otama_vacuum_index
 otama_invoke
+otama_kvs_open
+otama_kvs_close
+otama_kvs_set
+otama_kvs_get
+otama_kvs_delete
+otama_kvs_clear
+otama_kvs_vacuum
+otama_kvs_each_pair
+otama_kvs_each_key
+otama_kvs_each_value
+otama_kvs_value_ptr
+otama_kvs_value_size
+otama_kvs_value_alloc
+otama_kvs_value_free

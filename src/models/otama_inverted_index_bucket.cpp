@@ -165,7 +165,7 @@ InvertedIndexBucket::set(int64_t no,
 }
 
 otama_status_t
-InvertedIndexBucket::search_cosine(
+InvertedIndexBucket::search(
 	otama_result_t **results, int n,
 	const sparse_vec_t &vec
 	)

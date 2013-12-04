@@ -46,7 +46,7 @@ namespace otama
 		
 		virtual void
 		feature_to_sparse_vec(InvertedIndex::sparse_vec_t &svec,// must be sort
-									const T *fixed) = 0;
+							  const T *fv) = 0;
 		
 		virtual otama_status_t
 		feature_search(otama_result_t **results, int n,
@@ -57,8 +57,7 @@ namespace otama
 			
 			feature_to_sparse_vec(svec, query);
 			
-			return m_inverted_index->search_cosine(results, n, svec);
-			//return m_inverted_index->search_count(results, n, svec);
+			return m_inverted_index->search(results, n, svec);
 		}
 
 		virtual void
@@ -71,41 +70,14 @@ namespace otama
 		virtual InvertedIndex::ScoreFunction *feature_similarity_func(void) = 0;
 
 		virtual float
-		feature_similarity(const T *fixed1,
-					  const T *fixed2,
-					  otama_variant_t *options)
-		{
-			InvertedIndex::ScoreFunction *similarity_func = this->feature_similarity_func();
-			InvertedIndex::sparse_vec_t svec1, svec2, intersection;
-			InvertedIndex::sparse_vec_t::const_iterator it;
-			float norm1 = 0.0f, norm2 = 0.0f, dot = 0.0f;
-			
-			feature_to_sparse_vec(svec1, fixed1);
-			feature_to_sparse_vec(svec2, fixed2);
-			std::set_intersection(svec1.begin(), svec1.end(),
-								  svec2.begin(), svec2.end(),
-								  std::back_inserter(intersection));
-			
-			for (it = svec1.begin(); it != svec1.end(); ++it) {
-				float w = (*similarity_func)(*it);
-				norm1 += w * w;
-			}
-			for (it = svec2.begin(); it != svec2.end(); ++it) {
-				float w = (*similarity_func)(*it);				
-				norm2 += w * w;
-			}
-			for (it = intersection.begin(); it != intersection.end(); ++it) {
-				float w = (*similarity_func)(*it);
-				dot += w * w;
-			}
-			
-			return dot / (sqrtf(norm1) * sqrtf(norm2));
-		}
+		feature_similarity(const T *fv1,
+						   const T *fv2,
+						   otama_variant_t *options) = 0;
 		
 		virtual otama_status_t
 		try_load_local(otama_id_t *id,
 					   uint64_t seq,
-					   T *fixed)
+					   T *fv)
 		{
 			return OTAMA_STATUS_NODATA;
 		}
@@ -157,16 +129,16 @@ namespace otama
 					int ng;
 					const char *id = db_records[i].id_str.c_str();
 					const char *vec = db_records[i].vec_str.c_str();
-					T fixed;
+					T fv;
 					records[i].no = db_records[i].no;
 					
 					otama_id_hexstr2bin(&records[i].id, id);
-					ng = this->feature_deserialize(&fixed, vec);
+					ng = this->feature_deserialize(&fv, vec);
 					if (ng) {
 						ret = OTAMA_STATUS_ASSERTION_FAILURE;
 						OTAMA_LOG_ERROR("invalid vector string. id(%s)", id);
 					} else {
-						feature_to_sparse_vec(records[i].vec, &fixed);
+						feature_to_sparse_vec(records[i].vec, &fv);
 					}
 				}
 			}
@@ -232,7 +204,7 @@ namespace otama
 		using DBIDriver<T>::search;
 		
 		InvertedIndexDriver(otama_variant_t *options)
-			: DBIDriver<T>(options)
+		: DBIDriver<T>(options)
 		{
 			m_inverted_index = new IV(options);
 		}

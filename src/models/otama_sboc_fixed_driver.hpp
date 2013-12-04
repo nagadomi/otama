@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_SBOC_FIXED_TABLE_HPP
-#define OTAMA_SBOC_FIXED_TABLE_HPP
+#ifndef OTAMA_SBOC_FIXED_DRIVER_HPP
+#define OTAMA_SBOC_FIXED_DRIVER_HPP
 
 #include "nv_color_boc.h"
 #include "otama_fixed_driver.hpp"

@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_LMCA_FIXED_TABLE_HPP
-#define OTAMA_LMCA_FIXED_TABLE_HPP
+#ifndef OTAMA_LMCA_FIXED_DRIVER_HPP
+#define OTAMA_LMCA_FIXED_DRIVER_HPP
 
 #include "otama_fixed_driver.hpp"
 #include "nv_lmca.hpp"

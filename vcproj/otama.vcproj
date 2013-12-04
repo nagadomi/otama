@@ -327,6 +327,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\src\models\otama_bovw_sparse_nodb_driver.hpp"
+					>
+				</File>
+				<File
 					RelativePath="..\src\models\otama_dbi_driver.hpp"
 					>
 				</File>
@@ -379,11 +383,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\src\models\otama_inverted_index_map.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\src\models\otama_inverted_index_map.hpp"
+					RelativePath="..\src\models\otama_inverted_index_leveldb.cpp"
 					>
 				</File>
 				<File
@@ -444,6 +444,14 @@
 				</File>
 				<File
 					RelativePath="..\src\lib\otama_dbi.h"
+					>
+				</File>
+				<File
+					RelativePath="..\src\lib\otama_kvs.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\src\lib\otama_kvs.h"
 					>
 				</File>
 				<File

@@ -191,6 +191,18 @@
 				RelativePath="..\src\tests\otama_test_variant.c"
 				>
 			</File>
+			<File
+				RelativePath="..\src\tests\otama_test_kvs.c"
+				>
+			</File>
+			<File
+				RelativePath="..\src\tests\otama_test_vlad.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\src\tests\otama_test_bovw.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="ヘッダー ファイル"

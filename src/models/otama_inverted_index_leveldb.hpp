@@ -96,8 +96,8 @@ namespace otama
 		virtual otama_status_t clear(void);
 		virtual otama_status_t vacuum(void);
 
-		virtual otama_status_t search_cosine(otama_result_t **results, int n,
-											 const sparse_vec_t &vec);
+		virtual otama_status_t search(otama_result_t **results, int n,
+									  const sparse_vec_t &vec);
 
 		virtual int64_t count(void);
 		virtual bool sync(void);

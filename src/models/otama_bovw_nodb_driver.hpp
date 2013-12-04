@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_BOVW_NODB_TABLE_HPP
-#define OTAMA_BOVW_NODB_TABLE_HPP
+#ifndef OTAMA_BOVW_NODB_DRIVER_HPP
+#define OTAMA_BOVW_NODB_DRIVER_HPP
 
 #include "otama_nodb_driver.hpp"
 #include "nv_bovw.hpp"
@@ -33,8 +33,6 @@ namespace otama
 	protected:
 		typedef nv_bovw_ctx<BIT, COLOR_CLASS> T;
 		typedef typename T::dense_t FT;
-		
-		static const int COLOR_NN = 3;
 		static inline float DEFAULT_COLOR_WEIGHT() { return 0.32f; }
 		
 		float m_color_weight;
