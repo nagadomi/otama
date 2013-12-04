@@ -23,6 +23,7 @@
 #include "otama_lmca_fixed_driver.hpp"
 #include "otama_bovw_inverted_index_driver.hpp"
 #include "otama_bovw_nodb_driver.hpp"
+#include "otama_bovw_sparse_nodb_driver.hpp"
 #include "otama_vlad_nodb_driver.hpp"
 #include "otama_sboc_nodb_driver.hpp"
 #include "otama_sboc_fixed_driver.hpp"
@@ -70,7 +71,7 @@ otama::createDriver(otama_variant_t *config)
 		return new SBOCNoDBDriver(config);
 	}
 	else if (strcmp(driver_name, "id_nodb") == 0) {
-		return new BOVWNoDBDriver<NV_BOVW_BIT512K, nv_bovw_dummy_color_t>(config);		
+		return new BOVWSparseNoDBDriver<NV_BOVW_BIT512K>(config);
 	}
 	
 	// bovw-rectangle-feature
@@ -98,7 +99,7 @@ otama::createDriver(otama_variant_t *config)
 	}
 	else if (strcmp(driver_name, "bovw512k_nodb") == 0)
 	{
-		return new BOVWNoDBDriver<NV_BOVW_BIT512K, nv_bovw_dummy_color_t>(config);
+		return new BOVWSparseNoDBDriver<NV_BOVW_BIT512K>(config);
 	}
 	else if (strcmp(driver_name, "bovw2k_boc") == 0) {
 		return new BOVWFixedDriver<NV_BOVW_BIT2K, nv_color_boc_t>(config);
