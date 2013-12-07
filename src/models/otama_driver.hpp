@@ -54,32 +54,32 @@ namespace otama
 #endif
 		virtual std::string name(void) = 0;
 		virtual T *feature_new(void) = 0;
-		virtual void feature_free(T*fixed) = 0;
+		virtual void feature_free(T*fv) = 0;
 		virtual otama_feature_raw_free_t feature_free_func(void) = 0;
 		
-		virtual void feature_extract(T *fixed, nv_matrix_t *image) = 0;
-		virtual int feature_extract_file(T *fixed, const char *file,
+		virtual void feature_extract(T *fv, nv_matrix_t *image) = 0;
+		virtual int feature_extract_file(T *fv, const char *file,
 										 otama_variant_t *options) = 0;
-		virtual int feature_extract_data(T *fixed, const void *data, size_t data_len,
+		virtual int feature_extract_data(T *fv, const void *data, size_t data_len,
 										 otama_variant_t *options) = 0;
-		virtual int feature_deserialize(T *fixed, const char *s) = 0;
-		virtual char *feature_serialize(const T *fixed) = 0;
+		virtual int feature_deserialize(T *fv, const char *s) = 0;
+		virtual char *feature_serialize(const T *fv) = 0;
 		virtual void feature_serialized_free(char *s)	{ nv_free(s); }
 		virtual void feature_copy(T *to, const T*from) = 0;
 		
 		virtual otama_status_t feature_search(otama_result_t **results, int n,
 											  const T *query,
 											  otama_variant_t *options) = 0;
-		virtual float feature_similarity(const T *fixed1, const T *fixed2,
+		virtual float feature_similarity(const T *fv1, const T *fv2,
 										  otama_variant_t *options) = 0;
 		
-		virtual otama_status_t try_load_local(otama_id_t *id,
-											  uint64_t seq,
-											  T *fixed) = 0;
+		virtual otama_status_t load_local(otama_id_t *id,
+										  uint64_t seq,
+										  T *fv) = 0;
 		virtual otama_status_t load(const otama_id_t *id,
-									T *fixed) = 0;
+									T *fv) = 0;
 		virtual otama_status_t insert(const otama_id_t *id,
-									  const T *fixed) = 0;
+									  const T *fv) = 0;
 		virtual otama_status_t exists_master(bool &e, uint64_t &seq,
 											 const otama_id_t *id) = 0;
 		virtual otama_status_t update_flag(const otama_id_t *id, uint8_t flag) = 0;
@@ -217,7 +217,7 @@ namespace otama
 		
 		inline void
 		set_result(otama_result_t *results, int i,
-						const otama_id_t *id, float cosine)
+				   const otama_id_t *id, float cosine)
 		{
 			otama_variant_t *hash = otama_result_value(results, i);
 			otama_variant_t *c;
@@ -227,151 +227,175 @@ namespace otama
 			otama_variant_set_float(c, cosine);
 			otama_result_set_id(results, i, id);
 		}
-		
+
 		otama_status_t
-		extract(otama_id_t *id,
-				bool &has_id,
-				T *fixed,
-				bool &has_feature,
-				bool &exist,
-				otama_variant_t *data)
+		get_id(otama_id_t *id, otama_variant_t *data)
 		{
 			otama_variant_t *file, *blob, *image, *vid, *feature_string, *raw;
 			otama_status_t ret;
-
-			has_id = false;
-			has_feature = false;
-			exist = false;
 			
 			if (OTAMA_VARIANT_IS_STRING(file = otama_variant_hash_at(data, "file"))) {
 				ret = otama_id_file(id, otama_variant_to_string(file));
 				if (ret != OTAMA_STATUS_OK) {
 					return ret;
 				}
-				has_id = true;
-				if (try_load(id, fixed) != OTAMA_STATUS_OK) {
-					if (feature_extract_file(fixed, otama_variant_to_string(file), data) != 0) {
-						return OTAMA_STATUS_SYSERROR;				
-					}
-				} else {
-					exist = true;
-				}
-				has_feature = true;
 			} else if (OTAMA_VARIANT_IS_BINARY(blob = otama_variant_hash_at(data, "data"))) {
 				otama_id_data(id, 
 							  otama_variant_to_binary_ptr(blob),
 							  otama_variant_to_binary_len(blob));
-				has_id = true;
-				if (try_load(id, fixed) != OTAMA_STATUS_OK) {
-					if (feature_extract_data(fixed,
-											 otama_variant_to_binary_ptr(blob),
-											 otama_variant_to_binary_len(blob),
-											 data) != 0)
-					{
-						return OTAMA_STATUS_INVALID_ARGUMENTS;
-					}
-				} else {
-					exist = true;
-				}
-				has_feature = true;
 			} else if (OTAMA_VARIANT_IS_POINTER(image =	otama_variant_hash_at(data, "image"))) {
 				otama_image_t *p = (otama_image_t *)otama_variant_to_pointer(image);
-				
 				if (p) {
 					if (p->has_id) {
 						memcpy(id, &p->id, sizeof(*id));
-						has_id = true;
 					} else {
+						// TODO: otama_image_t repairs
 						otama_id_data(id, 
 									  p->image->v,
 									  (size_t)p->image->list_step *
 									  p->image->list * sizeof(float));
-						has_id = true;
 					}
-					if (try_load(id, fixed) != OTAMA_STATUS_OK) {
-						feature_extract(fixed, p->image);
-					} else {
-						exist = true;
-					}
-					has_feature = true;
 				} else {
 					return OTAMA_STATUS_INVALID_ARGUMENTS;
 				}
 			} else if (OTAMA_VARIANT_IS_STRING(feature_string = otama_variant_hash_at(data, "string"))) {
-				has_id = false;
-				if (feature_deserialize(fixed, otama_variant_to_string(feature_string)) != 0) {
-					return OTAMA_STATUS_INVALID_ARGUMENTS;
-				}
-				has_feature = true;
-			} else if (OTAMA_VARIANT_IS_POINTER(raw =
-												otama_variant_hash_at(data, "raw")))
+				return OTAMA_STATUS_NODATA;
+			} else if (OTAMA_VARIANT_IS_POINTER(raw = otama_variant_hash_at(data, "raw")))
 			{
-				const otama_feature_raw_t *p = (const otama_feature_raw_t*)otama_variant_to_pointer(raw);
-				has_id = false;
-				if (p) {
-					feature_copy(fixed, (const T *)(p->raw));
-					has_feature = true;
+				return OTAMA_STATUS_NODATA;
+			} else if (!OTAMA_VARIANT_IS_NULL(vid = otama_variant_hash_at(data, "id"))) {
+				if (OTAMA_VARIANT_IS_STRING(vid)) {
+					const char *s = otama_variant_to_string(vid);
+					size_t len = strlen(s);
+					if (len == OTAMA_ID_HEXSTR_LEN - 1) {
+						if (otama_id_hexstr2bin(id, s) != OTAMA_STATUS_OK) {
+							return OTAMA_STATUS_INVALID_ARGUMENTS;
+						}
+					} else if (len == sizeof(*id)) {
+						// binary id
+						memcpy(id, s, sizeof(*id));
+					} else {
+						return OTAMA_STATUS_INVALID_ARGUMENTS;
+					}
+				} else if (OTAMA_VARIANT_IS_BINARY(vid)) {
+					if (otama_variant_to_binary_len(vid) != sizeof(*id)) {
+						return OTAMA_STATUS_INVALID_ARGUMENTS;
+					}
+					memcpy(id, otama_variant_to_binary_ptr(vid), sizeof(*id));
 				} else {
 					return OTAMA_STATUS_INVALID_ARGUMENTS;
-				}
-			} else if (OTAMA_VARIANT_IS_STRING(vid = otama_variant_hash_at(data, "id"))) {
-				if (otama_id_hexstr2bin(id, otama_variant_to_string(vid)) != OTAMA_STATUS_OK) {
-					return OTAMA_STATUS_INVALID_ARGUMENTS;
-				}
-				has_id = true;
-				if (try_load(id, fixed, true) != OTAMA_STATUS_OK) {
-					has_feature = false;
-				} else {
-					exist = true;
-					has_feature = true;
-				}
-			} else if (OTAMA_VARIANT_IS_BINARY(vid))	{
-				if (otama_variant_to_binary_len(vid) != sizeof(*id)) {
-					return OTAMA_STATUS_INVALID_ARGUMENTS;
-				}
-				memcpy(id, otama_variant_to_binary_ptr(vid), sizeof(*id));
-				has_id = true;
-				if (try_load(id, fixed, true) != OTAMA_STATUS_OK) {
-					has_feature = false;
-				} else {
-					exist = true;
-					has_feature = true;
 				}
 			} else {
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
-	
+			
+			return OTAMA_STATUS_OK;
+		}
+
+		otama_status_t
+		get_feature(T *fv, otama_variant_t *data)
+		{
+			otama_variant_t *file, *blob, *image, *vid, *feature_string, *raw;
+			
+			if (OTAMA_VARIANT_IS_STRING(file = otama_variant_hash_at(data, "file"))) {
+				if (feature_extract_file(fv, otama_variant_to_string(file), data) != 0) {
+					return OTAMA_STATUS_SYSERROR;				
+				}
+			} else if (OTAMA_VARIANT_IS_BINARY(blob = otama_variant_hash_at(data, "data"))) {
+				if (feature_extract_data(fv,
+										 otama_variant_to_binary_ptr(blob),
+										 otama_variant_to_binary_len(blob),
+										 data) != 0)
+				{
+					return OTAMA_STATUS_INVALID_ARGUMENTS;
+				}
+			} else if (OTAMA_VARIANT_IS_POINTER(image =	otama_variant_hash_at(data, "image"))) {
+				otama_image_t *p = (otama_image_t *)otama_variant_to_pointer(image);
+				
+				if (p) {
+					feature_extract(fv, p->image);
+				} else {
+					return OTAMA_STATUS_INVALID_ARGUMENTS;
+				}
+			} else if (OTAMA_VARIANT_IS_STRING(feature_string = otama_variant_hash_at(data, "string"))) {
+				if (feature_deserialize(fv, otama_variant_to_string(feature_string)) != 0) {
+					return OTAMA_STATUS_INVALID_ARGUMENTS;
+				}
+			} else if (OTAMA_VARIANT_IS_POINTER(raw =
+												otama_variant_hash_at(data, "raw")))
+			{
+				const otama_feature_raw_t *p = (const otama_feature_raw_t*)otama_variant_to_pointer(raw);
+				if (p) {
+					feature_copy(fv, (const T *)(p->raw));
+				} else {
+					return OTAMA_STATUS_INVALID_ARGUMENTS;
+				}
+			} else if (!OTAMA_VARIANT_IS_NULL(vid = otama_variant_hash_at(data, "id"))) {
+				return OTAMA_STATUS_NODATA;
+			} else {
+				return OTAMA_STATUS_INVALID_ARGUMENTS;
+			}
+			return OTAMA_STATUS_OK;
+		}
+		
+		otama_status_t
+		extract(otama_id_t *id,
+				bool &has_id,
+				T *fv,
+				bool &has_feature,
+				bool &exist,
+				otama_variant_t *data)
+		{
+			otama_status_t ret;
+			
+			has_feature = false;
+			exist = false;
+			has_id = false;
+			
+			if (id) {
+				ret = get_id(id, data);
+				if (ret == OTAMA_STATUS_OK) {
+					has_id = true;
+				}
+				if (!(ret == OTAMA_STATUS_OK || ret == OTAMA_STATUS_NODATA)) {
+					return ret;
+				}
+			}
+			if (has_id && (m_load_fv || !OTAMA_VARIANT_IS_NULL(otama_variant_hash_at(data, "id")))) {
+				ret = try_load(id, fv);
+				if (ret == OTAMA_STATUS_OK) {
+					exist = true;
+					has_feature = true;
+					return OTAMA_STATUS_OK;
+				}
+				if (!(ret == OTAMA_STATUS_OK || ret == OTAMA_STATUS_NODATA)) {
+					return ret;
+				}
+			}
+			ret = get_feature(fv, data);
+			if (ret == OTAMA_STATUS_OK) {
+				has_feature = true;
+			}
+			if (!(ret == OTAMA_STATUS_OK || ret == OTAMA_STATUS_NODATA)) {
+				return ret;
+			}
 			return OTAMA_STATUS_OK;
 		}
 
 		otama_status_t
 		try_load(otama_id_t *id,
-				 T *fixed,
+				 T *fv,
 				 bool force = false)
 		{
-			uint64_t seq;
-			bool e;
-			otama_status_t sret;
+			uint64_t seq = 0;
+			otama_status_t ret;
 			
-			if (m_load_fv || force) {
-				sret = exists_master(e, seq, id);
-				
-				if (sret != OTAMA_STATUS_OK) {
-					return sret;
+			ret = load_local(id, seq, fv);
+			if (ret != OTAMA_STATUS_OK) {
+				ret = load(id, fv);
+				if (ret != OTAMA_STATUS_OK) {
+					return ret;
 				}
-				if (e) {
-					sret = try_load_local(id, seq, fixed);
-					if (sret != OTAMA_STATUS_OK) {
-						sret = load(id, fixed);
-						if (sret != OTAMA_STATUS_OK) {
-							return sret;
-						}
-					}
-				} else {
-					return OTAMA_STATUS_NODATA;
-				}
-			} else {
-				return OTAMA_STATUS_NODATA;
 			}
 			
 			return OTAMA_STATUS_OK;
@@ -442,23 +466,29 @@ namespace otama
 		{
 			otama_status_t ret;
 			otama_id_t id;
-			T *fixed = this->feature_new();
+			T *fv = this->feature_new();
 			bool has_id, has_feature, exist;
 			char *s;
-	
-			ret = extract(&id, has_id, fixed, has_feature, exist, data);
+
+			if (m_load_fv
+				|| !OTAMA_VARIANT_IS_NULL(otama_variant_hash_at(data, "id")))
+			{
+				ret = extract(&id, has_id, fv, has_feature, exist, data);
+			} else {
+				ret = extract(NULL, has_id, fv, has_feature, exist, data);
+			}
 			if (ret != OTAMA_STATUS_OK) {
-				feature_free(fixed);
+				feature_free(fv);
 				return ret;
 			}
 			if (!has_feature) {
-				feature_free(fixed);
+				feature_free(fv);
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
-			s = feature_serialize(fixed);
+			s = feature_serialize(fv);
 			features = std::string(s);
 			feature_serialized_free(s);
-			feature_free(fixed);
+			feature_free(fv);
 			
 			return ret;
 		}
@@ -468,22 +498,27 @@ namespace otama
 		{
 			otama_status_t ret;
 			otama_id_t id;
-			T *pfixed = this->feature_new();
+			T *pfv = this->feature_new();
 			bool has_id, has_feature, exist;
 
 			*raw = NULL;
-			
-			ret = extract(&id, has_id, pfixed, has_feature, exist, data);
+			if (m_load_fv
+				|| !OTAMA_VARIANT_IS_NULL(otama_variant_hash_at(data, "id")))
+			{
+				ret = extract(&id, has_id, pfv, has_feature, exist, data);
+			} else {
+				ret = extract(NULL, has_id, pfv, has_feature, exist, data);
+			}
 			if (ret != OTAMA_STATUS_OK) {
-				feature_free(pfixed);
+				feature_free(pfv);
 				return ret;
 			}
 			if (!has_feature) {
-				feature_free(pfixed);
+				feature_free(pfv);
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
 			*raw = new otama_feature_raw_t;
-			(*raw)->raw = (void *)pfixed;
+			(*raw)->raw = (void *)pfv;
 			(*raw)->self_free = this->feature_free_func();
 			
 			return ret;
@@ -494,28 +529,28 @@ namespace otama
 			   otama_variant_t *data)
 		{
 			otama_status_t ret;
-			T *fixed = this->feature_new();
+			T *fv = this->feature_new();
 			bool has_id, has_feature, exist;
 
-			ret = extract(id, has_id, fixed, has_feature, exist, data);
+			ret = extract(id, has_id, fv, has_feature, exist, data);
 			if (ret != OTAMA_STATUS_OK) {
-				feature_free(fixed);
+				feature_free(fv);
 				return ret;
 			}
 			if (!(has_id && has_feature)) {
-				feature_free(fixed);
+				feature_free(fv);
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
 			if (!exist) {
-				ret = insert(id, fixed);
+				ret = insert(id, fv);
 				if (ret != OTAMA_STATUS_OK) {
-					feature_free(fixed);
+					feature_free(fv);
 					return ret;
 				}
 			} else {
 				ret = update_flag(id, 0);
 			}
-			feature_free(fixed);
+			feature_free(fv);
 	
 			return ret;
 		}
@@ -525,26 +560,31 @@ namespace otama
 			   otama_variant_t *query)
 		{
 			otama_id_t id;
-			T *fixed = this->feature_new();
+			T *fv = this->feature_new();
 			bool has_id, has_feature, exist;
 			otama_status_t ret;
 			
 			if (!OTAMA_VARIANT_IS_HASH(query)) {
-				feature_free(fixed);
+				feature_free(fv);
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
-			
-			ret = extract(&id, has_id, fixed, has_feature, exist, query);
+			if (m_load_fv
+				|| !OTAMA_VARIANT_IS_NULL(otama_variant_hash_at(query, "id")))
+			{
+				ret = extract(&id, has_id, fv, has_feature, exist, query);
+			} else {
+				ret = extract(NULL, has_id, fv, has_feature, exist, query);
+			}
 			if (ret != OTAMA_STATUS_OK) {
-				feature_free(fixed);
+				feature_free(fv);
 				return ret;
 			}
 			if (!has_feature) {
-				feature_free(fixed);
+				feature_free(fv);
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
-			ret = feature_search(results, n, fixed, query);
-			feature_free(fixed);
+			ret = feature_search(results, n, fv, query);
+			feature_free(fv);
 			
 			return ret;
 		}
@@ -561,41 +601,65 @@ namespace otama
 			  otama_variant_t *query,
 			  otama_variant_t *data)
 		{
-			T *fixed1, *fixed2;
+			
+			T *fv1, *fv2;
 			otama_id_t id1, id2;
 			bool has_feature1, has_feature2, has_id1, has_id2, exist1, exist2;
 			otama_status_t ret;
+			bool fv1_free = true, fv2_free = true;
+			otama_variant_t *raw;
 			
 			if (!OTAMA_VARIANT_IS_HASH(query) || !OTAMA_VARIANT_IS_HASH(data)) {
 				return OTAMA_STATUS_INVALID_ARGUMENTS;
 			}
-			fixed1 = this->feature_new();
-			ret = extract(&id1, has_id1, fixed1, has_feature1, exist1, query);
-			if (ret != OTAMA_STATUS_OK) {
-				feature_free(fixed1);
-				return ret;
-			}
-			if (!has_feature1) {
-				feature_free(fixed1);
-				return OTAMA_STATUS_INVALID_ARGUMENTS;
+			if (OTAMA_VARIANT_IS_POINTER(raw = otama_variant_hash_at(query, "raw"))) {
+				otama_feature_raw_t *p = (otama_feature_raw_t*)otama_variant_to_pointer(raw);
+				if (p) {
+					fv1 = (T *)p->raw;
+					fv1_free = false;
+				} else {
+					return OTAMA_STATUS_INVALID_ARGUMENTS;
+				}
+			} else {
+				fv1 = this->feature_new();
+				ret = extract(&id1, has_id1, fv1, has_feature1, exist1, query);
+				if (ret != OTAMA_STATUS_OK) {
+					feature_free(fv1);
+					return ret;
+				}
+				if (!has_feature1) {
+					feature_free(fv1);
+					return OTAMA_STATUS_INVALID_ARGUMENTS;
+				}
 			}
 			
-			fixed2 = this->feature_new();
-			ret = extract(&id2, has_id2, fixed2, has_feature2, exist2, data);
-			if (ret != OTAMA_STATUS_OK) {
-				feature_free(fixed1);
-				feature_free(fixed2);
-				return ret;
+			if (OTAMA_VARIANT_IS_POINTER(raw = otama_variant_hash_at(data, "raw"))) {
+				otama_feature_raw_t *p = (otama_feature_raw_t*)otama_variant_to_pointer(raw);
+				if (p) {
+					fv2 = (T *)p->raw;
+					fv2_free = false;
+				} else {
+					if (fv1_free) feature_free(fv1);
+					return OTAMA_STATUS_INVALID_ARGUMENTS;
+				}
+			} else {
+				fv2 = this->feature_new();
+				ret = extract(&id2, has_id2, fv2, has_feature2, exist2, data);
+				if (ret != OTAMA_STATUS_OK) {
+					if (fv1_free) feature_free(fv1);
+					feature_free(fv2);
+					return ret;
+				}
+				if (!has_feature2) {
+					if (fv1_free) feature_free(fv1);
+					feature_free(fv2);
+					return OTAMA_STATUS_INVALID_ARGUMENTS;
+				}
 			}
-			if (!has_feature2) {
-				feature_free(fixed1);
-				feature_free(fixed2);
-				return OTAMA_STATUS_INVALID_ARGUMENTS;
-			}
-			*v = feature_similarity(fixed1, fixed2, query);
-				
-			feature_free(fixed1);
-			feature_free(fixed2);
+			*v = feature_similarity(fv1, fv2, query);
+
+			if (fv1_free) feature_free(fv1);
+			if (fv2_free) feature_free(fv2);
 			
 			return OTAMA_STATUS_OK;
 		}

@@ -124,13 +124,13 @@ namespace otama
 		
 		virtual otama_status_t
 		insert(const otama_id_t *id,
-			   const T *fixed)
+			   const T *fv)
 		{
 			otama_status_t ret = OTAMA_STATUS_OK;
 			otama_dbi_result_t *res;
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
-			char *fv = this->feature_serialize(fixed);
-			size_t esc_len = strlen(fv) * 2 + 3;
+			char *fv_str = this->feature_serialize(fv);
+			size_t esc_len = strlen(fv_str) * 2 + 3;
 			char *fv_esc = nv_alloc_type(char, esc_len);
 			
 #ifdef _OPENMP
@@ -144,7 +144,7 @@ namespace otama
 				"    WHERE NOT EXISTS(SELECT otama_id FROM %s WHERE otama_id='%s');",
 				this->table_name().c_str(),
 				id_hexstr,
-				otama_dbi_escape(m_dbi, fv_esc, esc_len, fv),
+				otama_dbi_escape(m_dbi, fv_esc, esc_len, fv_str),
 				this->table_name().c_str(),
 				id_hexstr
 				);
@@ -153,7 +153,7 @@ namespace otama
 			} else {
 				otama_dbi_result_free(&res);
 			}
-			nv_free(fv);
+			nv_free(fv_str);
 			nv_free(fv_esc);
 			
 			return ret;
@@ -161,7 +161,7 @@ namespace otama
 		
 		virtual otama_status_t
 		load(const otama_id_t *id,
-			 T *fixed)
+			 T *fv)
 		{
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
 			otama_dbi_result_t *res;
@@ -182,14 +182,14 @@ namespace otama
 					const char *vec = otama_dbi_result_string(res, 0);
 					int ng;
 					
-					ng = this->feature_deserialize(fixed, vec);
+					ng = this->feature_deserialize(fv, vec);
 					if (ng != 0) {
 						OTAMA_LOG_ERROR("invalid vector string. id(%s), size(%zd), vec(%s)",
 										id_hexstr, strlen(vec), vec);
 						ret = OTAMA_STATUS_ASSERTION_FAILURE;
 					}
 				} else {
-					ret = OTAMA_STATUS_ASSERTION_FAILURE;
+					ret = OTAMA_STATUS_NODATA;
 				}
 				otama_dbi_result_free(&res);
 			}

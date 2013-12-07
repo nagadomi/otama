@@ -349,7 +349,7 @@ public:
 		return 0;
 	}
 
-	int
+	inline int
 	deserialize(nv_matrix_t *vlad, int j, const char *s)
 	{
 		nv_matrix_t *vec = nv_deserialize_matrix(s);
@@ -363,7 +363,7 @@ public:
 		return 0;
 	}
 	
-	char *
+	inline char *
 	serialize(const nv_matrix_t *vlad, int j)
 	{
 		nv_matrix_t *mat = nv_matrix_alloc(vlad->n, 1);
@@ -376,7 +376,7 @@ public:
 		return s;
 	}
 	
-	float
+	inline float
 	similarity(const nv_matrix_t *v1, int j1,
 			   const nv_matrix_t *v2, int j2)
 	{

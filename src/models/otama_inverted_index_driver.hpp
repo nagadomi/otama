@@ -75,9 +75,9 @@ namespace otama
 						   otama_variant_t *options) = 0;
 		
 		virtual otama_status_t
-		try_load_local(otama_id_t *id,
-					   uint64_t seq,
-					   T *fv)
+		load_local(otama_id_t *id,
+				   uint64_t seq,
+				   T *fv)
 		{
 			return OTAMA_STATUS_NODATA;
 		}

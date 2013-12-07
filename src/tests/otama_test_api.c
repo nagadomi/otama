@@ -216,6 +216,11 @@ test_insert_pull(const char *config)
 	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
 	NV_ASSERT(count == 2);
+	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG_NEGA) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
+	NV_ASSERT(count == 2);
 
 	otama_close(&otama);
 }

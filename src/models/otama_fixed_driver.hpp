@@ -56,15 +56,15 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		try_load_local(otama_id_t *id,
-					   uint64_t seq,
-					   T *fixed)
+		load_local(otama_id_t *id,
+				   uint64_t seq,
+				   T *fixed)
 		{
-			if (m_mmap->try_load(id, seq, fixed) != OTAMA_STATUS_OK) {
-				otama_status_t ret = this->load(id, fixed);
-				if (ret != OTAMA_STATUS_OK) {
-					return ret;
-				}
+			otama_status_t ret;
+			
+			ret = m_mmap->load(id, seq, fixed);
+			if (ret != OTAMA_STATUS_OK) {
+				return ret;
 			}
 			return OTAMA_STATUS_OK;
 		}

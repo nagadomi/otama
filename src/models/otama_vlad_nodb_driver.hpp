@@ -97,8 +97,8 @@ namespace otama
 		
 		virtual float
 		feature_similarity(const nv_matrix_t *fv1,
-							const nv_matrix_t *fv2,
-							otama_variant_t *options)
+						   const nv_matrix_t *fv2,
+						   otama_variant_t *options)
 		{
 			return m_ctx.similarity(fv1, 0, fv2, 0);
 		}
