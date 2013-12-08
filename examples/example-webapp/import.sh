@@ -9,6 +9,6 @@ renice 19 -p $$
 otama_create_database -c ./config.yaml
 otama_import -c ./config.yaml $filename > id.txt
 otama_pull -c ./config.yaml
-rm -f example.gdbm
+rm -f ./data/example.ldb
 ruby make-database.rb
 
