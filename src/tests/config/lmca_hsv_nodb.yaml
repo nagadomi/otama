@@ -1,0 +1,6 @@
+---
+namespace: test
+
+driver:
+  name: lmca_hsv_nodb
+  metric: ./config/lmca_hsv.mat

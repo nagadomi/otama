@@ -4,7 +4,6 @@ namespace: test
 driver:
   name: bovw512k_iv
   data_dir: ./data
-  color_weight: 0.2
   
 database:
   driver: sqlite3

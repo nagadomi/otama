@@ -256,14 +256,11 @@ otama_test_bovw(void)
 {
 	OTAMA_TEST_NAME;
 	
-	printf("-- hist\n");
 	otama_test_bovw_tpl<nv_bovw_ctx<NV_BOVW_BIT2K, nv_color_boc_t> >();
 	otama_test_bovw_tpl<nv_bovw_ctx<NV_BOVW_BIT8K, nv_color_boc_t> >();
 	otama_test_bovw_tpl<nv_bovw_ctx<NV_BOVW_BIT512K, nv_color_boc_t> >();
 	otama_test_bovw_tpl<nv_bovw_ctx<NV_BOVW_BIT2K, nv_color_sboc_t> >();
 	otama_test_bovw_tpl<nv_bovw_ctx<NV_BOVW_BIT8K, nv_color_sboc_t> >();
 	otama_test_bovw_tpl<nv_bovw_ctx<NV_BOVW_BIT512K, nv_color_sboc_t> >();
-
 	otama_test_bovw_svec_tpl<nv_bovw_ctx<NV_BOVW_BIT512K, nv_color_sboc_t> >();	
-	printf("-- rect\n");
 }
