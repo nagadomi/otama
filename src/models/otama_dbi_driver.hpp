@@ -233,8 +233,7 @@ namespace otama
 			OTAMA_LOG_DEBUG("database[port]     => %s", port);
 			OTAMA_LOG_DEBUG("database[name]     => %s", dbname);
 			OTAMA_LOG_DEBUG("database[user]     => %s", username);
-			OTAMA_LOG_DEBUG("database[password] => * length(%d)",
-							password == NULL ? 0 : strlen(password));
+			OTAMA_LOG_DEBUG("database[password] => *", 0);
 		}
 
 		otama_status_t
