@@ -29,25 +29,30 @@ otama_test_kvs.c
 noinst_DATA = config/lmca_vlad.mat config/lmca_hsv.mat config/lmca_vladhsv.mat
 
 config/lmca_vlad.mat:
+	$(MKDIR_P) $(builddir)/config
 	gzip -d -c $(srcdir)/config/lmca_vlad.mat.gz > $(builddir)/config/lmca_vlad.mat
 
 config/lmca_hsv.mat:
+	$(MKDIR_P) $(builddir)/config
 	gzip -d -c $(srcdir)/config/lmca_hsv.mat.gz > $(builddir)/config/lmca_hsv.mat
 
 config/lmca_vladhsv.mat:
+	$(MKDIR_P) $(builddir)/config
 	gzip -d -c $(srcdir)/config/lmca_vladhsv.mat.gz > $(builddir)/config/lmca_vladhsv.mat
 
 check-local:
-	$(MKDIR_P) ./data
-	$(MKDIR_P) ./data/node1
-	$(MKDIR_P) ./data/node2
+	$(MKDIR_P) $(builddir)/data
+	$(MKDIR_P) $(builddir)/data/node1
+	$(MKDIR_P) $(builddir)/data/node2
 	$(builddir)/otama_test$(EXEEXT)
 
 all-local:
-	$(MKDIR_P) ./data
-	$(MKDIR_P) ./data/node1
-	$(MKDIR_P) ./data/node2
+	$(MKDIR_P) $(builddir)/data
+	$(MKDIR_P) $(builddir)/data/node1
+	$(MKDIR_P) $(builddir)/data/node2
 
 clean-local:
-	rm -fr ./data/*
-
+	rm -fr $(builddir)/data/*
+	rm -f $(builddir)/config/lmca_vladhsv.mat
+	rm -f $(builddir)/config/lmca_hsv.mat
+	rm -f $(builddir)/config/lmca_vlad.mat

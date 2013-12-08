@@ -58,10 +58,12 @@ LT_INIT([win32-dll])
 AC_CHECK_LIB(m, main)
 AC_CHECK_LIB(stdc++, main)
 
+otama_debug=0
 AX_ARG_ENABLE(debug,
         AS_HELP_STRING([--enable-debug], [enable assert and -g ]), [no],
 #	[CFLAGS="$CFLAGS -g -D_GLIBCXX_DEBUG "], # bug
-	[CFLAGS="$CFLAGS -g "],
+	[otama_debug=1
+	CFLAGS="$CFLAGS -g "],
         [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -funsafe-loop-optimizations -DNDEBUG "])
 
 otama_native=0
@@ -103,11 +105,13 @@ AX_ARG_ENABLE(popcnt,
         [CFLAGS="$CFLAGS -mpopcnt -D__POPCNT__=1 "],
         [])
 
+otama_openmp=0
 AX_ARG_ENABLE(openmp,
         AS_HELP_STRING([--disable-openmp], [ disable OpenMP ]), [yes],
         [AC_CHECK_HEADERS(
 		[omp.h],
-		[CFLAGS="$CFLAGS -fopenmp -D_GLIBCXX_PARALLEL "
+		[otama_openmp=1
+		CFLAGS="$CFLAGS -fopenmp -D_GLIBCXX_PARALLEL "
 		AC_CHECK_LIB(gomp, omp_get_num_procs)
 		AC_CHECK_LIB(pthread, pthread_create)],
 		[AC_MSG_ERROR(*** omp.h not found. please either install gcc version 4.2 or any later version or use the --disable-openmp option..)])
@@ -229,6 +233,8 @@ AC_SUBST(otama_leveldb)
 AC_SUBST(otama_sqlite3)
 AC_SUBST(otama_pgsql)
 AC_SUBST(otama_mysql)
+AC_SUBST(otama_debug)
+AC_SUBST(otama_openmp)
 AC_SUBST(otama_unordered_map_tr1)
 AC_SUBST(otama_unordered_map)
 AC_SUBST(OTAMA_MAJOR)
@@ -255,3 +261,13 @@ Makefile
 ])
 
 AC_OUTPUT
+echo "Otama $OTAMA_MAJOR.$OTAMA_MINOR.$OTAMA_REVISION:"
+echo "   Compiling with Native Instruction : $otama_native"
+echo "   Compiling with OpenMP ........... : $otama_openmp"
+echo "   Compiling with Debug ............ : $otama_debug"
+echo "   Building SQLite3 Driver ......... : $otama_sqlite3"
+echo "   Building PostgreSQL Driver ...... : $otama_pgsql"
+echo "   Building MySQL Driver ........... : $otama_mysql"
+echo "   Building LevelDB Driver ......... : $otama_leveldb"
+echo "   Using ruby ...................... : $RUBY"
+
