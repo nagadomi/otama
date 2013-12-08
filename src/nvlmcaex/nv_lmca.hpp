@@ -100,23 +100,40 @@ private:
 			 const float *v2)
 	{
 		int i;
-		float dist;
+		NV_ALIGNED(float,  dist, 32);
 		
+#if NV_ENABLE_AVX
+		NV_ASSERT(LMCA_DIM % 8 == 0);
+		__m256 u = _mm256_setzero_ps();
+		__m128 a;
+		
+		for (i = 0; i < LMCA_DIM; i += 8) {
+			__m256 x = _mm256_load_ps(&v1[i]);
+			__m256 h = _mm256_load_ps(&v2[i]);
+			x = _mm256_sub_ps(x, h);
+			x = _mm256_mul_ps(x, x);
+			h = _mm256_hadd_ps(x, x);
+			u = _mm256_add_ps(u, h);
+		}
+		u = _mm256_hadd_ps(u, u);
+		a = _mm_add_ps(_mm256_extractf128_ps(u, 0), _mm256_extractf128_ps(u, 1));
+		_mm_store_ss(&dist, a);
+		
+#elif NV_ENABLE_SSE
 		NV_ASSERT(LMCA_DIM % 4 == 0);
-#if NV_ENABLE_SSE
 		__m128 u = _mm_setzero_ps();
 		NV_ALIGNED(float, mm[4], 16);
 		
 		for (i = 0; i < LMCA_DIM; i += 4) {
-			//__m128 x = _mm_sub_ps(_mm_loadu_ps(&v1[i]), *(const __m128 *)&v2[i]);
 			__m128 x = _mm_sub_ps(_mm_load_ps(&v1[i]), *(const __m128 *)&v2[i]);
 			u = _mm_add_ps(u, _mm_mul_ps(x, x));
 		}
 		_mm_store_ps(mm, u);
 		dist = mm[0] + mm[1] + mm[2] + mm[3];
+		
 #else
 		dist = 0.0f;
-		for (i = 0; i < LMCA_DIM; i += 4) {
+		for (i = 0; i < LMCA_DIM; i+= 4) {
 			dist += (v1[i] - v2[i]) * (v1[i] - v2[i]);
 		}
 #endif
