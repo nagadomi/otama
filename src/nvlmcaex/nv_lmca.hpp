@@ -133,7 +133,7 @@ private:
 		
 #else
 		dist = 0.0f;
-		for (i = 0; i < LMCA_DIM; i+= 4) {
+		for (i = 0; i < LMCA_DIM; ++i) {
 			dist += (v1[i] - v2[i]) * (v1[i] - v2[i]);
 		}
 #endif
