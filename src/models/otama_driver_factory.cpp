@@ -21,6 +21,7 @@
 #include "otama_driver_factory.hpp"
 #include "otama_bovw_fixed_driver.hpp"
 #include "otama_lmca_fixed_driver.hpp"
+#include "otama_lmca_nodb_driver.hpp"
 #include "otama_bovw_inverted_index_driver.hpp"
 #include "otama_bovw_nodb_driver.hpp"
 #include "otama_bovw_sparse_nodb_driver.hpp"
@@ -39,11 +40,11 @@ otama::createDriver(otama_variant_t *config)
 	otama_variant_t *driver = otama_variant_hash_at(config, "driver");
 	
 	if (!OTAMA_VARIANT_IS_HASH(config) || !OTAMA_VARIANT_IS_HASH(driver)) {
-		OTAMA_LOG_ERROR("invalid config format.", 0);
+		OTAMA_LOG_ERROR("Invalid config format: `driver' element not found.", 0);
 		return NULL;
 	}
 	if ((driver_name = otama_variant_hash_at3(driver, "name")) == NULL) {
-        OTAMA_LOG_ERROR("DRIVER is NULL.", 0);
+        OTAMA_LOG_ERROR("Invalid config format: `driver.name' is NULL.", 0);
         return NULL;
 	}
 	
@@ -73,9 +74,6 @@ otama::createDriver(otama_variant_t *config)
 	else if (strcmp(driver_name, "id_nodb") == 0) {
 		return new BOVWSparseNoDBDriver<NV_BOVW_BIT512K>(config);
 	}
-	
-	// bovw-rectangle-feature
-	// removed
 	
 	// bovw-gradient-histogram 
 	else if (strcmp(driver_name, "bovw2k") == 0) {
@@ -163,12 +161,10 @@ otama::createDriver(otama_variant_t *config)
 	{
 		return new VLADNoDBDriver<NV_VLAD_512>(config);
 	}
-	// vald 128
 	else if (strcmp(driver_name, "vlad128_nodb") == 0)
 	{
 		return new VLADNoDBDriver<NV_VLAD_128>(config);
 	}
-	// vald 512
 	else if (strcmp(driver_name, "vlad512_nodb") == 0)
 	{
 		return new VLADNoDBDriver<NV_VLAD_512>(config);
@@ -183,7 +179,7 @@ otama::createDriver(otama_variant_t *config)
 	{
 		return new SBOCNoDBDriver(config);
 	}
-	// vlad_lmca
+	// lmca
 	else if (strcmp(driver_name, "lmca_vlad") == 0)
 	{
 		return new LMCAFixedDriver<NV_LMCA_FEATURE_VLAD, nv_lmca_empty_color_t>(config);
@@ -203,6 +199,27 @@ otama::createDriver(otama_variant_t *config)
 	else if (strcmp(driver_name, "lmca_vlad_colorcode") == 0)
 	{
 		return new LMCAFixedDriver<NV_LMCA_FEATURE_VLAD_COLORCODE, nv_lmca_colorcode_t>(config);
+	}
+	
+	else if (strcmp(driver_name, "lmca_vlad_nodb") == 0)
+	{
+		return new LMCANoDBDriver<NV_LMCA_FEATURE_VLAD, nv_lmca_empty_color_t>(config);
+	}
+	else if (strcmp(driver_name, "lmca_hsv_nodb") == 0)
+	{
+		return new LMCANoDBDriver<NV_LMCA_FEATURE_HSV, nv_lmca_empty_color_t>(config);
+	}
+	else if (strcmp(driver_name, "lmca_vlad_hsv_nodb") == 0)
+	{
+		return new LMCANoDBDriver<NV_LMCA_FEATURE_VLAD_HSV, nv_lmca_hsv_t>(config);
+	}
+	else if (strcmp(driver_name, "lmca_vladhsv_nodb") == 0)
+	{
+		return new LMCANoDBDriver<NV_LMCA_FEATURE_VLADHSV, nv_lmca_empty_color_t>(config);
+	}
+	else if (strcmp(driver_name, "lmca_vlad_colorcode_nodb") == 0)
+	{
+		return new LMCANoDBDriver<NV_LMCA_FEATURE_VLAD_COLORCODE, nv_lmca_colorcode_t>(config);
 	}
 	
 	OTAMA_LOG_ERROR("Can't locate `%s' driver.", driver_name);
