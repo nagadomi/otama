@@ -35,6 +35,7 @@ otama_test_similarity_api(const char *config)
 
 	OTAMA_TEST_NAME;
 	printf("config: %s\n", config);
+	fflush(stdout);
 	
 	NV_ASSERT(otama_open(&otama, config) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_similarity_file(otama, &similarity1, OTAMA_TEST_IMG, OTAMA_TEST_IMG_NEGA)

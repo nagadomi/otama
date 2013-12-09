@@ -445,6 +445,7 @@ otama_test_api(const char *config)
 {
 	OTAMA_TEST_NAME;
 	printf("config: %s\n", config);
+	fflush(stdout);
 	test_open(config);
 	test_drop_create(config);
 	test_white(config);	
