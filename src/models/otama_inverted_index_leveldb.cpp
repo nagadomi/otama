@@ -167,14 +167,8 @@ InvertedIndexLevelDB::init_index_buffer(index_buffer_t &index_buffer,
 				}
 				
 				std::vector<uint8_t> empty_rec;
-				last_no_buffer.insert(
-					std::make_pair<uint32_t, int64_t>(
-						hash,
-						last_no));
-				index_buffer.insert(
-					std::make_pair<uint32_t, std::vector<uint8_t> >(
-						hash,
-						empty_rec));
+				last_no_buffer.insert(std::make_pair(hash, last_no));
+				index_buffer.insert(std::make_pair(hash, empty_rec));
 			}
 		}
 	}
@@ -516,7 +510,7 @@ InvertedIndexLevelDB::search(otama_result_t **results, int n,
 		std::vector<hit_tmp_t> hit_tmp;
 		bool has_error = false;
 				
-		for (typename std::vector<similarity_temp_t>::const_iterator j = hits[0].begin();
+		for (std::vector<similarity_temp_t>::const_iterator j = hits[0].begin();
 			 j != hits[0].end(); ++j)
 		{
 			if (j->no == no) {

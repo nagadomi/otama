@@ -301,8 +301,7 @@ otama_variant_array_find_or_create(otama_variant_t *var, int64_t index)
 
 	if (it == var->value.a.array->end()) {
 		ret = var->value.a.array->insert(
-			make_pair<int64_t, otama_variant_t *>(index,
-												  otama_variant_pool_new(var->pool)));
+			make_pair(index, otama_variant_pool_new(var->pool)));
 		it = ret.first;
 	}
 	if (index > var->value.a.count) {
