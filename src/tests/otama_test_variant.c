@@ -90,7 +90,7 @@ test_to_string(void)
 	value2 = otama_variant_array_at(value, 1);
 	otama_variant_set_string(value2, "value2");
 
-	otama_variant_print(stderr, root);
+	otama_variant_print(stdout, root);
 	otama_variant_pool_free(&pool);
 }
 
