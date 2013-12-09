@@ -134,6 +134,18 @@ rubyobj2variant_pair(VALUE pair, otama_variant_t *var)
 	return Qnil;
 }
 
+static size_t
+my_strnlen(const char *s, size_t maxlen)
+{
+	size_t len;
+	for (len = 0; len < maxlen; ++len) {
+		if (s[len] == '\0') {
+			return len;
+		}
+	}
+	return maxlen;
+}
+
 // need better implementation
 static int
 is_binary_string(VALUE str)
@@ -146,7 +158,7 @@ is_binary_string(VALUE str)
 	if (rb_str_capacity(str) > len && p[len] != '\0') {
 		return 1;
 	}
-	if (strnlen(p, len) != len) {
+	if (my_strnlen(p, len) != len) {
 		return 1;
 	}
 	return 0;
