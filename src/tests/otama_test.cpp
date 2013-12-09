@@ -73,7 +73,7 @@ int main(void)
 	otama_test_vlad();
 	otama_test_bovw();
 #endif
-#if OTAMA_WTIH_SQLITE3	
+#if OTAMA_WITH_SQLITE3
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/sim.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/id.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/color.yaml");
