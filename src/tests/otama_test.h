@@ -25,7 +25,7 @@
 extern "C" {
 #endif	
 
-#define OTAMA_TEST_NAME (printf("---- %s\n", __FUNCTION__))
+#define OTAMA_TEST_NAME {printf("---- %s\n", __FUNCTION__); fflush(stdout);}
 #define OTAMA_TEST_EPSILON (FLT_EPSILON * 4.0f)
 #define OTAMA_TEST_EQ1(v) (!(fabsf((v) - 1.0f) > 0.00001f))
 #define OTAMA_TEST_EQ0(v) (!(fabsf(v) > 0.00001f))
