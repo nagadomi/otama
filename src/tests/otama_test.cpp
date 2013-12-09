@@ -80,7 +80,6 @@ int main(void)
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw2k.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw2k_sboc.yaml");	
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw8k.yaml");
-	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw8k_sboc.yaml");	
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/sboc.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad.yaml");
