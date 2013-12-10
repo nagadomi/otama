@@ -24,6 +24,7 @@
 #include "nv_color_boc.h"
 #include <vector>
 #include <queue>
+#include <functional>
 
 extern "C" nv_matrix_t nv_color_boc_static;
 
