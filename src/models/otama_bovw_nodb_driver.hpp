@@ -43,19 +43,24 @@ namespace otama
 		virtual FT *
 		feature_new(void)
 		{
-			return new FT;
+			void *p;
+			int ret = nv_aligned_malloc(&p, 16, sizeof(FT));
+			if (ret) {
+				return NULL;
+			}
+			
+			return (FT *)p;
 		}
 		
 		virtual void
 		feature_free(FT *fixed)
 		{
-			delete fixed;
+			nv_aligned_free(fixed);			
 		}
 		static void
 		feature_raw_free(void *p)
 		{
-			FT *ft = (FT *)p;
-			delete ft;
+			nv_aligned_free(p);			
 		}
 		virtual otama_feature_raw_free_t
 		feature_free_func(void)
