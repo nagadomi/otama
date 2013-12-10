@@ -1,47 +1,25 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama", "otama.vcproj", "{D7C4C9A4-22DF-4977-9117-F165F09A0CF1}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 2013 for Windows Desktop
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama", "otama.vcxproj", "{D7C4C9A4-22DF-4977-9117-F165F09A0CF1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_import", "otama_import.vcproj", "{75EE4809-4F30-4BA6-A76C-21E6C4ECAE30}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_import", "otama_import.vcxproj", "{75EE4809-4F30-4BA6-A76C-21E6C4ECAE30}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_create_database", "otama_create_database.vcproj", "{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_create_database", "otama_create_database.vcxproj", "{F54D01E6-F41F-4CFF-A1AC-463F71D5684D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_drop_database", "otama_drop_database.vcproj", "{E7086C56-AE09-484F-8665-0E64D7E4085C}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_drop_database", "otama_drop_database.vcxproj", "{E7086C56-AE09-484F-8665-0E64D7E4085C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_pull", "otama_pull.vcproj", "{A304D07C-2FC7-448F-A270-D538D5166A2F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_pull", "otama_pull.vcxproj", "{A304D07C-2FC7-448F-A270-D538D5166A2F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_test", "otama_test.vcproj", "{A4A27F3C-9B8B-4488-9B68-23A066DB8663}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_test", "otama_test.vcxproj", "{A4A27F3C-9B8B-4488-9B68-23A066DB8663}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_vacuum_index", "otama_vacuum_index.vcproj", "{1553B031-FEA9-4C25-9A42-DB31DD3EAE4E}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_vacuum_index", "otama_vacuum_index.vcxproj", "{1553B031-FEA9-4C25-9A42-DB31DD3EAE4E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_drop_index", "otama_drop_index.vcproj", "{5B2A608B-1B8F-428F-9466-6568595E85CD}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_drop_index", "otama_drop_index.vcxproj", "{5B2A608B-1B8F-428F-9466-6568595E85CD}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_search", "otama_search.vcproj", "{C347D629-ADFF-475D-A8E3-6B1500A8E8C8}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D7C4C9A4-22DF-4977-9117-F165F09A0CF1} = {D7C4C9A4-22DF-4977-9117-F165F09A0CF1}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "otama_search", "otama_search.vcxproj", "{C347D629-ADFF-475D-A8E3-6B1500A8E8C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
