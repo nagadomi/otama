@@ -3,4 +3,4 @@ namespace: test
 
 driver:
   name: lmca_vlad_colorcode_nodb
-  metric: ./config/lmca_vlad.mat
+  metric: lmca_vlad.mat

@@ -4,7 +4,7 @@ namespace: test
 driver:
   name: lmca_vlad
   data_dir: ./data
-  metric: ./config/lmca_vlad.mat
+  metric: lmca_vlad.mat
   
 database:
   driver: sqlite3

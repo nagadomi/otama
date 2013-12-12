@@ -3,4 +3,4 @@ namespace: test
 
 driver:
   name: lmca_vladhsv_nodb
-  metric: ./config/lmca_vladhsv.mat
+  metric: lmca_vladhsv.mat

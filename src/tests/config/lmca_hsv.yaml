@@ -4,7 +4,7 @@ namespace: test
 driver:
   name: lmca_hsv
   data_dir: ./data
-  metric: ./config/lmca_hsv.mat
+  metric: lmca_hsv.mat
   
 database:
   driver: sqlite3
