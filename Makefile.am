@@ -51,5 +51,7 @@ install-exec-hook:
 clean-local:
 	$(MKDIR_P) $(abs_top_builddir)/ruby; \
 	cd $(abs_top_builddir)/ruby; \
-	$(MAKE) $(AM_MAKEFLAGS) clean
+	if test -e Makefile; then \
+		$(MAKE) $(AM_MAKEFLAGS) clean; \
+	fi
 endif
