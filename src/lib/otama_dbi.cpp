@@ -71,7 +71,7 @@ otama_dbi_table_exist(otama_dbi_t *dbi, int *exist, const char *table_name)
 int
 otama_dbi_execf(otama_dbi_t *dbi, const char *fmt, ...)
 {
-	char *buff = (char *)calloc(OTAMA_DBI_SQL_LEN, sizeof(char));
+	char *buff = nv_alloc_type(char, OTAMA_DBI_SQL_LEN);
 	va_list args;
 	int s;
 	int ret;
@@ -81,8 +81,8 @@ otama_dbi_execf(otama_dbi_t *dbi, const char *fmt, ...)
 	va_end(args);
 	
 	if (s > 0) {
-		free(buff);
-		buff = (char *)calloc((s + 2), sizeof(char));
+		nv_free(buff);
+		buff = nv_alloc_type(char, (s + 2));
 		va_start(args, fmt);
 		s = nv_vsnprintf(buff, s + 1, fmt, args);
 		va_end(args);
@@ -114,7 +114,7 @@ otama_dbi_query(otama_dbi_t *dbi, const char *query)
 otama_dbi_result_t *
 otama_dbi_queryf(otama_dbi_t *dbi, const char *fmt, ...)
 {
-	char *buff = (char *)calloc(OTAMA_DBI_SQL_LEN, sizeof(char));
+	char *buff = nv_alloc_type(char, OTAMA_DBI_SQL_LEN);
 	va_list args;
 	int s;
 	otama_dbi_result_t *res;
@@ -124,8 +124,8 @@ otama_dbi_queryf(otama_dbi_t *dbi, const char *fmt, ...)
 	va_end(args);
 	
 	if (s > 0) {
-		free(buff);
-		buff = (char *)calloc((s + 2), sizeof(char));
+		nv_free(buff);
+		buff = nv_alloc_type(char, (s + 2));
 		
 		va_start(args, fmt);
 		s = nv_vsnprintf(buff, s + 1, fmt, args);
@@ -133,7 +133,7 @@ otama_dbi_queryf(otama_dbi_t *dbi, const char *fmt, ...)
 	}
 	
 	res = otama_dbi_query(dbi, buff);
-	free(buff);
+	nv_free(buff);
 
 	return res;
 }

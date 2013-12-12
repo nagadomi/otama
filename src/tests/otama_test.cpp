@@ -30,7 +30,6 @@ handle_segv(int i)
 	abort();
 }
 
-
 size_t
 otama_test_read_file(const char *file, void **p, size_t *len)
 {
@@ -64,13 +63,17 @@ int main(void)
 {
 	signal(SIGSEGV, handle_segv);
 	setup();
-
+	
+#if OTAMA_HAS_KVS
+	otama_test_kvs();
+#endif
+	otama_test_variant();
 #if !OTAMA_MSVC
 	otama_test_dbi();
 	otama_test_vlad();
 	otama_test_bovw();
 #endif
-	
+#if OTAMA_WITH_SQLITE3
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/sim.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/id.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/color.yaml");
@@ -79,32 +82,42 @@ int main(void)
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw8k.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv.yaml");
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/sboc.yaml");
-#if OTAMA_WITH_KC
-	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_hsv.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vladhsv.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_hsv.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_colorcode.yaml");
 #endif
-
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sim.yaml");
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/id.yaml");
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/color.yaml");
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw2k.yaml");
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw2k_sboc.yaml");	
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw8k.yaml");
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv.yaml");
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sboc.yaml");
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/vlad_nodb.yaml");
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/vlad128_nodb.yaml");
-#if OTAMA_WITH_KC
-	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc.yaml");
+#if (OTAMA_WITH_LEVELDB && OTAMA_WITH_SQLITE3)
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb.yaml");
 #endif
-#if !OTAMA_WINDOWS /* WindowsÇÕmmapÇÃé¿ëïè„ìØÇ∂prefixÇ™äJÇØÇ»Ç¢ */
+#if (!OTAMA_WINDOWS && OTAMA_WTIH_SQLITE3) /* does not work on WindowsOS */
 	otama_test_cluster(
 		OTAMA_TEST_CONFIG_DIR "/bovw8k_node1.yaml",
 		OTAMA_TEST_CONFIG_DIR "/bovw8k_node2.yaml");
-#  if OTAMA_WITH_KC
+#  if OTAMA_WITH_LEVELDB
 	otama_test_cluster(
-		OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc_node1.yaml",
-		OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_kc_node2.yaml");
+		OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb_node1.yaml",
+		OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb_node2.yaml");
 #  endif
 #endif
+	
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sim_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/id_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/color_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw2k_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw2k_sboc_nodb.yaml");	
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw8k_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/sboc_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/vlad_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/vlad128_nodb.yaml");
+	
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_hsv_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vladhsv_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_hsv_nodb.yaml");
+	otama_test_similarity_api(OTAMA_TEST_CONFIG_DIR "/lmca_vlad_colorcode_nodb.yaml");
+	
 	return 0;
 }

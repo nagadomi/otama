@@ -144,17 +144,31 @@ otama_close(otama_t **otama)
 }
 
 otama_status_t
-otama_create_table(otama_t *otama)
+otama_create_database(otama_t *otama)
 {
 	NV_ASSERT(otama != NULL);
-	return otama->driver->create_table();
+	return otama->driver->create_database();
 }
 
 otama_status_t
-otama_drop_table(otama_t *otama)
+otama_drop_database(otama_t *otama)
 {
 	NV_ASSERT(otama != NULL);
-	return otama->driver->drop_table();
+	return otama->driver->drop_database();
+}
+
+otama_status_t
+otama_drop_index(otama_t *otama)
+{
+	NV_ASSERT(otama != NULL);
+	return otama->driver->drop_index();
+}
+
+otama_status_t
+otama_vacuum_index(otama_t *otama)
+{
+	NV_ASSERT(otama != NULL);
+	return otama->driver->vacuum_index();
 }
 
 otama_status_t
@@ -638,6 +652,17 @@ otama_unset(otama_t *otama,
 {
 	NV_ASSERT(otama != NULL);	
 	return otama->driver->unset(std::string(key));
+}
+
+otama_status_t
+otama_invoke(otama_t *otama,
+			 const char *method,
+			 otama_variant_t *output,
+			 otama_variant_t *input
+	)
+{
+	NV_ASSERT(otama != NULL);	
+	return otama->driver->invoke(std::string(method), output, input);
 }
 
 void

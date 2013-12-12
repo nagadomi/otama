@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_BOVW_INVERTED_INDEX_TABLE_HPP
-#define OTAMA_BOVW_INVERTED_INDEX_TABLE_HPP
+#ifndef OTAMA_BOVW_INVERTED_INDEX_DRIVER_HPP
+#define OTAMA_BOVW_INVERTED_INDEX_DRIVER_HPP
 
 #include "nv_bovw.hpp"
 #include "otama_inverted_index_driver.hpp"
@@ -32,12 +32,11 @@ namespace otama
 		public InvertedIndexDriver<InvertedIndex::sparse_vec_t, IV>
 	{
 	protected:
-		const static int SEARCH_SCALE = 10;
-		
+		typedef InvertedIndex::sparse_vec_t FT;
 		typedef nv_bovw_ctx<BIT, nv_bovw_dummy_color_t> T;
 		nv_bovw_rerank_method_t m_rerank_method;
 		
-		class IdfW: public InvertedIndex::ScoreFunction {
+		class IdfW: public InvertedIndex::WeightFunction {
 		public:
 			T *ctx;
 			nv_bovw_rerank_method_t rerank_method;
@@ -55,21 +54,21 @@ namespace otama
 		IdfW m_idf_w;
 		T *m_ctx;
 		
-		virtual InvertedIndex::sparse_vec_t *
+		virtual FT *
 		feature_new(void)
 		{
-			return new InvertedIndex::sparse_vec_t;
+			return new FT;
 		}
 
 		virtual void
-		feature_free(InvertedIndex::sparse_vec_t *fixed)
+		feature_free(FT *fv)
 		{
-			delete fixed;
+			delete fv;
 		}
 		static void
 		feature_raw_free(void *p)
 		{
-			InvertedIndex::sparse_vec_t *ft = (InvertedIndex::sparse_vec_t *)p;
+			FT *ft = (FT *)p;
 			delete ft;
 		}
 		virtual otama_feature_raw_free_t
@@ -79,17 +78,17 @@ namespace otama
 		}
 		
 		virtual void
-		feature_extract(InvertedIndex::sparse_vec_t *fixed, nv_matrix_t *image)
+		feature_extract(FT *fv, nv_matrix_t *image)
 		{
-			// T::sparse_t == InvertedIndex::sparse_vec_t
-			m_ctx->extract(*fixed, image);
+			// T::sparse_t == FT
+			m_ctx->extract(*fv, image);
 		}
 		
 		virtual int
-		feature_extract_file(InvertedIndex::sparse_vec_t *fixed, const char *file,
+		feature_extract_file(FT *fv, const char *file,
 							 otama_variant_t *options)
 		{
-			if (m_ctx->extract(*fixed, file)) {
+			if (m_ctx->extract(*fv, file)) {
 				return 1;
 			}
 			
@@ -97,11 +96,11 @@ namespace otama
 		}
 		
 		virtual int
-		feature_extract_data(InvertedIndex::sparse_vec_t *fixed,
+		feature_extract_data(FT *fv,
 							 const void *data, size_t data_len,
 							 otama_variant_t *options)
 		{
-			if (m_ctx->extract(*fixed, data, data_len)) {
+			if (m_ctx->extract(*fv, data, data_len)) {
 				return 1;
 			}
 			
@@ -109,35 +108,65 @@ namespace otama
 		}
 		
 		virtual int
-		feature_deserialize(InvertedIndex::sparse_vec_t *fixed, const char *s)
+		feature_deserialize(FT *fv, const char *s)
 		{
-			return m_ctx->deserialize(fixed, s);
+			return m_ctx->deserialize(fv, s);
 		}
 		
 		virtual char *
-		feature_serialize(const InvertedIndex::sparse_vec_t *fixed)
+		feature_serialize(const FT *fv)
 		{
 			std::string s;
 			char *ret;
 			
-			m_ctx->serialize(s, fixed);
+			m_ctx->serialize(s, fv);
 			ret = nv_alloc_type(char, s.size() + 1);
 			strcpy(ret, s.c_str());
 			
 			return ret;
 		}
 
-		virtual InvertedIndex::ScoreFunction *
-		feature_similarity_func(void)
+		virtual InvertedIndex::WeightFunction *
+		feature_weight_func(void)
 		{
 			return &m_idf_w;
 		}
+
+		virtual float
+		feature_similarity(const FT *fv1,
+						   const FT *fv2,
+						   otama_variant_t *options)
+		{
+			InvertedIndex::WeightFunction *score_func = this->feature_weight_func();
+			InvertedIndex::sparse_vec_t intersection;
+			InvertedIndex::sparse_vec_t::const_iterator it;
+			float norm1 = 0.0f, norm2 = 0.0f, dot = 0.0f;
+			
+			std::set_intersection(fv1->begin(), fv1->end(),
+								  fv2->begin(), fv2->end(),
+								  std::back_inserter(intersection));
+			
+			for (it = fv1->begin(); it != fv1->end(); ++it) {
+				float w = (*score_func)(*it);
+				norm1 += w * w;
+			}
+			for (it = fv2->begin(); it != fv2->end(); ++it) {
+				float w = (*score_func)(*it);				
+				norm2 += w * w;
+			}
+			for (it = intersection.begin(); it != intersection.end(); ++it) {
+				float w = (*score_func)(*it);
+				dot += w * w;
+			}
+			
+			return dot / (sqrtf(norm1) * sqrtf(norm2));
+		}
 		
 		virtual void
-		feature_to_sparse_vec(InvertedIndex::sparse_vec_t &svec,
-							  const InvertedIndex::sparse_vec_t *fixed)
+		feature_to_sparse_vec(FT &svec,
+							  const FT *fv)
 		{
-			svec = *fixed;
+			svec = *fv;
 		}
 		
 		static inline void
@@ -162,10 +191,10 @@ namespace otama
 		
 		virtual otama_status_t
 		feature_search(otama_result_t **results, int n,
-					   const InvertedIndex::sparse_vec_t *query,
+					   const FT *query,
 					   otama_variant_t *options)
 		{
-			return this->m_inverted_index->search_cosine(results, n, *query);
+			return this->m_inverted_index->search(results, n, *query);
 		}
 
 		void
@@ -182,7 +211,6 @@ namespace otama
 			}
 			OTAMA_LOG_DEBUG("begin idf_print, stopword_th: %d", stopword_th);
 			
-			this->m_inverted_index->begin_reader();
 			count = this->m_inverted_index->count();
 			
 			nv_matrix_zero(freq);
@@ -201,7 +229,6 @@ namespace otama
 			OTAMA_LOG_DEBUG("stop word count %d", stopword_count);
 			
 			nv_matrix_free(&freq);
-			this->m_inverted_index->end();
 		}
 		
 	public:
@@ -214,10 +241,11 @@ namespace otama
 		}
 		
 		BOVWInvertedIndexDriver(otama_variant_t *options)
-			: InvertedIndexDriver<InvertedIndex::sparse_vec_t, IV>(options)
+		: InvertedIndexDriver<FT, IV>(options)
 		{
 			otama_variant_t *driver, *value;
 			
+			m_ctx = NULL;
 			m_rerank_method = NV_BOVW_RERANK_IDF;
 			
 			driver = otama_variant_hash_at(options, "driver");
@@ -241,11 +269,9 @@ namespace otama
 				OTAMA_LOG_DEBUG("driver[rerank_method] => %s", "none");
 				break;
 			}
-			m_ctx = new T;
-			m_ctx->open();
-			
 			m_idf_w.rerank_method = m_rerank_method;
-			m_idf_w.ctx = m_ctx;
+			m_idf_w.ctx = NULL;
+			
 			// bucket.reserve
 			this->m_inverted_index->reserve((size_t)BIT);
 		}
@@ -255,15 +281,43 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		set(const std::string &key, otama_variant_t *value)
+		open(void)
 		{
-			OTAMA_LOG_DEBUG("set key: %s\n", key.c_str());
+			otama_status_t ret;
 			
-			if (key == "print_idf") {
-				print_idf(value);
+			ret = InvertedIndexDriver<FT, IV>::open();
+			if (ret != OTAMA_STATUS_OK) {
+				return ret;
+			}
+			m_ctx = new T;
+			if (m_ctx->open() != 0) {
+				return OTAMA_STATUS_SYSERROR;
+			}
+			m_idf_w.ctx = m_ctx;
+			
+			return OTAMA_STATUS_OK;
+		}
+
+		virtual otama_status_t
+		close(void)
+		{
+			delete m_ctx;
+			m_ctx = NULL;
+			m_idf_w.ctx = NULL;
+			return InvertedIndexDriver<FT, IV>::close();
+		}
+		
+		virtual otama_status_t
+		invoke(const std::string &method, otama_variant_t *output, otama_variant_t *input)
+		{
+			OTAMA_LOG_DEBUG("invoke: %s\n", method.c_str());
+			
+			if (method == "print_idf") {
+				print_idf(input);
+				otama_variant_set_null(output);
 				return OTAMA_STATUS_OK;
 			}
-			return InvertedIndexDriver<InvertedIndex::sparse_vec_t, IV>::set(key, value);
+			return InvertedIndexDriver<FT, IV>::invoke(method, output, input);
 		}
 	};
 }

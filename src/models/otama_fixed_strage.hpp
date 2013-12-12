@@ -353,11 +353,12 @@ namespace otama
 		}
 		
 		otama_status_t
-		try_load(const otama_id_t *id,
-				 uint64_t seq,
-				 T *vec)
+		load(const otama_id_t *id,
+			 uint64_t seq,
+			 T *vec)
 		{
-			index_t key = {0};
+			index_t key;
+			memset(&key, 0, sizeof(key));
 			
 			key.seq = seq;
 			index_t *rec = (index_t *)
@@ -366,9 +367,9 @@ namespace otama
 						seq_cmp);
 			if (rec == NULL) {
 				return OTAMA_STATUS_NODATA;
-			} else {
-				*vec = m_memory_table.vec[rec->index];
 			}
+			*vec = m_memory_table.vec[rec->index];
+			
 			return OTAMA_STATUS_OK;
 		}
 		

@@ -1,0 +1,6 @@
+---
+namespace: test
+
+driver:
+  name: lmca_vlad_colorcode_nodb
+  metric: lmca_vlad.mat

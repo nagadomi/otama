@@ -3,9 +3,12 @@ namespace: ukbench
 
 driver:
   name: sim
-  color_weight: 0.35
+#  name: color
+#  name: id
   data_dir: ./data
+  load_fv: false
+  hit_threshold: 2
   
 database:
   driver: sqlite3
-  name: ./data/example.sqlite3
+  name: ./data/ukbench.sqlite3

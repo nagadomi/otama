@@ -1,0 +1,197 @@
+<% option_query = (color_weight_support? && !@color_weight.nil?) ? "?color_weight=#{sprintf('%.2f', @color_weight)}" : "" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+  <head>
+    <title>Otama Example-WebApp</title>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />
+    <script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+    <script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+    <style type="text/css">
+      body {
+        margin: 2em;
+        font-size: 0.8em;
+      }
+      h1, h2 {
+        font-size: 1.2em;
+        margin: 4px;
+        padding: 4px;
+        background-color: #ccf;
+      }
+      form {
+        margin: 4px;
+        padding: 8px;
+      }
+      img {
+        max-height: 120px;
+        max-width: 120px;
+        border: 0;
+      }
+      .images {
+        display: table-cell;
+        float: left;
+        margin: 2px;
+        padding: 2px;
+        border-left: 1px solid #ccc;
+      }
+      .box {
+        margin: 2px;
+        padding: 2px;
+      }
+      .error {
+        color: blue;
+      }
+      .image {
+         float: left;
+         width: 96px;
+         height: 96px;
+         margin: 2px;
+         text-align: center;
+         vertical-align: middle;
+      }
+    </style>
+    <script type="text/javascript">
+      $(function() {
+         var upload_ui = $("#upload-ui");
+         if (upload_ui.length > 0) {
+            upload_ui.hide();
+            $("#upload-switch").click(function() {$("#upload-ui").toggle()});
+         }
+         <% if color_weight_support? %>
+         $("#color_weight").slider({
+             min: 0.0,
+             max: 1.0,
+             step: 0.05,
+             change: function(event, ui) {
+                       $("#color_weight_value").val(ui.value);
+                       $("#color_weight_change").submit();
+             },
+             value: <%= @color_weight ? sprintf("%.2f", @color_weight.to_s) : "0" %>,
+             slide: function(event, ui) { $("#color_weight_text").text(ui.value); },
+             disabled: <%= request.path =~ /action/ ? "true" : "false" %>
+         });
+	 <% end %>
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Otama Example-WebApp</h1>
+    <div class="error">
+      <%= CGI.escapeHTML(@error_message ? @error_message : "") %>
+    </div>
+    <% if (settings.enable_upload_search || settings.enable_insert) %>
+    <div>
+      <a href="#" id="upload-switch">+ Upload</a>
+    </div>
+    <div id="upload-ui">
+      <form action="/action" method="post" enctype="multipart/form-data">
+	<table>
+	  <tr>
+	    <td>
+	      url
+	    </td>
+	    <td>
+	      <input type="text" name="url" size="64"/>
+	    </td>
+	  </tr>
+	  <tr>
+	    <td>
+	      file
+	    </td>
+	    <td>
+	      <input type="file" name="file" size="64"/>
+	    </td>
+	  </tr>
+	  <tr>
+	    <td></td>
+	    <td>
+	      <% if settings.enable_upload_search %>
+		<input type="submit" value="Search" name="search"/>
+	      <% end %>
+	      <% if settings.enable_insert %>
+		<input type="submit" value="Add" name="add" onclick="return window.confirm('Are you sure?')"/>
+	      <% end %>
+	    </td>
+	  </tr>
+	</table>
+      </form>
+    </div>
+    <% end %>
+    <div class="box">
+      <form action="/" method="get">
+	<input type="submit" value="random"/>
+	<% if color_weight_support? %>
+	   <input type="hidden" name="color_weight" value="<%= sprintf("%.2f", @color_weight) %>"/>
+	<% end %>
+      </form>
+      <% if color_weight_support? %>
+	<% if request.path =~ /action/ %>
+          <form action="/" method="get" id="color_weight_change">
+	    <input type="hidden" name="color_weight" value="<%= sprintf("%.2f", @color_weight) %>" id="color_weight_value"/>
+          </form>
+	<% else %>
+          <form action="<%= request.path %>" method="get" id="color_weight_change">
+	    <input type="hidden" name="color_weight" value="<%= sprintf("%.2f", @color_weight) %>" id="color_weight_value"/>
+          </form>
+	<% end %>
+	<div style="float:left;margin-right:1em;">
+	  color weight
+	</div>
+	<div id="color_weight" style="float:left;width: 200px;"></div>
+	<div id="color_weight_text" style="float:left;margin-left:1em;">
+	  <%= sprintf("%f", @color_weight) %>
+	</div>
+      <% end %>
+      <div style="clear:both"></div>
+    </div>
+    <% if (@query_id.nil? && @query_url.nil?) %>
+      <div class="box images">
+	<% @random_images.each_with_index do |image_id, i| %>
+	  <div class="image">
+	    <a href="/search/<%= CGI.escapeHTML(image_id) + option_query %>"%>
+	      <img src="/thumb/<%= CGI.escapeHTML(image_id) %>.jpg"/>
+	    </a>
+	  </div>
+	  <% if (i + 1) % settings.columns == 0 %>
+	    <div style="clear:both"></div>
+	  <% end %>
+	<% end %>
+      </div>
+    <% else %>
+      <% if settings.enable_upload_search %>
+	<% if (@query_id) %>
+          <h2>query</h2>
+	  <div class="box">
+            <img src="/thumb/<%= CGI.escapeHTML(@query_id) %>.jpg"/>
+	  </div>
+	<% elsif (@query_url) %>
+          <h2>query</h2>
+	  <div class="box">
+	  <img src="<%= CGI.escapeHTML(@query_url) %>"/>
+	  </div>
+	<% end %>
+      <% end %>
+    <% end %>
+    <div style="clear:both"></div>
+    <% if @results && @results.length > 0 %>
+      <h2>results</h2>
+      <div>
+	<% @results.each_with_index do |result, i| %>
+	  <div class="box images" style="background-color: #<%= sprintf("%02x", 255 - (51 - ((i / settings.columns).to_f / settings.columns * 51).to_i)) * 3 %>">
+            <div>
+	      <%= sprintf('%f', result.value[:similarity]) %>
+	    </div>
+	    <div class="image">
+	      <a href="/search/<%= CGI.escapeHTML(result.id) + option_query %>">
+		<img src="/thumb/<%= CGI.escapeHTML(result.id) %>.jpg"/>
+              </a>
+	    </div>
+	  </div>
+	  <% if (i + 1) % settings.columns == 0 %>
+	    <div style="clear:both"></div>
+	  <% end %>
+	<% end %>
+      </div>
+    <% end %>
+  </body>
+</html>

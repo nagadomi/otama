@@ -35,10 +35,18 @@ namespace otama
 	{
 	protected:
 		IV *m_inverted_index;
+		typedef struct db_record{
+			int64_t no;
+			std::string id_str;
+			std::string vec_str;
+			db_record(int64_t no, const std::string &id_str, const std::string &vec_str)
+				: no(no), id_str(id_str), vec_str(vec_str){}
+			~db_record(){}
+		} db_record_t;
 		
 		virtual void
 		feature_to_sparse_vec(InvertedIndex::sparse_vec_t &svec,// must be sort
-									const T *fixed) = 0;
+							  const T *fv) = 0;
 		
 		virtual otama_status_t
 		feature_search(otama_result_t **results, int n,
@@ -49,8 +57,7 @@ namespace otama
 			
 			feature_to_sparse_vec(svec, query);
 			
-			return m_inverted_index->search_cosine(results, n, svec);
-			//return m_inverted_index->search_count(results, n, svec);
+			return m_inverted_index->search(results, n, svec);
 		}
 
 		virtual void
@@ -60,44 +67,17 @@ namespace otama
 			*to = *from;
 		}
 		
-		virtual InvertedIndex::ScoreFunction *feature_similarity_func(void) = 0;
+		virtual InvertedIndex::WeightFunction *feature_weight_func(void) = 0;
 
 		virtual float
-		feature_similarity(const T *fixed1,
-					  const T *fixed2,
-					  otama_variant_t *options)
-		{
-			InvertedIndex::ScoreFunction *similarity_func = this->feature_similarity_func();
-			InvertedIndex::sparse_vec_t svec1, svec2, intersection;
-			InvertedIndex::sparse_vec_t::const_iterator it;
-			float norm1 = 0.0f, norm2 = 0.0f, dot = 0.0f;
-			
-			feature_to_sparse_vec(svec1, fixed1);
-			feature_to_sparse_vec(svec2, fixed2);
-			std::set_intersection(svec1.begin(), svec1.end(),
-								  svec2.begin(), svec2.end(),
-								  std::back_inserter(intersection));
-			
-			for (it = svec1.begin(); it != svec1.end(); ++it) {
-				float w = (*similarity_func)(*it);
-				norm1 += w * w;
-			}
-			for (it = svec2.begin(); it != svec2.end(); ++it) {
-				float w = (*similarity_func)(*it);				
-				norm2 += w * w;
-			}
-			for (it = intersection.begin(); it != intersection.end(); ++it) {
-				float w = (*similarity_func)(*it);
-				dot += w * w;
-			}
-			
-			return dot / (sqrtf(norm1) * sqrtf(norm2));
-		}
+		feature_similarity(const T *fv1,
+						   const T *fv2,
+						   otama_variant_t *options) = 0;
 		
 		virtual otama_status_t
-		try_load_local(otama_id_t *id,
-					   uint64_t seq,
-					   T *fixed)
+		load_local(otama_id_t *id,
+				   uint64_t seq,
+				   T *fv)
 		{
 			return OTAMA_STATUS_NODATA;
 		}
@@ -110,19 +90,9 @@ namespace otama
 			int64_t last_no = -1;
 			long t = nv_clock();
 			long t0 = t;
-			int64_t ntuples = 0;
 			int i;
-			
-			typedef struct {
-				int64_t no;
-				std::string id_str;
-				std::string vec_str;
-			} tmp_t;
-			typedef struct {
-				int64_t no;
-				otama_id_t id;
-				InvertedIndex::sparse_vec_t svec;
-			} tmp2_t;
+			InvertedIndex::batch_records_t records;
+			std::vector<db_record_t> db_records;
 			
 			redo = false;
 			
@@ -135,58 +105,55 @@ namespace otama
 			if (res == NULL) {
 				return OTAMA_STATUS_SYSERROR;
 			}
-
 			t = nv_clock();
-			tmp_t *tmp = new tmp_t[DBIDriver<T>::PULL_LIMIT];
 			
 			while (otama_dbi_result_next(res)) {
-				tmp[ntuples].no = otama_dbi_result_int64(res, 0);
-				tmp[ntuples].id_str = otama_dbi_result_string(res, 1);
-				tmp[ntuples].vec_str = otama_dbi_result_string(res, 2);
-				last_no = tmp[ntuples].no;
-				++ntuples;
+				last_no = otama_dbi_result_int64(res, 0);
+				db_records.push_back(
+					db_record_t(
+						last_no,
+						otama_dbi_result_string(res, 1),
+						otama_dbi_result_string(res, 2))
+					);
 			}
 			otama_dbi_result_free(&res);
 			OTAMA_LOG_DEBUG("-- read: %dms\n", nv_clock() - t);
 			t = nv_clock();
-			tmp2_t *tmp2 = new tmp2_t[(size_t)ntuples];
+			records.resize(db_records.size());
+			
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 4)
 #endif
-			for (i = 0; i < (int)ntuples; ++i) {
+			for (i = 0; i < (int)db_records.size(); ++i) {
 				if (ret == OTAMA_STATUS_OK) {
 					int ng;
-					const char *id = tmp[i].id_str.c_str();
-					const char *vec = tmp[i].vec_str.c_str();
-					T fixed;
-					tmp2[i].no = tmp[i].no;
-						
-					otama_id_hexstr2bin(&tmp2[i].id, id);
-					ng = this->feature_deserialize(&fixed, vec);
+					const char *id = db_records[i].id_str.c_str();
+					const char *vec = db_records[i].vec_str.c_str();
+					T fv;
+					records[i].no = db_records[i].no;
+					
+					otama_id_hexstr2bin(&records[i].id, id);
+					ng = this->feature_deserialize(&fv, vec);
 					if (ng) {
 						ret = OTAMA_STATUS_ASSERTION_FAILURE;
 						OTAMA_LOG_ERROR("invalid vector string. id(%s)", id);
 					} else {
-						feature_to_sparse_vec(tmp2[i].svec, &fixed);
+						feature_to_sparse_vec(records[i].vec, &fv);
 					}
 				}
 			}
-			delete [] tmp;
 			OTAMA_LOG_DEBUG("-- parse: %dms\n", nv_clock() - t);
 			t = nv_clock();
-				
-			if (ret == OTAMA_STATUS_OK && ntuples > 0) {
+			
+			if (ret == OTAMA_STATUS_OK && db_records.size() > 0) {
 				// sequential access
-				for (i = 0; i < (int)ntuples; ++i) {
-					m_inverted_index->set(tmp2[i].no, &tmp2[i].id, tmp2[i].svec);
-				}
+				m_inverted_index->batch_set(records);
 				m_inverted_index->set_last_no(last_no);
 				sync();
 			}
-			delete [] tmp2;
 			OTAMA_LOG_DEBUG("-- append: %dms\n", nv_clock() - t);
 			
-			if (ntuples == DBIDriver<T>::PULL_LIMIT) {
+			if (db_records.size() == DBIDriver<T>::PULL_LIMIT) {
 				redo = true;
 			}
 			OTAMA_LOG_DEBUG("pull_records: %ldms\n",  nv_clock() - t0);
@@ -237,7 +204,7 @@ namespace otama
 		using DBIDriver<T>::search;
 		
 		InvertedIndexDriver(otama_variant_t *options)
-			: DBIDriver<T>(options)
+		: DBIDriver<T>(options)
 		{
 			m_inverted_index = new IV(options);
 		}
@@ -259,7 +226,7 @@ namespace otama
 			if (ret != OTAMA_STATUS_OK) {
 				return ret;
 			}
-			m_inverted_index->similarity_func(this->feature_similarity_func());
+			m_inverted_index->weight_func(this->feature_weight_func());
 			m_inverted_index->prefix(this->name());
 			ret = m_inverted_index->open();
 			
@@ -308,47 +275,57 @@ namespace otama
 				return ret;
 			}
 			do {
-				ret = m_inverted_index->begin_writer();
-				if (ret != OTAMA_STATUS_OK) {
-					m_inverted_index->end();
-					return ret;
-				}
 				ret = pull_records(redo, max_id);
 				if (ret != OTAMA_STATUS_OK) {
-					m_inverted_index->end();
 					return ret;
 				}
-				m_inverted_index->end();
 			} while (redo);
 
-			ret = m_inverted_index->begin_writer();
-			if (ret != OTAMA_STATUS_OK) {
-				m_inverted_index->end();
-				return ret;
-			}
 			ret = pull_flags(max_commit_id);
 			if (ret != OTAMA_STATUS_OK) {
-				m_inverted_index->end();
 				return ret;
 			}
-			m_inverted_index->end();
+			m_inverted_index->update_count();
 			
 			return ret;
 		}
-		
+
 		virtual otama_status_t
-		drop_table(void)
+		drop_database(void)
 		{
-			int ret;
-			
-			ret = otama_dbi_drop_table(this->m_dbi, this->table_name().c_str());
-			if (ret == 0) {
+			otama_status_t ret;
+
+#ifdef _OPENMP
+			OMPLock lock(this->m_lock);
+#endif
+			ret = DBIDriver<T>::drop_database();
+	
+			if (ret == OTAMA_STATUS_OK) {
 				ret = m_inverted_index->clear();
-			} else {
-				return OTAMA_STATUS_SYSERROR;
 			}
-			
-			return OTAMA_STATUS_OK;
+			return ret;
+		}
+
+		virtual otama_status_t
+		drop_index(void)
+		{
+			otama_status_t ret;
+#ifdef _OPENMP
+			OMPLock lock(this->m_lock);
+#endif
+			ret = m_inverted_index->clear();
+			return ret;
+		}
+
+		virtual otama_status_t
+		vacuum_index(void)
+		{
+			otama_status_t ret;
+#ifdef _OPENMP
+			OMPLock lock(this->m_lock);
+#endif
+			ret = m_inverted_index->vacuum();
+			return ret;
 		}
 		
 		virtual otama_status_t

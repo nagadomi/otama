@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_VLAD_TABLE_HPP
-#define OTAMA_VLAD_TABLE_HPP
+#ifndef OTAMA_VLAD_NODB_DRIVER_HPP
+#define OTAMA_VLAD_NODB_DRIVER_HPP
 
 #include "otama_nodb_driver.hpp"
 #include "nv_vlad.hpp"
@@ -97,8 +97,8 @@ namespace otama
 		
 		virtual float
 		feature_similarity(const nv_matrix_t *fv1,
-							const nv_matrix_t *fv2,
-							otama_variant_t *options)
+						   const nv_matrix_t *fv2,
+						   otama_variant_t *options)
 		{
 			return m_ctx.similarity(fv1, 0, fv2, 0);
 		}

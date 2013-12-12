@@ -51,14 +51,14 @@ namespace otama
 		
 		virtual otama_status_t
 		insert(const otama_id_t *id,
-			   const T *fixed)
+			   const T *fv)
 		{
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}
 		
 		virtual otama_status_t
 		load(const otama_id_t *id,
-			 T *fixed)
+			 T *fv)
 		{
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}
@@ -85,13 +85,25 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		create_table(void)
+		create_database(void)
 		{
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}
 		
 		virtual otama_status_t
-		drop_table(void)
+		drop_database(void)
+		{
+			return OTAMA_STATUS_NOT_IMPLEMENTED;
+		}
+		
+		virtual otama_status_t
+		drop_index(void)
+		{
+			return OTAMA_STATUS_NOT_IMPLEMENTED;
+		}
+		
+		virtual otama_status_t
+		vacuum_index(void)
 		{
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}
@@ -120,9 +132,10 @@ namespace otama
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}
 
-		virtual otama_status_t try_load_local(otama_id_t *id,
-											  uint64_t seq,
-											  T *bovw)
+		virtual otama_status_t
+		load_local(otama_id_t *id,
+				   uint64_t seq,
+				   T *bovw)
 		{
 			return OTAMA_STATUS_NOT_IMPLEMENTED;
 		}

@@ -34,8 +34,8 @@ namespace otama
 	{
 	protected:
 		otama_dbi_t *m_dbi;
-		static const int PULL_LIMIT = 20000;
-
+		static const int PULL_LIMIT = 100000;
+		
 		virtual otama_status_t
 		exists_master(bool &exists, uint64_t &seq,
 					  const otama_id_t *id)
@@ -72,7 +72,6 @@ namespace otama
 		{
 			otama_dbi_result_t *res;
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
-			time_t curernt_time = time(NULL);
 			
 #ifdef _OPENMP
 			OMPLock lock(this->m_lock);
@@ -95,7 +94,6 @@ namespace otama
 			if (otama_dbi_result_next(res)) {
 				int64_t seq = 0;
 				int ret;
-				char time_string[256];
 				
 				otama_dbi_result_free(&res);
 				ret = otama_dbi_sequence_next(m_dbi, &seq, this->table_name().c_str());
@@ -105,11 +103,10 @@ namespace otama
 				}
 				ret = otama_dbi_execf(
 					m_dbi,
-					"UPDATE %s SET flag = %u, commit_id = %"PRId64", updated_at = '%s' WHERE otama_id = '%s';",
+					"UPDATE %s SET flag = %u, commit_id = %"PRId64" WHERE otama_id = '%s';",
 					this->table_name().c_str(),
 					(unsigned int)flag,
 					seq,
-					otama_dbi_time_string(time_string, &curernt_time),
 					id_hexstr);
 				if (ret != 0) {
 					otama_dbi_rollback(m_dbi);
@@ -127,16 +124,14 @@ namespace otama
 		
 		virtual otama_status_t
 		insert(const otama_id_t *id,
-			   const T *fixed)
+			   const T *fv)
 		{
-			otama_status_t ret = OTAMA_STATUS_OK;	
+			otama_status_t ret = OTAMA_STATUS_OK;
 			otama_dbi_result_t *res;
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
-			time_t curernt_time = time(NULL);
-			char *s = this->feature_serialize(fixed);
-			size_t esc_len = strlen(s) * 2 + 3;
-			char *esc = nv_alloc_type(char, esc_len);
-			char time_string[256];
+			char *fv_str = this->feature_serialize(fv);
+			size_t esc_len = strlen(fv_str) * 2 + 3;
+			char *fv_esc = nv_alloc_type(char, esc_len);
 			
 #ifdef _OPENMP
 			OMPLock lock(this->m_lock);
@@ -144,26 +139,29 @@ namespace otama
 			otama_id_bin2hexstr(id_hexstr, id);
 			res = otama_dbi_queryf(
 				m_dbi,
-				"INSERT INTO %s (otama_id, vector, created_at) "
-				" VALUES('%s', %s, '%s'); ",
+				"INSERT INTO %s (otama_id, vector) "
+				"  SELECT '%s', %s "
+				"    WHERE NOT EXISTS(SELECT otama_id FROM %s WHERE otama_id='%s');",
 				this->table_name().c_str(),
 				id_hexstr,
-				otama_dbi_escape(m_dbi, esc, esc_len, s),
-				otama_dbi_time_string(time_string, &curernt_time));
+				otama_dbi_escape(m_dbi, fv_esc, esc_len, fv_str),
+				this->table_name().c_str(),
+				id_hexstr
+				);
 			if (!res) {
 				ret = OTAMA_STATUS_SYSERROR;
 			} else {
 				otama_dbi_result_free(&res);
 			}
-			nv_free(s);
-			nv_free(esc);
+			nv_free(fv_str);
+			nv_free(fv_esc);
 			
 			return ret;
 		}
 		
 		virtual otama_status_t
 		load(const otama_id_t *id,
-			 T *fixed)
+			 T *fv)
 		{
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
 			otama_dbi_result_t *res;
@@ -184,14 +182,14 @@ namespace otama
 					const char *vec = otama_dbi_result_string(res, 0);
 					int ng;
 					
-					ng = this->feature_deserialize(fixed, vec);
+					ng = this->feature_deserialize(fv, vec);
 					if (ng != 0) {
 						OTAMA_LOG_ERROR("invalid vector string. id(%s), size(%zd), vec(%s)",
 										id_hexstr, strlen(vec), vec);
 						ret = OTAMA_STATUS_ASSERTION_FAILURE;
 					}
 				} else {
-					ret = OTAMA_STATUS_ASSERTION_FAILURE;
+					ret = OTAMA_STATUS_NODATA;
 				}
 				otama_dbi_result_free(&res);
 			}
@@ -235,8 +233,7 @@ namespace otama
 			OTAMA_LOG_DEBUG("database[port]     => %s", port);
 			OTAMA_LOG_DEBUG("database[name]     => %s", dbname);
 			OTAMA_LOG_DEBUG("database[user]     => %s", username);
-			OTAMA_LOG_DEBUG("database[password] => * length(%d)",
-							password == NULL ? 0 : strlen(password));
+			OTAMA_LOG_DEBUG("database[password] => *", 0);
 		}
 
 		otama_status_t
@@ -379,15 +376,13 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		create_table(void)
+		create_database(void)
 		{
-			static otama_dbi_column_t column_def[] = {
+			static const otama_dbi_column_t column_def[] = {
 				{ "id", OTAMA_DBI_COLUMN_INT64_PKEY_AUTO, 0, 0, 0, NULL },
 				{ "otama_id", OTAMA_DBI_COLUMN_CHAR, 40, 0, 0, NULL },
 				{ "vector", OTAMA_DBI_COLUMN_TEXT, 0, 0, 1, NULL },
 				{ "flag", OTAMA_DBI_COLUMN_INT, 0, 0, 0, "0" },
-				{ "created_at", OTAMA_DBI_COLUMN_TIMESTAMP,  0, 0, 1, NULL },
-				{ "updated_at", OTAMA_DBI_COLUMN_TIMESTAMP, 0, 0, 0, NULL },
 				{ "commit_id", OTAMA_DBI_COLUMN_INT64, 0, 0, 0, NULL }
 			};
 			static const otama_dbi_column_t index_otama_id[] = {
@@ -466,7 +461,7 @@ namespace otama
 		}
 		
 		virtual otama_status_t
-		drop_table(void)
+		drop_database(void)
 		{
 			int ret = 0;
 			int exist;

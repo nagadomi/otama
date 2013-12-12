@@ -1,0 +1,5 @@
+---
+namespace: test
+
+driver:
+  name: bovw2k_sboc_nodb

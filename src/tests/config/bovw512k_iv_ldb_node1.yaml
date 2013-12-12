@@ -1,0 +1,11 @@
+---
+namespace: test
+
+driver:
+  name: bovw512k_iv_ldb
+  data_dir: ./data/node1
+  shard: 0-7
+  
+database:
+  driver: sqlite3
+  name: ./data/test.db

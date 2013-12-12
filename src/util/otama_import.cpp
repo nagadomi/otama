@@ -28,6 +28,33 @@
 
 using namespace std;
 
+typedef enum {
+	OTAMA_IMPORT_FORMAT_NORMAL,
+	OTAMA_IMPORT_FORMAT_LABELED
+} otama_import_format_e;
+
+static otama_import_format_e
+lookup_format(const char *test_line)
+{
+	FILE *fp;
+	fp = fopen(test_line, "rb");
+	if (fp == NULL) {
+		const char *file = strstr(test_line, " ");
+		if (file != NULL) {
+			file += 1;
+			fp = fopen(file, "rb");
+			if (fp == NULL) {
+				return OTAMA_IMPORT_FORMAT_NORMAL;
+			}
+			fclose(fp);
+			return OTAMA_IMPORT_FORMAT_LABELED;
+		}
+		return OTAMA_IMPORT_FORMAT_NORMAL;
+	}
+	fclose(fp);
+	return OTAMA_IMPORT_FORMAT_NORMAL;
+}
+
 static int
 import_multi_client(const char *filename, otama_variant_t *config)
 {
@@ -39,9 +66,11 @@ import_multi_client(const char *filename, otama_variant_t *config)
 	int end;
 	int threads = nv_omp_procs();
 	otama_t **otama = nv_alloc_type(otama_t *, 	threads);
+	otama_import_format_e format = OTAMA_IMPORT_FORMAT_NORMAL;
 	
 	if (fp == NULL) {
-		OTAMA_LOG_ERROR("open failed: %s", filename);
+		fprintf(stderr, "otama_import: fopen failed: %s\n",
+				filename);
 		return -1;
 	}
 	
@@ -50,14 +79,17 @@ import_multi_client(const char *filename, otama_variant_t *config)
 		line[len-1] = '\0';
 		list.push_back(std::string(line));
 	}
-	end = list.size();
 	fclose(fp);
-
+	
+	end = list.size();
+	if (end > 0) {
+		format = lookup_format(list[0].c_str());
+	}
 	for (i = 0; i < threads; ++i) {
 		otama_status_t ret;
 		ret = otama_open_opt(&otama[i], config);
 		if (ret != OTAMA_STATUS_OK) {
-			OTAMA_LOG_ERROR("otama_open failed: %s", otama_status_message(ret));
+			fprintf(stderr, "otama_import: otama_open_opt failed\n");
 			return -1;
 		}
 	}
@@ -66,15 +98,22 @@ import_multi_client(const char *filename, otama_variant_t *config)
 #pragma omp parallel for schedule(dynamic, 1) num_threads(threads)
 #endif
 	for (i = 0; i < end; ++i) {
-		const char *import_file = list[i].c_str();
 		char hex[OTAMA_ID_HEXSTR_LEN];
 		otama_id_t id;
 		otama_status_t ret;
 		int thread_id = nv_omp_thread_id();
-		
+		const char *import_file = list[i].c_str();
+
+		if (format == OTAMA_IMPORT_FORMAT_LABELED) {
+			const char *f = strstr(import_file, " ");
+			if (f != NULL) {
+				import_file = f + 1;
+			}
+		}
 		ret = otama_insert_file(otama[thread_id], &id, import_file);
 		if (ret != OTAMA_STATUS_OK) {
-			OTAMA_LOG_ERROR("%s: %s", import_file, otama_status_message(ret));
+			fprintf(stderr, "otama_import: otama_insert_file failed: %s\n",
+					import_file);
 		} else {
 			otama_id_bin2hexstr(hex, &id);
 #ifdef _OPENMP
@@ -105,15 +144,17 @@ import_parallel(const char *filename, otama_variant_t *config)
 	int threads = nv_omp_procs();
 	otama_t *otama= NULL;
 	otama_status_t ret;
+	otama_import_format_e format = OTAMA_IMPORT_FORMAT_NORMAL;
 	
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
-		OTAMA_LOG_ERROR("%s: %s\n", filename, strerror(errno));
+		fprintf(stderr, "otama_import: fopen failed: %s\n",
+				filename);
 		return -1;
 	}
 	ret = otama_open_opt(&otama, config);
 	if (ret != OTAMA_STATUS_OK) {
-		OTAMA_LOG_ERROR("otama_open: %s\n", otama_status_message(ret));
+		fprintf(stderr, "otama_import: otama_open_opt failed\n");
 		return -1;
 	}
 	
@@ -122,21 +163,31 @@ import_parallel(const char *filename, otama_variant_t *config)
 		line[len-1] = '\0';
 		list.push_back(std::string(line));
 	}
-	end = list.size();
 	fclose(fp);
+	end = list.size();
+	if (end > 0) {
+		format = lookup_format(list[0].c_str());
+	}
 	
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1) num_threads(threads)
 #endif
 	for (i = 0; i < end; ++i) {
-		const char *import_file = list[i].c_str();
 		char hex[OTAMA_ID_HEXSTR_LEN];
 		otama_id_t id;
 		otama_status_t ret;
+		const char *import_file = list[i].c_str();
 		
+		if (format == OTAMA_IMPORT_FORMAT_LABELED) {
+			const char *f = strstr(import_file, " ");
+			if (f != NULL) {
+				import_file = f + 1;
+			}
+		}
 		ret = otama_insert_file(otama, &id, import_file);
 		if (ret != OTAMA_STATUS_OK) {
-			OTAMA_LOG_ERROR("%s: %s", import_file, otama_status_message(ret));
+			fprintf(stderr, "otama_import: otama_insert_file failed: %s\n",
+					import_file);
 		} else {
 			otama_id_bin2hexstr(hex, &id);
 #ifdef _OPENMP
@@ -199,7 +250,7 @@ main(int argc, char **argv)
 		case 'c':
 			config = otama_yaml_read_file(nv_getopt_optarg, pool);
 			if (config == NULL) {
-				OTAMA_LOG_ERROR("%s: parse error or empty.", nv_getopt_optarg);
+				fprintf(stderr, "otama_search: otama_yaml_read_file failed: %s: parse error or empty.\n", nv_getopt_optarg);
 				return -1;
 			}
 			break;
@@ -220,8 +271,9 @@ main(int argc, char **argv)
 		return -1;
 	}
 	filename = argv[0];
-
-	otama_log_set_level(level);
+	if (level == OTAMA_LOG_LEVEL_DEBUG) {
+		otama_log_set_level(level);
+	}
 
 	if (multi_client) {
 		iret = import_multi_client(filename, config);

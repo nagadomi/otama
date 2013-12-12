@@ -16,8 +16,8 @@ else
 end
 
 class OtamaTest < Test::Unit::TestCase
-  FILE1  = "../image/lena.jpg"
-  FILE2  = "../image/lena-nega.jpg"
+  FILE1  = File.join(File.dirname(__FILE__), "../image/lena.jpg")
+  FILE2  = File.join(File.dirname(__FILE__), "../image/lena-nega.jpg")
   
   puts "#{__FILE__} #{Otama.version_string}"
   
@@ -27,13 +27,13 @@ class OtamaTest < Test::Unit::TestCase
     
     @drop_create = lambda do
       Otama.open($driver_config) do |otama|
-        otama.drop_table
-        otama.create_table
+        otama.drop_database
+        otama.create_database
       end
     end
     begin
       Otama.open($driver_config) do |otama|
-        otama.create_table
+        otama.create_database
       end
     rescue
     end
@@ -58,17 +58,17 @@ class OtamaTest < Test::Unit::TestCase
     Otama.open($driver_config) do |otama|
       i = 0
       begin
-        otama.create_table
+        otama.create_database
         i = 1
-        otama.drop_table
-        otama.create_table
+        otama.drop_database
+        otama.create_database
         i = 2
       rescue
         if (i == 0)
-          otama.drop_table
-          otama.create_table
-          otama.drop_table
-          otama.create_table
+          otama.drop_database
+          otama.create_database
+          otama.drop_database
+          otama.create_database
           i = 2
         end
       end
@@ -92,6 +92,19 @@ class OtamaTest < Test::Unit::TestCase
     Otama.open($driver_config) do |otama|
       id1 = otama.insert("file" => FILE1)
       id2 = otama.insert("file" => FILE2)
+      otama.pull
+      assert_equal otama.count, 2
+    end
+  end
+  def test_drop_index
+    @drop_create.call
+    Otama.open($driver_config) do |otama|
+      id1 = otama.insert("file" => FILE1)
+      id2 = otama.insert("file" => FILE2)
+      otama.pull
+      assert_equal otama.count, 2
+      otama.drop_index
+      assert_equal otama.count, 0
       otama.pull
       assert_equal otama.count, 2
     end

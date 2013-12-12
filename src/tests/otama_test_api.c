@@ -31,8 +31,8 @@ drop_create(const char *config)
 	OTAMA_TEST_NAME;
 	
 	NV_ASSERT(otama_open(&otama, config) == OTAMA_STATUS_OK);
-	otama_drop_table(otama);
-	NV_ASSERT(otama_create_table(otama) == OTAMA_STATUS_OK);
+	otama_drop_database(otama);
+	NV_ASSERT(otama_create_database(otama) == OTAMA_STATUS_OK);
 	
 	otama_close(&otama);
 }
@@ -103,6 +103,60 @@ test_drop_create(const char *config)
 }
 
 static void
+test_drop_index(const char *config)
+{
+	int64_t count;
+	otama_id_t id;
+	otama_t *otama;
+	
+	OTAMA_TEST_NAME;
+	drop_create(config);
+	
+	NV_ASSERT(otama_open(&otama, config) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG_NEGA) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
+	NV_ASSERT(count == 2);
+	
+	NV_ASSERT(otama_drop_index(otama) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
+	NV_ASSERT(count == 0);
+	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
+	NV_ASSERT(count == 2);
+	
+	otama_close(&otama);
+}
+
+static void
+test_vacuum_index(const char *config)
+{
+	int64_t count;
+	otama_id_t id;
+	otama_t *otama;
+	otama_status_t ret;
+	
+	OTAMA_TEST_NAME;
+	drop_create(config);
+	
+	NV_ASSERT(otama_open(&otama, config) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG_NEGA) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
+	NV_ASSERT(count == 2);
+	ret = otama_vacuum_index(otama);
+	NV_ASSERT(ret == OTAMA_STATUS_OK || ret == OTAMA_STATUS_NOT_IMPLEMENTED);
+	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
+	NV_ASSERT(count == 2);
+	
+	otama_close(&otama);
+}
+
+
+static void
 test_white(const char *config)
 {
 	otama_t *otama;
@@ -157,6 +211,11 @@ test_insert_pull(const char *config)
 	drop_create(config);
 	
 	NV_ASSERT(otama_open(&otama, config) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG_NEGA) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
+	NV_ASSERT(otama_count(otama, &count) == OTAMA_STATUS_OK);
+	NV_ASSERT(count == 2);
 	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_insert_file(otama, &id, OTAMA_TEST_IMG_NEGA) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_pull(otama) == OTAMA_STATUS_OK);
@@ -386,11 +445,14 @@ otama_test_api(const char *config)
 {
 	OTAMA_TEST_NAME;
 	printf("config: %s\n", config);
+	fflush(stdout);
 	test_open(config);
 	test_drop_create(config);
 	test_white(config);	
 	test_id(config);
 	test_insert_pull(config);
+	test_drop_index(config);
+	test_vacuum_index(config);
 	test_file_insert_search_remove_search(config);
 	test_error(config);
 	test_data_insert_search_remove_search(config);

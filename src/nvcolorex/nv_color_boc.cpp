@@ -24,6 +24,7 @@
 #include "nv_color_boc.h"
 #include <vector>
 #include <queue>
+#include <functional>
 
 extern "C" nv_matrix_t nv_color_boc_static;
 
@@ -172,8 +173,8 @@ nv_color_boc(nv_color_boc_t *boc,
 	nv_free(vq);
 }
 
-static int nv_color_sboc_norm_e[4] = { 9 * 4, 13 * 4, 15 * 4, 16 * 4};
-static float nv_color_sboc_w[4] = { 0.4f, 0.25f, 0.15f, 0.2f };
+static const int nv_color_sboc_norm_e[4] = { 9 * 4, 13 * 4, 15 * 4, 16 * 4};
+static const float nv_color_sboc_w[4] = { 0.4f, 0.25f, 0.15f, 0.2f };
 #define NV_COLOR_SBOC_LEVEL (int)(sizeof(nv_color_sboc_norm_e) / sizeof(int))
 
 static inline float
@@ -407,8 +408,8 @@ search_ex(nv_color_boc_result_t *results, int k,
 	int64_t jmax;
 	int_fast8_t threads = nv_omp_procs();
 	nv_color_boc_topn_t topn;
-	float *cosine_min = nv_alloc_type(float, threads);
-	nv_color_boc_topn_t *topn_temp = new nv_color_boc_topn_t[threads];
+	std::vector<float> cosine_min(threads);
+	std::vector<nv_color_boc_topn_t> topn_temp(threads);
 	
 	for (j = 0; j < threads; ++j) {
 		cosine_min[j] = -FLT_MAX;
@@ -449,9 +450,6 @@ search_ex(nv_color_boc_result_t *results, int k,
 		results[j] = topn.top();
 		topn.pop();
 	}
-	
-	delete [] topn_temp;
-	nv_free(cosine_min);
 	
 	return (int)jmax;
 }

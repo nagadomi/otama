@@ -94,18 +94,15 @@ namespace otama
 		virtual otama_status_t open(void);
 		virtual otama_status_t close(void);
 		virtual otama_status_t clear(void);
+		virtual otama_status_t vacuum(void);
 
 		virtual otama_status_t
-		search_cosine(otama_result_t **results, int n,
-					  const sparse_vec_t &hash);
+		search(otama_result_t **results, int n,
+			   const sparse_vec_t &hash);
 
 		virtual int64_t hash_count(uint32_t hash);
 		virtual int64_t count(void);
-		virtual otama_status_t begin_writer(void);
-		virtual otama_status_t begin_reader(void);
-		virtual otama_status_t end(void);
 		
-		/* begin_writer required */
 		virtual otama_status_t set(int64_t no, const otama_id_t *id,
 								   const InvertedIndex::sparse_vec_t &hash);
 		virtual otama_status_t set_flag(int64_t no, uint8_t flag);
@@ -113,6 +110,7 @@ namespace otama
 		virtual bool set_last_commit_no(int64_t no);
 		virtual int64_t get_last_no(void);
 		virtual bool set_last_no(int64_t no);
+		virtual bool update_count(void);
 		virtual bool sync(void);
 		virtual ~InvertedIndexBucket();
 

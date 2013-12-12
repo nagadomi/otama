@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_SBOC_NODB_TABLE_HPP
-#define OTAMA_SBOC_NODB_TABLE_HPP
+#ifndef OTAMA_SBOC_NODB_DRIVER_HPP
+#define OTAMA_SBOC_NODB_DRIVER_HPP
 
 #include "nv_color_boc.h"
 #include "otama_nodb_driver.hpp"

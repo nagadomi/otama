@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_BOVW_FIXED_TABLE_HPP
-#define OTAMA_BOVW_FIXED_TABLE_HPP
+#ifndef OTAMA_BOVW_FIXED_DRIVER_HPP
+#define OTAMA_BOVW_FIXED_DRIVER_HPP
 
 #include "otama_fixed_driver.hpp"
 #include "nv_bovw.hpp"
@@ -37,8 +37,8 @@ namespace otama
 		
 		static const int CLUSTER_K = 16;
 		static const int COLOR_NN = 3;
-		static const float OVERFIT_TH() { return 0.8f; }
-		static const float DEFAULT_COLOR_WEIGHT() { return 0.32f; }
+		static inline float OVERFIT_TH() { return 0.8f; }
+		static inline float DEFAULT_COLOR_WEIGHT() { return 0.32f; }
 		
 		bool m_strip;
 		float m_color_weight;
@@ -49,20 +49,25 @@ namespace otama
 		virtual FT *
 		feature_new(void)
 		{
-			return new FT;
+			void *p;
+			int ret = nv_aligned_malloc(&p, 16, sizeof(FT));
+			if (ret) {
+				return NULL;
+			}
+			
+			return (FT *)p;
 		}
 		
 		virtual void
 		feature_free(FT *fixed)
 		{
-			delete fixed;
+			nv_aligned_free(fixed);			
 		}
 
 		static void
 		feature_raw_free(void *p)
 		{
-			FT *ft = (FT *)p;
-			delete ft;
+			nv_aligned_free(p);			
 		}
 		virtual otama_feature_raw_free_t
 		feature_free_func(void)
@@ -110,7 +115,15 @@ namespace otama
 							const FT *fixed2,
 							otama_variant_t *options)
 		{
-			return m_ctx->similarity(fixed1, fixed2, m_rerank_method, m_color_weight);
+			float color_weight = m_color_weight;
+			otama_variant_t *cw;
+			
+			if (OTAMA_VARIANT_IS_HASH(options)
+				&& !OTAMA_VARIANT_IS_NULL(cw = otama_variant_hash_at(options, "color_weight")))
+			{
+				color_weight = otama_variant_to_float(cw);
+			}
+			return m_ctx->similarity(fixed1, fixed2, m_rerank_method, color_weight);
 		}
 		
 		static inline void
@@ -139,10 +152,11 @@ namespace otama
 			float color_weight = m_color_weight;
 			otama_variant_t *cw;
 			
-			if (OTAMA_VARIANT_IS_HASH(cw = otama_variant_hash_at(options, "color_weight"))) {
+			if (OTAMA_VARIANT_IS_HASH(options)
+				&& !OTAMA_VARIANT_IS_NULL(cw = otama_variant_hash_at(options, "color_weight")))
+			{
 				color_weight = otama_variant_to_float(cw);
 			}
-			
 			*results = otama_result_alloc(n);
 			nresult = m_ctx->search(first_results, first_n,
 									FixedDriver<FT>::m_mmap->vec(),
@@ -281,6 +295,7 @@ namespace otama
 			m_color_weight = DEFAULT_COLOR_WEIGHT();
 			m_strip = false;
 			m_rerank_method = NV_BOVW_RERANK_IDF;
+			m_ctx = NULL;
 			
 			driver = otama_variant_hash_at(options, "driver");
 			if (OTAMA_VARIANT_IS_HASH(driver)) {
@@ -312,12 +327,26 @@ namespace otama
 				OTAMA_LOG_DEBUG("driver[rerank_method] => %s", "none");
 				break;
 			}
-			m_ctx = new T;
-			m_ctx->open();
 		}
 		~BOVWFixedDriver() {
 			nv_matrix_free(&m_color);
 			delete m_ctx;
+		}
+
+		virtual otama_status_t
+		open(void)
+		{
+			otama_status_t ret;
+			
+			ret = FixedDriver<FT>::open();
+			if (ret != OTAMA_STATUS_OK) {
+				return ret;
+			}
+			m_ctx = new T;
+			if (m_ctx->open() != 0) {
+				return OTAMA_STATUS_SYSERROR;
+			}
+			return OTAMA_STATUS_OK;
 		}
 
 		virtual otama_status_t
@@ -334,11 +363,22 @@ namespace otama
 			} else if (key == "strip") {
 				m_strip = otama_variant_to_bool(value) ? true : false;
 				return OTAMA_STATUS_OK;
-			} else if (key == "update_idf") {
-				update_idf(value);
-				return OTAMA_STATUS_OK;
 			}
 			return FixedDriver<FT>::set(key, value);
+		}
+		
+		virtual otama_status_t
+		get(const std::string &key,
+			otama_variant_t *value)
+		{
+#ifdef _OPENMP
+			OMPLock lock(FixedDriver<FT>::m_lock);
+#endif
+			if (key == "color_weight") {
+				otama_variant_set_float(value, m_color_weight);
+				return OTAMA_STATUS_OK;
+			}
+			return FixedDriver<FT>::get(key, value);
 		}
 		
 		virtual otama_status_t
@@ -357,6 +397,25 @@ namespace otama
 			}
 			
 			return FixedDriver<FT>::unset(key);
+		}
+
+
+		virtual otama_status_t
+		invoke(const std::string &method,
+			   otama_variant_t *output,
+			   otama_variant_t *input)
+		{
+#ifdef _OPENMP
+			OMPLock lock(FixedDriver<FT>::m_lock);
+#endif
+			OTAMA_LOG_DEBUG("invoke: %s\n", method.c_str());
+			
+			if (method == "update_idf") {
+				update_idf(input);
+				otama_variant_set_null(output);
+				return OTAMA_STATUS_OK;
+			}
+			return FixedDriver<FT>::invoke(method, output, input);
 		}
 	};
 }

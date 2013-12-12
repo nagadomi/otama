@@ -36,6 +36,8 @@
 #define PATH_MAX MAX_PATH
 #endif
 
+#define ERRMSG_MAX 2048
+
 struct otama_mmap {
 	HANDLE fd;
 	void *mem;
@@ -46,10 +48,8 @@ struct otama_mmap {
 };
 
 static const char *
-otama_last_error(void)
+otama_last_error(char *buffer)
 {
-	static char buffer[2048] = {0};
-  
 	FormatMessage(
 		FORMAT_MESSAGE_FROM_SYSTEM,
 		NULL,
@@ -57,7 +57,7 @@ otama_last_error(void)
 		//MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
 		(LPTSTR) buffer,
-		sizeof(buffer)-1,
+		ERRMSG_MAX-1,
 		NULL);
 	
 	return buffer;
@@ -68,14 +68,15 @@ otama_file_trunc(HANDLE fd, uint64_t ulen)
 {
 	LONG lo = (LONG)(ulen & 0xffffffffULL);
 	LONG hi = (LONG)((ulen & 0xffffffff00000000ULL) >> 32);
-
+	char err[ERRMSG_MAX];
+	
 	if (SetFilePointer(fd, lo, &hi, FILE_BEGIN) == -1) {
-		OTAMA_LOG_ERROR("SetFilePointer: %s", otama_last_error());
+		OTAMA_LOG_ERROR("SetFilePointer: %s", otama_last_error(err));
 		return -1;		
 	}
 	
 	if (SetEndOfFile(fd) == 0) {
-		OTAMA_LOG_ERROR("SetEndOfFile: %s", otama_last_error());
+		OTAMA_LOG_ERROR("SetEndOfFile: %s", otama_last_error(err));
 		return -1;
 	}
 	
@@ -90,6 +91,7 @@ otama_mmap_open(otama_mmap_t **new_shm, const char *shm_dir,
 	uint64_t ulen = (uint64_t)len; // TODO: filesize
 	HANDLE file_fd;
 	BOOL exists;
+	char err[ERRMSG_MAX];
 	
 	strncpy(shm->name, name, sizeof(shm->name) -1);
 	nv_snprintf(shm->path, sizeof(shm->path) - 1, "%s\\%s", shm_dir, name);
@@ -108,7 +110,7 @@ otama_mmap_open(otama_mmap_t **new_shm, const char *shm_dir,
 						 FILE_FLAG_SEQUENTIAL_SCAN,
 						 NULL);
 	if (file_fd == INVALID_HANDLE_VALUE) {
-		OTAMA_LOG_NOTICE("CreateFile: %s: %s", shm->path, otama_last_error());
+		OTAMA_LOG_NOTICE("CreateFile: %s: %s", shm->path, otama_last_error(err));
 		*new_shm = NULL;
 		free(shm);
 		return -1;
@@ -119,7 +121,7 @@ otama_mmap_open(otama_mmap_t **new_shm, const char *shm_dir,
 								(DWORD)((ulen & 0xffffffff00000000ULL) >> 32),
 								(DWORD)(ulen & 0xffffffffULL), shm->name);
 	if (shm->fd == NULL) {
-		OTAMA_LOG_ERROR("CreateFileMapping: %s: %s", shm->path, otama_last_error());
+		OTAMA_LOG_ERROR("CreateFileMapping: %s: %s", shm->path, otama_last_error(err));
 		CloseHandle(file_fd);
 		free(shm);
 		*new_shm = NULL;
@@ -131,7 +133,7 @@ otama_mmap_open(otama_mmap_t **new_shm, const char *shm_dir,
 	
 	shm->mem = MapViewOfFile(shm->fd, FILE_MAP_ALL_ACCESS, 0, 0, (size_t)len);
 	if (shm->mem == NULL) {
-		OTAMA_LOG_ERROR("MapViewOfFile: %s: %s", shm->path, otama_last_error());
+		OTAMA_LOG_ERROR("MapViewOfFile: %s: %s", shm->path, otama_last_error(err));
 		CloseHandle(shm->fd);
 		free(shm);
 		*new_shm = NULL;
@@ -155,7 +157,8 @@ otama_mmap_create(const char *shm_dir,
 	HANDLE fd, file_fd;
 	void *mem;
 	char path[PATH_MAX];
-
+	char err[ERRMSG_MAX];
+	
 	nv_snprintf(path, sizeof(path) - 1, "%s\\%s", shm_dir, name);
 
 	file_fd = CreateFile(path, GENERIC_READ|GENERIC_WRITE, 
@@ -173,14 +176,14 @@ otama_mmap_create(const char *shm_dir,
 		(DWORD)((ulen & 0xffffffff00000000ULL) >> 32),
 		(DWORD)(ulen & 0xffffffffULL), name);
 	if (fd == NULL) {
-		OTAMA_LOG_ERROR("CreateFile: %s", otama_last_error());
+		OTAMA_LOG_ERROR("CreateFile: %s", otama_last_error(err));
 		CloseHandle(file_fd);
 		return -1;
 	}
 	
 	mem = MapViewOfFile(fd, FILE_MAP_ALL_ACCESS, 0, 0, (size_t)len);
 	if (mem == NULL) {
-		OTAMA_LOG_ERROR("MapViewOfFile: %s", otama_last_error());
+		OTAMA_LOG_ERROR("MapViewOfFile: %s", otama_last_error(err));
 		CloseHandle(fd);
 		CloseHandle(file_fd);
 		return -1;
@@ -189,15 +192,15 @@ otama_mmap_create(const char *shm_dir,
 	
 	if (CloseHandle(file_fd) == 0) {
 		OTAMA_LOG_ERROR("CloseHandle: file_fd: %s: %s",
-						path, otama_last_error());
+						path, otama_last_error(err));
 	}
 	if (UnmapViewOfFile(mem) == 0) {
 		OTAMA_LOG_ERROR("UnmapViewOfFile: %s: %s",
-						path, otama_last_error());
+						path, otama_last_error(err));
 	}
 	if (CloseHandle(fd) == 0) {
 		OTAMA_LOG_ERROR("CloseHandle: fd: %s: %s",
-						path, otama_last_error());
+						path, otama_last_error(err));
 	}
 	
 	return 0;
@@ -238,11 +241,12 @@ int
 otama_mmap_sync(const otama_mmap_t *shm)
 {
 	BOOL ret;
-
+	char err[ERRMSG_MAX];
+	
 	ret = FlushViewOfFile(shm->mem, (SIZE_T)shm->len);
 	if (ret == 0) {
 		OTAMA_LOG_ERROR("FlushViewOfFile: %s: %s",
-						shm->path, otama_last_error());
+						shm->path, otama_last_error(err));
 		return -1;
 	}
 	
@@ -253,12 +257,13 @@ int
 otama_mmap_unlink(const char *shm_dir, const char *name)
 {
 	char path[PATH_MAX];
+	char err[ERRMSG_MAX];
 	
 	nv_snprintf(path, sizeof(path) - 1, "%s\\%s", shm_dir, name);
 	
 	if (DeleteFile(path) == 0) {
 		OTAMA_LOG_ERROR("DeleteFile: %s: %s",
-						path, otama_last_error());
+						path, otama_last_error(err));
 		return -1;
 	}
 	
@@ -268,14 +273,15 @@ otama_mmap_unlink(const char *shm_dir, const char *name)
 void
 otama_mmap_close(otama_mmap_t **shm)
 {
+	char err[ERRMSG_MAX];	
 	if (shm && *shm) {
 		if (UnmapViewOfFile((*shm)->mem) == 0) {
 			OTAMA_LOG_ERROR("UnmapViewOfFile: %s: %s",
-							(*shm)->path, otama_last_error());
+							(*shm)->path, otama_last_error(err));
 		}
 		if (CloseHandle((*shm)->fd) == 0) {
 			OTAMA_LOG_ERROR("CloseHandle: %s: %s",
-							(*shm)->path, otama_last_error());
+							(*shm)->path, otama_last_error(err));
 		}
 		free(*shm);
 		*shm = NULL;

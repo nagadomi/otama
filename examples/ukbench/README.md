@@ -2,29 +2,6 @@
 
 [Recognition Benchmark Images](http://vis.uky.edu/~stewe/ukbench/)を実行します。
 
-## 必要なライブラリをインストール
-
-システムのライブラリをインストールします。
-
-(Ubuntu)
-
-    sudo apt-get install libgdbm-dev libffi-dev
-
-(FreeBSD)
-
-    sudo pkg_add -r gdbm libffi
-
-Rubyの依存ライブラリをインストールします。
-
-    sudo gem install bundler
-    sudo bundle install
-
-otamaとotamaのruby拡張ライブラリはインストール済みとします。
-
-./dataというディレクトリがない場合は作っておきます。（`config.yaml`で指定されている）
-
-    mkdir data
-
 ## ukbenchを配置
 
 ファイルは2GB以上あるので本当にやる気のある人だけ…

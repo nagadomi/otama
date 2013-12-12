@@ -1,0 +1,6 @@
+---
+namespace: test
+
+driver:
+  name: lmca_vladhsv_nodb
+  metric: lmca_vladhsv.mat

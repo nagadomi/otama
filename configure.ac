@@ -1,10 +1,12 @@
+
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(otama, 0.6.0, nagadomi@nurs.or.jp)
+AC_INIT(otama, 0.7.0, nagadomi@nurs.or.jp)
 OTAMA_MAJOR=0
-OTAMA_MINOR=6
+OTAMA_MINOR=7
+OTAMA_REVISION=0
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADER([src/config.h:src/config.h.in])
@@ -24,7 +26,13 @@ fi
 if test "" = "$CPPFLAGS"; then
     CPPFLAGS=" "
 fi
-CFLAGS=" $CFLAGS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -Wall "
+if test "" = "$LDFLAGS"; then
+    LDFLAGS=" "
+fi
+
+CFLAGS=" $CFLAGS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS "
+CFLAGS=" $CFLAGS -Wall -Wextra -Wformat=2 -Werror=format-security -Wunsafe-loop-optimizations -Wdisabled-optimization -Wno-unused-parameter "
+CFLAGS=" $CFLAGS -D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 "
 
 # Checks for programs.
 AC_PROG_CC
@@ -35,8 +43,9 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_MKDIR_P
 #AC_OPENMP
+AC_CHECK_PROG(RUBY, [ruby], [ruby], [no])
 
-AC_CHECK_PROG(GZIP,gzip,gzip,no)
+AC_CHECK_PROG(GZIP, [gzip], [gzip], [no])
 if test "$GZIP" = no ; then
    AC_MSG_ERROR(*** gzip command not found. please install gzip command.)]
 fi
@@ -47,29 +56,39 @@ LT_INIT([win32-dll])
 # Checks for typedefs, structures, and compiler characteristics.
 
 AC_CHECK_LIB(m, main)
-AC_CHECK_LIB(rt, main)
 AC_CHECK_LIB(stdc++, main)
 
+otama_debug=0
 AX_ARG_ENABLE(debug,
         AS_HELP_STRING([--enable-debug], [enable assert and -g ]), [no],
 #	[CFLAGS="$CFLAGS -g -D_GLIBCXX_DEBUG "], # bug
-	[CFLAGS="$CFLAGS -g "],
-        [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -DNDEBUG "])
+	[otama_debug=1
+	CFLAGS="$CFLAGS -g "],
+        [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -funsafe-loop-optimizations -DNDEBUG "])
 
+otama_native=0
 AX_ARG_ENABLE(native,
         AS_HELP_STRING([--disable-native],[disable -march=native]), [yes],
-        [CFLAGS=" $CFLAGS -march=native "],
+        [otama_native=1
+	CFLAGS=" $CFLAGS -march=native "],
         [])
-        
-otama_kc=0        
+
+otama_sse2=0	
+AX_ARG_ENABLE(sse2,
+        AS_HELP_STRING([--disable-sse2],[disable -msse2]), [yes],
+        [otama_sse2=1],
+        [])
+
+otama_leveldb=0
 AC_LANG_PUSH([C++])
-AX_ARG_ENABLE(kyotocabinet,
-        AS_HELP_STRING([--enable-kyotocabinet], [enable kyotocabinet.]), [no],
-	[AC_CHECK_HEADERS([kcpolydb.h],
-		[otama_kc=1
-        AC_CHECK_LIB(kyotocabinet, main)
+AX_ARG_ENABLE(leveldb,
+        AS_HELP_STRING([--enable-leveldb], [enable leveldb.]), [yes],
+	[AC_CHECK_HEADERS([leveldb/db.h],
+		[otama_leveldb=1
+		AC_CHECK_LIB(snappy, main)
+		AC_CHECK_LIB(leveldb, main)
 		],
-		[AC_MSG_ERROR(*** libkyotocabinet not found. please install kyotocabinet.)])],
+		[AC_MSG_ERROR(*** libleveldb not found. please install libleveldb-dev and libsnappy-dev.)])],
         [])
 
 # unordered_map
@@ -81,26 +100,18 @@ AC_CHECK_HEADER(unordered_map,[otama_unordered_map=1],[])
 
 AC_LANG_POP([C++])
 
-otama_lzo=0
-AX_ARG_ENABLE(lzo,
-        AS_HELP_STRING([--enable-lzo], [enable lzo compress.]), [no],
-	[AC_CHECK_HEADERS([lzo/lzo1x.h],
-		[otama_lzo=1
-        AC_CHECK_LIB(lzo2, main)
-		],
-		[AC_MSG_ERROR(*** liblzo2 not found. please install liblzo2-dev.)])],
-        [])
-
 AX_ARG_ENABLE(popcnt,
         AS_HELP_STRING([--enable-popcnt], [enable popcnt]), [no],
         [CFLAGS="$CFLAGS -mpopcnt -D__POPCNT__=1 "],
         [])
 
+otama_openmp=0
 AX_ARG_ENABLE(openmp,
         AS_HELP_STRING([--disable-openmp], [ disable OpenMP ]), [yes],
         [AC_CHECK_HEADERS(
 		[omp.h],
-		[CFLAGS="$CFLAGS -fopenmp -D_GLIBCXX_PARALLEL "
+		[otama_openmp=1
+		CFLAGS="$CFLAGS -fopenmp -D_GLIBCXX_PARALLEL "
 		AC_CHECK_LIB(gomp, omp_get_num_procs)
 		AC_CHECK_LIB(pthread, pthread_create)],
 		[AC_MSG_ERROR(*** omp.h not found. please either install gcc version 4.2 or any later version or use the --disable-openmp option..)])
@@ -136,10 +147,6 @@ AX_ARG_ENABLE(mysql,
 		[AC_MSG_ERROR(*** libmysqlclient not found. please install libmysqlclient-dev.)])],
         [])
         
-AC_CHECK_HEADERS([eiio.h], 
-	[AC_CHECK_LIB(eiio, eiio_read_file)],
-	[AC_MSG_ERROR(*** eiio not found. please install libeiio.)])
-
 AC_CHECK_HEADERS([nv_core.h],
 	[AC_CHECK_LIB(nv, nv_matrix_alloc)],
 	[AC_MSG_ERROR(*** nv not found. please install libnv.)])
@@ -155,6 +162,22 @@ AC_ARG_WITH(pkgconfigdir,
 	[pkgconfigdir=${withval}],
 	[pkgconfigdir='${libdir}/pkgconfig'])
 AC_MSG_NOTICE([pkgconfig directory is ${pkgconfigdir}])	
+
+AC_ARG_WITH(ruby,
+	AS_HELP_STRING([--with-ruby],
+	[use the specified ruby command (default is ruby)]),
+	[RUBY=${withval}],
+	[])
+
+if test "$RUBY" = no ; then
+   AC_MSG_WARN(*** ruby command not found. ruby extension does not compile.)
+else
+   if $RUBY -rmkmf -e ""; then
+      AC_MSG_NOTICE(ruby is ${RUBY})
+   else
+      AC_MSG_ERROR(*** $RUBY -rmkmf failed. please install ruby-dev or use --without-ruby option.)
+   fi
+fi
 
 AC_C_CONST
 AC_TYPE_INT64_T
@@ -180,24 +203,43 @@ case $host in
     CFLAGS="$CFLAGS -mstackrealign -mthreads "
     LDFLAGS="$LDFLAGS -Wl,--stack,10485760 "
     ;;
+  *-linux*)
+    LDFLAGS="$LDFLAGS -Wl,-z,relro "
+    CFLAGS="$CFLAGS -rdynamic "
+    ;;
   *)
     CFLAGS="$CFLAGS -rdynamic "
     ;;
 esac
 
-CXXFLAGS="$CFLAGS"
-CPPFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS  "
+case $host in
+  i?86-*)
+    if test $otama_sse2 = 1 -a $otama_native != 1; then
+      echo "Note: set -msse2 flag. (--enable-sse2)"
+      CFLAGS=" $CFLAGS -msse -msse2 "
+    fi
+    ;;
+  *)
+    ;;
+esac
 
-AC_SUBST(otama_kc)
-AC_SUBST(otama_lzo)
+CXXFLAGS=$CFLAGS
+
+AM_CONDITIONAL([BUILDING_RUBY], [test $RUBY != "no"])
+AC_SUBST(RUBY)
+AC_SUBST(otama_native)
+AC_SUBST(otama_sse2)
+AC_SUBST(otama_leveldb)
 AC_SUBST(otama_sqlite3)
 AC_SUBST(otama_pgsql)
 AC_SUBST(otama_mysql)
+AC_SUBST(otama_debug)
+AC_SUBST(otama_openmp)
 AC_SUBST(otama_unordered_map_tr1)
 AC_SUBST(otama_unordered_map)
 AC_SUBST(OTAMA_MAJOR)
 AC_SUBST(OTAMA_MINOR)
+AC_SUBST(OTAMA_REVISION)
 AC_SUBST(pkgconfigdir)
 
 AC_CONFIG_FILES([
@@ -219,3 +261,13 @@ Makefile
 ])
 
 AC_OUTPUT
+echo "Otama $OTAMA_MAJOR.$OTAMA_MINOR.$OTAMA_REVISION:"
+echo "   Compiling with Native Instruction : $otama_native"
+echo "   Compiling with OpenMP ........... : $otama_openmp"
+echo "   Compiling with Debug ............ : $otama_debug"
+echo "   Building SQLite3 Driver ......... : $otama_sqlite3"
+echo "   Building PostgreSQL Driver ...... : $otama_pgsql"
+echo "   Building MySQL Driver ........... : $otama_mysql"
+echo "   Building LevelDB Driver ......... : $otama_leveldb"
+echo "   Using ruby ...................... : $RUBY"
+

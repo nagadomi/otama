@@ -1,0 +1,5 @@
+---
+namespace: test
+
+driver:
+  name: sim_nodb

@@ -36,9 +36,11 @@
 typedef nv_bovw_ctx<NV_BOVW_BIT512K, nv_bovw_dummy_color_t> bovw;
 
 // from nv_color_sboc.c
+#if !DUMMY_COLOR
 static int nv_color_sboc_norm_e[4] = { 9 * 4, 13 * 4, 15 * 4, 16 * 4};
 static float nv_color_sboc_w[4] = { 0.4f, 0.25f, 0.15f, 0.2f };
 #define NV_COLOR_SBOC_LEVEL (int)(sizeof(nv_color_sboc_norm_e) / sizeof(int))
+#endif
 
 
 void

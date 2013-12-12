@@ -6,7 +6,7 @@ OtamaのWebAPI。
     bundle install
     thin start -p 4568 -P ./thin.pid -d
     ruby test.rb
-    kill `cat thin.pid`
+    thin stop -P ./thin.pid
 
 `otama_server.rb`がサーバーで、`otama_client.rb`がクライアントのクラス例です。
 

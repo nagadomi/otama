@@ -1,0 +1,276 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="src\models">
+      <UniqueIdentifier>{cd3da3ca-0325-449a-a3a3-4ed001674e5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\lib">
+      <UniqueIdentifier>{5224075a-2048-4a06-a316-ac4c1c56c6eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\nvbovw">
+      <UniqueIdentifier>{ab2d1b8e-c5d4-4cce-a889-be14923cb740}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\nvvlad">
+      <UniqueIdentifier>{713c7661-6cb0-4826-89e5-0f0e69ae16d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\nvcolorex">
+      <UniqueIdentifier>{590edaa0-11a7-4602-8cc7-dcc078135d7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\nvlmcaex">
+      <UniqueIdentifier>{28a08499-6e63-4ab2-9c65-f3780c3904b5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\models\otama_bovw_fixed_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_bovw_inverted_index_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_bovw_nodb_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_bovw_sparse_nodb_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_dbi_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_driver_factory.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_driver_interface.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_fixed_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_fixed_strage.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_inverted_index.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_inverted_index_bucket.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_inverted_index_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_inverted_index_kvs.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_inverted_index_leveldb.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_leveldb.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_lmca_fixed_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_nodb_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_omp_lock.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_sboc_fixed_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_sboc_nodb_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_variable_byte_code_vector.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\models\otama_vlad_nodb_driver.hpp">
+      <Filter>src\models</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_config.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_config_msvc.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_dbi.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_kvs.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_dbi_internal.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_feature_raw.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_id.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_image.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_image_internal.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_internal.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_log.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_mmap.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_portable.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_result.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_result_internal.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_status.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_util.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_variant.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lib\otama_yaml.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvbovw\nv_bovw.hpp">
+      <Filter>src\nvbovw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvbovw\nv_bovw_config.h">
+      <Filter>src\nvbovw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvbovw\nv_bovw_internal.h">
+      <Filter>src\nvbovw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvvlad\nv_vlad.hpp">
+      <Filter>src\nvvlad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvcolorex\nv_color_boc.h">
+      <Filter>src\nvcolorex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvcolorex\nv_color_hist.h">
+      <Filter>src\nvcolorex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvcolorex\nv_color_major.h">
+      <Filter>src\nvcolorex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvcolorex\nv_color_vlad.h">
+      <Filter>src\nvcolorex</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\nvlmcaex\nv_lmca.hpp">
+      <Filter>src\nvlmcaex</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\models\otama_driver_factory.cpp">
+      <Filter>src\models</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\models\otama_inverted_index_bucket.cpp">
+      <Filter>src\models</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\models\otama_inverted_index_leveldb.cpp">
+      <Filter>src\models</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_dbi.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_kvs.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_dbi_mysql.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_dbi_pgsql.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_dbi_sqlite3.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_id.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_image.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_log.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_mmap.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_result.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_status.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_util.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_variant.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lib\otama_yaml.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvvlad\nv_vlad128_static.c">
+      <Filter>src\nvvlad</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvvlad\nv_vlad160_static.c">
+      <Filter>src\nvvlad</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvvlad\nv_vlad256_static.c">
+      <Filter>src\nvvlad</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvvlad\nv_vlad512_static.c">
+      <Filter>src\nvvlad</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvvlad\nv_vlad64_static.c">
+      <Filter>src\nvvlad</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvcolorex\nv_color_boc.cpp">
+      <Filter>src\nvcolorex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvcolorex\nv_color_boc_static.c">
+      <Filter>src\nvcolorex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvcolorex\nv_color_hist.c">
+      <Filter>src\nvcolorex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvcolorex\nv_color_major.c">
+      <Filter>src\nvcolorex</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\nvcolorex\nv_color_vlad.c">
+      <Filter>src\nvcolorex</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\libotama-0.def">
+      <Filter>src</Filter>
+    </None>
+  </ItemGroup>
+</Project>

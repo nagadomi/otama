@@ -1,0 +1,5 @@
+---
+namespace: test
+
+driver:
+  name: bovw8k_nodb

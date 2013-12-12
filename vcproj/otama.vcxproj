@@ -1,0 +1,269 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D7C4C9A4-22DF-4977-9117-F165F09A0CF1}</ProjectGuid>
+    <RootNamespace>otama</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\src\lib;..\src\models;..\src\nvbovw;..\src\nvvlad;..\src\nvcolorex;..\src\nvlmcaex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;__STDC_FORMAT_MACROS;__STDC_LIMIT_MACROS;__SSE__;__SSE2__;PKGDATADIR=".";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>libnv-2.lib;yaml.lib;sqlite3.lib;leveldb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)lib$(ProjectName)-0.lib</OutputFile>
+    </Lib>
+    <Link>
+      <AdditionalDependencies>libnv-2.lib;yaml.lib;sqlite3.lib;leveldb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>$(SolutionDir)..\src\libotama-0.def</ModuleDefinitionFile>
+      <ImportLibrary>$(TargetDir)libotama-0.lib</ImportLibrary>
+      <OutputFile>$(OutDir)libotama-0.dll</OutputFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\src\lib;..\src\models;..\src\nvbovw;..\src\nvvlad;..\src\nvcolorex;..\src\nvlmcaex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;__STDC_FORMAT_MACROS;__STDC_LIMIT_MACROS;NDEBUG;__SSE__;__SSE2__;__SSE3__;__SSE4_1__;__SSE4_2__;PKGDATADIR=".";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <OpenMPSupport>true</OpenMPSupport>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>libnv-2.lib;yaml.lib;sqlite3.lib;leveldb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)libotama-0.dll</OutputFile>
+      <ModuleDefinitionFile>$(SolutionDir)..\src\libotama-0.def</ModuleDefinitionFile>
+      <LargeAddressAware>true</LargeAddressAware>
+      <EntryPointSymbol />
+      <NoEntryPoint>false</NoEntryPoint>
+      <ImportLibrary>$(TargetDir)libotama-0.lib</ImportLibrary>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\src\lib;..\src\model;..\src\driver;..\src\nvbok;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;__SSE__;__SSE2__;__SSE3__;__SSE4_1__;__POPCNT__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>nv.lib;eiio.lib;libdbi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>..\src\lib;..\src\models;..\src\drivers;..\src\nvbovw;..\src\nvpvqh;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;__STDC_FORMAT_MACROS;__STDC_LIMIT_MACROS;NDEBUG;__SSE__;__SSE2__;__SSE3__;__SSE4_1__;__POPCNT__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <OpenMPSupport>true</OpenMPSupport>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>libnv-2.lib;libeiio-0.lib;libyaml-0-2.lib;libdbi-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)lib$(ProjectName)-0.dll</OutputFile>
+      <ModuleDefinitionFile>$(SolutionDir)..\src\libotama-0.def</ModuleDefinitionFile>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\models\otama_bovw_fixed_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_bovw_inverted_index_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_bovw_nodb_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_bovw_sparse_nodb_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_dbi_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_driver_factory.hpp" />
+    <ClInclude Include="..\src\models\otama_driver_interface.hpp" />
+    <ClInclude Include="..\src\models\otama_fixed_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_fixed_strage.hpp" />
+    <ClInclude Include="..\src\models\otama_inverted_index.hpp" />
+    <ClInclude Include="..\src\models\otama_inverted_index_bucket.hpp" />
+    <ClInclude Include="..\src\models\otama_inverted_index_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_inverted_index_kvs.hpp" />
+    <ClInclude Include="..\src\models\otama_inverted_index_leveldb.hpp" />
+    <ClInclude Include="..\src\models\otama_leveldb.hpp" />
+    <ClInclude Include="..\src\models\otama_lmca_fixed_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_nodb_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_omp_lock.hpp" />
+    <ClInclude Include="..\src\models\otama_sboc_fixed_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_sboc_nodb_driver.hpp" />
+    <ClInclude Include="..\src\models\otama_variable_byte_code_vector.hpp" />
+    <ClInclude Include="..\src\models\otama_vlad_nodb_driver.hpp" />
+    <ClInclude Include="..\src\lib\otama.h" />
+    <ClInclude Include="..\src\lib\otama_config.h" />
+    <ClInclude Include="..\src\lib\otama_config_msvc.h" />
+    <ClInclude Include="..\src\lib\otama_dbi.h" />
+    <ClInclude Include="..\src\lib\otama_kvs.h" />
+    <ClInclude Include="..\src\lib\otama_dbi_internal.h" />
+    <ClInclude Include="..\src\lib\otama_feature_raw.h" />
+    <ClInclude Include="..\src\lib\otama_id.h" />
+    <ClInclude Include="..\src\lib\otama_image.h" />
+    <ClInclude Include="..\src\lib\otama_image_internal.h" />
+    <ClInclude Include="..\src\lib\otama_internal.h" />
+    <ClInclude Include="..\src\lib\otama_log.h" />
+    <ClInclude Include="..\src\lib\otama_mmap.h" />
+    <ClInclude Include="..\src\lib\otama_portable.h" />
+    <ClInclude Include="..\src\lib\otama_result.h" />
+    <ClInclude Include="..\src\lib\otama_result_internal.h" />
+    <ClInclude Include="..\src\lib\otama_status.h" />
+    <ClInclude Include="..\src\lib\otama_util.h" />
+    <ClInclude Include="..\src\lib\otama_variant.h" />
+    <ClInclude Include="..\src\lib\otama_yaml.h" />
+    <ClInclude Include="..\src\nvbovw\nv_bovw.hpp" />
+    <ClInclude Include="..\src\nvbovw\nv_bovw_config.h" />
+    <ClInclude Include="..\src\nvbovw\nv_bovw_internal.h" />
+    <ClInclude Include="..\src\nvvlad\nv_vlad.hpp" />
+    <ClInclude Include="..\src\nvcolorex\nv_color_boc.h" />
+    <ClInclude Include="..\src\nvcolorex\nv_color_hist.h" />
+    <ClInclude Include="..\src\nvcolorex\nv_color_major.h" />
+    <ClInclude Include="..\src\nvcolorex\nv_color_vlad.h" />
+    <ClInclude Include="..\src\nvlmcaex\nv_lmca.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\models\otama_driver_factory.cpp" />
+    <ClCompile Include="..\src\models\otama_inverted_index_bucket.cpp" />
+    <ClCompile Include="..\src\models\otama_inverted_index_leveldb.cpp" />
+    <ClCompile Include="..\src\lib\otama.cpp" />
+    <ClCompile Include="..\src\lib\otama_dbi.cpp" />
+    <ClCompile Include="..\src\lib\otama_kvs.cpp" />
+    <ClCompile Include="..\src\lib\otama_dbi_mysql.c" />
+    <ClCompile Include="..\src\lib\otama_dbi_pgsql.c" />
+    <ClCompile Include="..\src\lib\otama_dbi_sqlite3.c" />
+    <ClCompile Include="..\src\lib\otama_id.c" />
+    <ClCompile Include="..\src\lib\otama_image.c" />
+    <ClCompile Include="..\src\lib\otama_log.c" />
+    <ClCompile Include="..\src\lib\otama_mmap.c" />
+    <ClCompile Include="..\src\lib\otama_result.c" />
+    <ClCompile Include="..\src\lib\otama_status.c" />
+    <ClCompile Include="..\src\lib\otama_util.c" />
+    <ClCompile Include="..\src\lib\otama_variant.cpp" />
+    <ClCompile Include="..\src\lib\otama_yaml.c" />
+    <ClCompile Include="..\src\nvvlad\nv_vlad128_static.c" />
+    <ClCompile Include="..\src\nvvlad\nv_vlad160_static.c" />
+    <ClCompile Include="..\src\nvvlad\nv_vlad256_static.c" />
+    <ClCompile Include="..\src\nvvlad\nv_vlad512_static.c" />
+    <ClCompile Include="..\src\nvvlad\nv_vlad64_static.c" />
+    <ClCompile Include="..\src\nvcolorex\nv_color_boc.cpp" />
+    <ClCompile Include="..\src\nvcolorex\nv_color_boc_static.c" />
+    <ClCompile Include="..\src\nvcolorex\nv_color_hist.c" />
+    <ClCompile Include="..\src\nvcolorex\nv_color_major.c" />
+    <ClCompile Include="..\src\nvcolorex\nv_color_vlad.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\libotama-0.def" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

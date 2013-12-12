@@ -40,8 +40,10 @@ namespace otama
 		virtual otama_status_t close(void) = 0;
 		virtual bool is_active(void) = 0;
 		
-		virtual otama_status_t create_table(void) = 0;
-		virtual otama_status_t drop_table(void) = 0;
+		virtual otama_status_t create_database(void) = 0;
+		virtual otama_status_t drop_database(void) = 0;
+		virtual otama_status_t drop_index(void) = 0;
+		virtual otama_status_t vacuum_index(void) = 0;
 		
 		virtual otama_status_t feature_string(std::string &features,
 											  otama_variant_t *data) = 0;
@@ -73,6 +75,7 @@ namespace otama
 		virtual otama_status_t set(const std::string &key, otama_variant_t *value) = 0;
 		virtual otama_status_t unset(const std::string &key) = 0;
 		virtual otama_status_t get(const std::string &key, otama_variant_t *value) = 0;
+		virtual otama_status_t invoke(const std::string &method, otama_variant_t *output, otama_variant_t *input) = 0;
 		
 		virtual ~DriverInterface() {};
 	};

@@ -32,16 +32,16 @@
 #include "nv_ip.h"
 
 typedef enum {
+	NV_VLAD_64 = 64,
 	NV_VLAD_128 = 128,
-	NV_VLAD_160 = 160,
 	NV_VLAD_256 = 256,
 	NV_VLAD_512 = 512
 } nv_vlad_word_e;
 
+extern "C" nv_matrix_t nv_vlad64_posi;
+extern "C" nv_matrix_t nv_vlad64_nega;	
 extern "C" nv_matrix_t nv_vlad128_posi;
 extern "C" nv_matrix_t nv_vlad128_nega;	
-extern "C" nv_matrix_t nv_vlad160_posi;
-extern "C" nv_matrix_t nv_vlad160_nega;	
 extern "C" nv_matrix_t nv_vlad256_posi;
 extern "C" nv_matrix_t nv_vlad256_nega;	
 extern "C" nv_matrix_t nv_vlad512_posi;
@@ -51,45 +51,53 @@ template <nv_vlad_word_e K>
 class nv_vlad_ctx {
 public:
 	static const int DIM = K * NV_KEYPOINT_DESC_N;
-	static const float IMG_SIZE() {return  512.0f; }
+	static inline float IMG_SIZE() {return  512.0f; }
 	static const int KEYPOINTS = 3000;
 	static const int KP = K / 2;
-	
 private:
 	nv_keypoint_ctx_t *m_ctx;
+	nv_matrix_t *m_vq_table[2];
 	
 	const nv_matrix_t *
 	POSI(void)
 	{
-		switch (K) {
-		case NV_VLAD_512:
-			return &nv_vlad512_posi;
-		case NV_VLAD_128:
-			return &nv_vlad128_posi;
-		case NV_VLAD_160:
-			return &nv_vlad160_posi;
-		case NV_VLAD_256:
-			return &nv_vlad256_posi;
-		default:
-			NV_ASSERT(0);
-			return NULL;
+		if (m_vq_table[0]) {
+			return m_vq_table[0];
+		} else {
+			switch (K) {
+			case NV_VLAD_512:
+				return &nv_vlad512_posi;
+			case NV_VLAD_128:
+				return &nv_vlad128_posi;
+			case NV_VLAD_64:
+				return &nv_vlad64_posi;
+			case NV_VLAD_256:
+				return &nv_vlad256_posi;
+			default:
+				NV_ASSERT(0);
+				return NULL;
+			}
 		}
 	}
 	const nv_matrix_t *
 	NEGA(void)
 	{
-		switch (K) {
-		case NV_VLAD_512:
-			return &nv_vlad512_nega;
-		case NV_VLAD_128:
-			return &nv_vlad128_nega;
-		case NV_VLAD_160:
-			return &nv_vlad160_nega;
-		case NV_VLAD_256:
-			return &nv_vlad256_nega;
-		default:
-			NV_ASSERT(0);
-			return NULL;
+		if (m_vq_table[1]) {
+			return m_vq_table[1];
+		} else {
+			switch (K) {
+			case NV_VLAD_512:
+				return &nv_vlad512_nega;
+			case NV_VLAD_128:
+				return &nv_vlad128_nega;
+			case NV_VLAD_64:
+				return &nv_vlad64_nega;
+			case NV_VLAD_256:
+				return &nv_vlad256_nega;
+			default:
+				NV_ASSERT(0);
+				return NULL;
+			}
 		}
 	}
 	
@@ -141,10 +149,25 @@ private:
 		
 		nv_matrix_free(&vec_tmp);
 	}
+	void
+	clear_vq_table(void)
+	{
+		if (m_vq_table[0]) {
+			nv_matrix_free(&m_vq_table[0]);
+			m_vq_table[0] = NULL;
+		}
+		if (m_vq_table[1]) {
+			nv_matrix_free(&m_vq_table[1]);
+			m_vq_table[1] = NULL;
+		}
+	}
 	
 public:
-	nv_vlad_ctx()
+	nv_vlad_ctx(const char *vq_table_file = NULL)
 	{
+		m_vq_table[0] = NULL;
+		m_vq_table[1] = NULL;
+		
 		switch (K) {
 		case NV_VLAD_512:
 		{
@@ -158,35 +181,11 @@ public:
 				NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
 			};
 			m_ctx = nv_keypoint_ctx_alloc(&param);
+			break;
 		}
-		break;
 		case NV_VLAD_256:
-		{
-			nv_keypoint_param_t param = {
-				16,
-				NV_KEYPOINT_EDGE_THRESH,
-				4.0f,
-				NV_KEYPOINT_LEVEL,
-				0.3f,
-				NV_KEYPOINT_DETECTOR_STAR,
-				NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
-			};
-			m_ctx = nv_keypoint_ctx_alloc(&param);
-		}
-		case NV_VLAD_160:
-		{
-			nv_keypoint_param_t param = {
-				12,
-				NV_KEYPOINT_EDGE_THRESH,
-				4.0f,
-				NV_KEYPOINT_LEVEL,
-				0.3f,
-				NV_KEYPOINT_DETECTOR_STAR,
-				NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
-			};
-			m_ctx = nv_keypoint_ctx_alloc(&param);
-		}
 		case NV_VLAD_128:
+		case NV_VLAD_64:
 		{
 			nv_keypoint_param_t param = {
 				16,
@@ -198,15 +197,34 @@ public:
 				NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
 			};
 			m_ctx = nv_keypoint_ctx_alloc(&param);
+			break;
 		}
-		break;
 		default:
 			NV_ASSERT(0);
 			break;
 		}
 	}
+	int
+	set_vq_table(const char *file)
+	{
+		int len = 2;
+		clear_vq_table();
+		
+		if (nv_load_matrix_array_text(file, m_vq_table, &len) != 0
+			|| len != 2
+			|| m_vq_table[0]->n != NV_KEYPOINT_DESC_N
+			|| m_vq_table[0]->m != K / 2
+			|| m_vq_table[1]->n != NV_KEYPOINT_DESC_N
+			|| m_vq_table[1]->m != K / 2)
+		{
+			clear_vq_table();
+			return -1;
+		}
+		return 0;
+	}
 	~nv_vlad_ctx()
 	{
+		clear_vq_table();
 		nv_keypoint_ctx_free(&m_ctx);
 	}
 	
@@ -331,7 +349,7 @@ public:
 		return 0;
 	}
 
-	int
+	inline int
 	deserialize(nv_matrix_t *vlad, int j, const char *s)
 	{
 		nv_matrix_t *vec = nv_deserialize_matrix(s);
@@ -345,7 +363,7 @@ public:
 		return 0;
 	}
 	
-	char *
+	inline char *
 	serialize(const nv_matrix_t *vlad, int j)
 	{
 		nv_matrix_t *mat = nv_matrix_alloc(vlad->n, 1);
@@ -358,7 +376,7 @@ public:
 		return s;
 	}
 	
-	float
+	inline float
 	similarity(const nv_matrix_t *v1, int j1,
 			   const nv_matrix_t *v2, int j2)
 	{

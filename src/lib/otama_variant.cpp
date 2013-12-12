@@ -20,8 +20,11 @@
 #include "otama_variant.h"
 #include "nv_portable.h"
 #include "otama_omp_lock.hpp"
+#include "nv_core.h"
 #include <map>
+#include <set>
 #include <string>
+#include <sstream>
 #include <vector>
 
 namespace otama {};
@@ -125,7 +128,7 @@ otama_variant_clear(otama_variant_t *var)
 		break;
 	}
 	memset(&var->value, 0, sizeof(var->value));
-	var->to_s = "";
+	var->to_s.clear();
 }
 
 static void
@@ -134,10 +137,13 @@ otama_variant_pool_clear(otama_variant_pool_t *pool)
 #ifdef _OPENMP	
 	OMPLock lock(&pool->lock);
 #endif
-	vector<otama_variant_t *>::iterator it;
-	for (it = pool->vars.begin(); it != pool->vars.end(); ++it) {
-		otama_variant_clear(*it);
-		delete *it;
+	
+	for (vector<otama_variant_t *>::iterator i = pool->vars.begin();
+		 i != pool->vars.end();
+		 ++i)
+	{
+		otama_variant_clear(*i);
+		delete *i;
 	}
 	pool->vars.clear();
 }
@@ -295,8 +301,7 @@ otama_variant_array_find_or_create(otama_variant_t *var, int64_t index)
 
 	if (it == var->value.a.array->end()) {
 		ret = var->value.a.array->insert(
-			make_pair<int64_t, otama_variant_t *>(index,
-												  otama_variant_pool_new(var->pool)));
+			make_pair(index, otama_variant_pool_new(var->pool)));
 		it = ret.first;
 	}
 	if (index > var->value.a.count) {
@@ -492,7 +497,7 @@ otama_variant_to_int(otama_variant_t *var)
 	case OTAMA_VARIANT_TYPE_STRING:
 		iv = nv_strtoll(var->value.s->c_str(), NULL, 10);
 		break;
-	case OTAMA_VARIANT_TYPE_POINTER:		
+	case OTAMA_VARIANT_TYPE_POINTER:
 		iv = (int64_t)var->value.p;
 		break;
 	case OTAMA_VARIANT_TYPE_ARRAY:
@@ -548,74 +553,6 @@ otama_variant_to_float(otama_variant_t *var)
 	}
 	
 	return fv;
-}
-
-const char *
-otama_variant_to_string(otama_variant_t *var)
-{
-#ifdef _OPENMP
-	OMPLock lock(&var->pool->lock);
-#endif
-	const char *sv = "";
-	char temp[1024];
-	
-	switch (var->type) {
-	case OTAMA_VARIANT_TYPE_INT:
-		sprintf(temp, "%" PRId64, var->value.i);
-		var->to_s = temp;
-		sv = var->to_s.c_str();
-		break;
-	case OTAMA_VARIANT_TYPE_POINTER:
-		sprintf(temp, "%p", var->value.p);
-		var->to_s = temp;
-		sv = var->to_s.c_str();
-		break;
-	case OTAMA_VARIANT_TYPE_FLOAT:
-		sprintf(temp, "%E", var->value.f);
-		var->to_s = temp;
-		sv = var->to_s.c_str();
-		break;
-	case OTAMA_VARIANT_TYPE_STRING:
-		sv = var->value.s->c_str();
-		break;
-	case OTAMA_VARIANT_TYPE_ARRAY:
-		sprintf(temp, "ARRAY(%p)", &var->value.a);
-		var->to_s = temp;
-		sv = var->to_s.c_str();
-		break;
-	case OTAMA_VARIANT_TYPE_HASH:
-		sprintf(temp, "HASH(%p)", &var->value.h);		
-		var->to_s = temp;
-		sv = var->to_s.c_str();
-		break;
-	case OTAMA_VARIANT_TYPE_NULL:
-		sv = "NULL";
-		break;
-	case OTAMA_VARIANT_TYPE_BINARY: {
-		size_t i;
-		for (i = 0; ((char *)var->value.b.ptr)[i] != '\0' &&
-				 i < var->value.b.len; ++i)
-			;
-		if (i == var->value.b.len) {
-			char *str = new char[i + 1];
-			memcpy(str, var->value.b.ptr, i);
-			str[i] = '\0';
-			var->to_s = str;
-			delete [] str;
-			sv = var->to_s.c_str();
-		} else {
-			sprintf(temp, "BINARY(%p)", var->value.b.ptr);
-			var->to_s = temp;
-			sv = var->to_s.c_str();
-		}
-	}		
-		break;
-	default:
-		sv = "UNKNOWN";
-		break;
-	}
-	
-	return sv;
 }
 
 const void *
@@ -696,86 +633,132 @@ otama_variant_type(otama_variant_t *var)
 	return var->type;
 }
 
-void
-otama_variant_print(FILE *out, otama_variant_t *var)
+static std::string
+otama_variant_to_string_internal(otama_variant_t *var,
+								 bool string_double_quote = true)
 {
-#ifdef _OPENMP
-	OMPLock lock(&var->pool->lock);
-#endif
-	switch (otama_variant_type(var)) {
+	std::ostringstream buffer;
+	
+	switch (var->type) {
 	case OTAMA_VARIANT_TYPE_NULL:
-		fprintf(out, "NULL");
+		if (string_double_quote) {
+			buffer << "\"";
+		}
+		buffer << "(null)";
+		if (string_double_quote) {
+			buffer << "\"";
+		}
 		break;
 	case OTAMA_VARIANT_TYPE_POINTER:
-		fprintf(out, "%p", otama_variant_to_pointer(var));
+		if (string_double_quote) {
+			buffer << "\"";
+		}
+		buffer << "(pointer: 0x" << std::hex << ((size_t)var->value.p) << ")";
+		if (string_double_quote) {
+			buffer << "\"";
+		}
 		break;
 	case OTAMA_VARIANT_TYPE_INT:
-		fprintf(out, "%"PRId64, otama_variant_to_int(var));
+		buffer << var->value.i;
 		break;
 	case OTAMA_VARIANT_TYPE_FLOAT:
-		fprintf(out, "%E", otama_variant_to_float(var));
+		buffer << std::scientific << var->value.f;
 		break;
 	case OTAMA_VARIANT_TYPE_STRING: {
-		string escape_string;
-		const char *s = otama_variant_to_string(var);
-		
-		while (*s != '\0') {
-			if (*s == '"') {
-				escape_string += '\\';
-				escape_string += *s;
-			} else {
-				escape_string += *s;
+		const char *s = var->value.s->c_str();
+		if (string_double_quote) {
+			std::string escape_string("\"");
+			while (*s != '\0') {
+				if (*s == '"') {
+					escape_string += '\\';
+					escape_string += *s;
+				} else {
+					escape_string += *s;
+				}
+				++s;
 			}
-			++s;
+			buffer << escape_string << "\"";
+		} else {
+			buffer << s;
 		}
-		fprintf(out, "\"%s\"", escape_string.c_str());
 	}
 		break;
 	case OTAMA_VARIANT_TYPE_ARRAY: {
 		int64_t count = otama_variant_array_count(var);
 		int64_t i;
-		fprintf(out, "[");
+		buffer << "[";
 		for (i = 0; i < count; ++i) {
 			if (i != 0) {
-				fprintf(out, ",");
+				buffer << ", ";
 			}
-			otama_variant_print(out, otama_variant_array_at(var, i));
+			buffer << otama_variant_to_string_internal(
+				otama_variant_array_at(var, i),
+				true);
 		}
-		fprintf(out, "]");
+		buffer << "]";
 	}
 		break;
 	case OTAMA_VARIANT_TYPE_HASH: {
 		otama_variant_t *keys = otama_variant_hash_keys(var);
 		int64_t count = otama_variant_array_count(keys);
 		int64_t i;
-
-		fprintf(out, "{");
+		
+		buffer << "{";
 		for (i = 0; i < count; ++i) {
 			if (i != 0) {
-				fprintf(out, ",");
+				buffer << ", ";
 			}
-			otama_variant_print(out, otama_variant_array_at(keys, i));
-			fprintf(out, ":");
-			otama_variant_print(out,
-								otama_variant_hash_at2(var,
-													   otama_variant_array_at(keys, i)));
+			buffer << otama_variant_to_string_internal(
+				otama_variant_array_at(keys, i),
+				true);
+			buffer << ": ";
+			buffer << otama_variant_to_string_internal(
+				otama_variant_hash_at2(var, otama_variant_array_at(keys, i)),
+				true);
 		}
-		fprintf(out, "}");		
+		buffer << "}";
 	}
 		break;
 	case OTAMA_VARIANT_TYPE_BINARY: {
 		size_t i;
-		fprintf(out, "\"");
-		fprintf(out, "hex:");
-		for (i = 0; i < var->value.b.len; ++i) {
-			fprintf(out, "%02x", ((uint8_t *)var->value.b.ptr)[i] & 0xff);
+		if (string_double_quote) {
+			buffer << "\"";
 		}
-		fprintf(out, "\"");		
+		for (i = 0; i < var->value.b.len; ++i) {
+			buffer << "\\x" << std::hex << (((uint8_t *)var->value.b.ptr)[i] & 0xff);
+		}
+		if (string_double_quote) {
+			buffer << "\"";
+		}
 	}
 		break;
 	default:
 		break;
 	}
+	return buffer.str();
+}
+
+const char *
+otama_variant_to_string(otama_variant_t *var)
+{
+#ifdef _OPENMP
+	OMPLock lock(&var->pool->lock);
+#endif
+	if (var->type == OTAMA_VARIANT_TYPE_STRING) {
+		var->to_s = *var->value.s;
+	} else {
+		var->to_s = otama_variant_to_string_internal(var, false);
+	}
+	return var->to_s.c_str();
+}
+
+void
+otama_variant_print(FILE *out, otama_variant_t *var)
+{
+#ifdef _OPENMP
+	OMPLock lock(&var->pool->lock);
+#endif
+	fprintf(out, "%s\n", otama_variant_to_string_internal(var, true).c_str());
 }
 
 int
@@ -804,7 +787,7 @@ otama_variant_to_bool(otama_variant_t *var)
 		break;
 	case OTAMA_VARIANT_TYPE_ARRAY:
 		ret = OTAMA_VARIANT_TRUE;
-	   break;
+		break;
 	case OTAMA_VARIANT_TYPE_HASH:
 		ret = OTAMA_VARIANT_TRUE;
 		break;
@@ -857,7 +840,7 @@ otama_variant_copy(otama_variant_t *dest, otama_variant_t *src, int deep)
 								   deep);
 			}
 		}
-	   break;
+		break;
 	case OTAMA_VARIANT_TYPE_HASH:
 		otama_variant_set_hash(dest);
 		{

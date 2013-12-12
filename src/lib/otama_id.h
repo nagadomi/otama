@@ -33,9 +33,6 @@ typedef struct  {
 	uint8_t octets[OTAMA_ID_LEN];
 } otama_id_t;
 	
-const char *
-otama_id_s(const otama_id_t *id);
-
 otama_status_t otama_id_file(otama_id_t *id,
 							 const char *image_filename);
 otama_status_t otama_id_data(otama_id_t *id,

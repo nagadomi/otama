@@ -18,8 +18,8 @@
  */
 
 #include "otama_config.h"
-#ifndef OTAMA_BOVW_NODB_TABLE_HPP
-#define OTAMA_BOVW_NODB_TABLE_HPP
+#ifndef OTAMA_BOVW_NODB_DRIVER_HPP
+#define OTAMA_BOVW_NODB_DRIVER_HPP
 
 #include "otama_nodb_driver.hpp"
 #include "nv_bovw.hpp"
@@ -33,9 +33,7 @@ namespace otama
 	protected:
 		typedef nv_bovw_ctx<BIT, COLOR_CLASS> T;
 		typedef typename T::dense_t FT;
-		
-		static const int COLOR_NN = 3;
-		static const float DEFAULT_COLOR_WEIGHT() { return 0.2f; }
+		static inline float DEFAULT_COLOR_WEIGHT() { return 0.32f; }
 		
 		float m_color_weight;
 		nv_bovw_rerank_method_t m_rerank_method;
@@ -45,19 +43,24 @@ namespace otama
 		virtual FT *
 		feature_new(void)
 		{
-			return new FT;
+			void *p;
+			int ret = nv_aligned_malloc(&p, 16, sizeof(FT));
+			if (ret) {
+				return NULL;
+			}
+			
+			return (FT *)p;
 		}
 		
 		virtual void
 		feature_free(FT *fixed)
 		{
-			delete fixed;
+			nv_aligned_free(fixed);			
 		}
 		static void
 		feature_raw_free(void *p)
 		{
-			FT *ft = (FT *)p;
-			delete ft;
+			nv_aligned_free(p);			
 		}
 		virtual otama_feature_raw_free_t
 		feature_free_func(void)

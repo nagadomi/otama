@@ -1,8 +1,17 @@
 #!/bin/sh
 
-ruby test.rb bovw2k.yaml && \
-ruby test.rb bovw8k.yaml && \
-ruby test.rb bovw512k.yaml && \
-ruby test.rb bovw512k_iv.yaml && \
-ruby test_similarity.rb bovw512k_nodb.yaml && \
-ruby test_similarity.rb vlad_nodb.yaml
+RUBY=ruby
+SRCDIR=.
+if test $# -gt 0; then
+    RUBY=$1
+fi
+if test $# -gt 1; then
+    SRCDIR=$2
+fi
+$RUBY $SRCDIR/test.rb $SRCDIR/bovw2k.yaml && \
+$RUBY $SRCDIR/test.rb $SRCDIR/bovw8k.yaml && \
+$RUBY $SRCDIR/test.rb $SRCDIR/bovw512k.yaml && \
+$RUBY $SRCDIR/test.rb $SRCDIR/bovw512k_iv.yaml && \
+$RUBY $SRCDIR/test_similarity.rb $SRCDIR/bovw512k_nodb.yaml && \
+$RUBY $SRCDIR/test_similarity.rb $SRCDIR/vlad_nodb.yaml && \
+$RUBY $SRCDIR/test_kvs.rb 

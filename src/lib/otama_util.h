@@ -40,7 +40,9 @@ int otama_writeable_directory(const char *dir);
 
 int otama_mkdir(const char *dir);
 
-	
+typedef int (*otama_file_each_f)(void *user_data, const char *path);
+int otama_file_each(const char *dir, otama_file_each_f func, void *userdata);
+
 #ifdef __cplusplus
 }
 #endif
