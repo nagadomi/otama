@@ -31,7 +31,7 @@ if test "" = "$LDFLAGS"; then
 fi
 
 CFLAGS=" $CFLAGS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS "
-CFLAGS=" $CFLAGS -Wall -Wextra -Wformat=2 -Werror=format-security -Wunsafe-loop-optimizations -Wdisabled-optimization -Wno-unused-parameter "
+CFLAGS=" $CFLAGS -Wall -Wextra -Wformat=2 -Werror=format-security -Wdisabled-optimization -Wno-unused-parameter "
 CFLAGS=" $CFLAGS -D_FORTIFY_SOURCE=2 -fstack-protector --param=ssp-buffer-size=4 "
 
 # Checks for programs.
@@ -64,7 +64,7 @@ AX_ARG_ENABLE(debug,
 #	[CFLAGS="$CFLAGS -g -D_GLIBCXX_DEBUG "], # bug
 	[otama_debug=1
 	CFLAGS="$CFLAGS -g "],
-        [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -funsafe-loop-optimizations -DNDEBUG "])
+        [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -DNDEBUG "])
 
 otama_native=0
 AX_ARG_ENABLE(native,
