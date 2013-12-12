@@ -121,7 +121,7 @@ AX_ARG_ENABLE(openmp,
 
 otama_pgsql=0
 otama_libpq_h_include=0
-otama_libpq_h_include_postgres=0
+otama_libpq_h_include_postgresql=0
 otama_sqlite3=0
 otama_mysql=0
 AX_ARG_ENABLE(pgsql,
