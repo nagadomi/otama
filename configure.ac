@@ -47,7 +47,7 @@ AC_CHECK_PROG(RUBY, [ruby], [ruby], [no])
 
 AC_CHECK_PROG(GZIP, [gzip], [gzip], [no])
 if test "$GZIP" = no ; then
-   AC_MSG_ERROR(*** gzip command not found. please install gzip command.)]
+   AC_MSG_ERROR(*** gzip command not found. please install gzip command.)
 fi
 
 # Checks for libraries.
