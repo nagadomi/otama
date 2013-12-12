@@ -153,7 +153,7 @@ namespace otama
 			}
 			OTAMA_LOG_DEBUG("-- append: %dms\n", nv_clock() - t);
 			
-			if (db_records.size() == DBIDriver<T>::PULL_LIMIT) {
+			if (db_records.size() == (size_t)DBIDriver<T>::PULL_LIMIT) {
 				redo = true;
 			}
 			OTAMA_LOG_DEBUG("pull_records: %ldms\n",  nv_clock() - t0);
