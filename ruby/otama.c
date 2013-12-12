@@ -155,9 +155,6 @@ is_binary_string(VALUE str)
 	
 	p = RSTRING_PTR(str);
 	len = RSTRING_LEN(str);
-	if (rb_str_capacity(str) > len && p[len] != '\0') {
-		return 1;
-	}
 	if (my_strnlen(p, len) != len) {
 		return 1;
 	}
