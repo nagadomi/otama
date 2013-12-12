@@ -19,7 +19,13 @@
 
 #include "otama_config.h"
 #if OTAMA_WITH_PGSQL
-#include "postgresql/libpq-fe.h"
+#if OTAMA_LIBPQ_H_INCLUDE
+#  include "libpq-fe.h"
+#elif OTAMA_LIBPQ_H_INCLUDE_POSTGRESQL
+#  include "postgresql/libpq-fe.h"
+#else
+#  error "libpq.h not detected"
+#endif
 #include "nv_core.h"
 #include "otama_log.h"
 #include "otama_dbi.h"

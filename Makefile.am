@@ -37,7 +37,7 @@ all-local:
 	$(MKDIR_P) $(abs_top_builddir)/ruby; \
 	cd $(abs_top_builddir)/ruby; \
 	if test ! -e otama.$(OBJEXT); then \
-		$(RUBY) $(abs_top_srcdir)/ruby/extconf.rb --with-otama-include=$(abs_top_srcdir)/src/lib --with-otama-lib=$(abs_top_builddir)/src/.libs && $(MAKE) $(AM_MAKEFLAGS) all; \
+		$(RUBY) $(abs_top_srcdir)/ruby/extconf.rb --with-otama-include=$(abs_top_srcdir)/src/lib --with-otama-lib=$(abs_top_builddir)/src/.libs --with-ldflags="-Wl,-rpath,'$(libdir)'" && $(MAKE) $(AM_MAKEFLAGS) all; \
 	fi
 
 check-local:
@@ -51,5 +51,7 @@ install-exec-hook:
 clean-local:
 	$(MKDIR_P) $(abs_top_builddir)/ruby; \
 	cd $(abs_top_builddir)/ruby; \
-	$(MAKE) $(AM_MAKEFLAGS) clean
+	if test -e Makefile; then \
+		$(MAKE) $(AM_MAKEFLAGS) clean; \
+	fi
 endif
