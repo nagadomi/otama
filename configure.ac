@@ -120,16 +120,29 @@ AX_ARG_ENABLE(openmp,
 )
 
 otama_pgsql=0
+otama_libpq_h_include=0
+otama_libpq_h_include_postgres=0
 otama_sqlite3=0
 otama_mysql=0
 AX_ARG_ENABLE(pgsql,
         AS_HELP_STRING([--enable-pgsql], [enable pgsql driver.]), [no],
         [AC_CHECK_HEADERS([postgresql/libpq-fe.h],
 		[otama_pgsql=1
-        AC_CHECK_LIB(pq, PQsetdbLogin)
+		otama_libpq_h_include_postgresql=1
+		AC_CHECK_LIB(pq, main)
 		],
-		[AC_MSG_ERROR(*** libpq not found. please install libpq-dev.)])],
-        [])
+		[
+		AC_CHECK_HEADERS([libpq-fe.h],
+			[otama_pgsql=1
+			otama_libpq_h_include=1
+			AC_CHECK_LIB(pq, main)
+			],
+			[AC_MSG_ERROR(*** libpq not found. please install libpq-dev.)]
+			)
+		])
+        ], []
+)
+	
 AX_ARG_ENABLE(sqlite3,
         AS_HELP_STRING([--enable-sqlite3], [enable sqlite3 driver.]), [yes],
         [AC_CHECK_HEADERS([sqlite3.h],
@@ -232,6 +245,8 @@ AC_SUBST(otama_sse2)
 AC_SUBST(otama_leveldb)
 AC_SUBST(otama_sqlite3)
 AC_SUBST(otama_pgsql)
+AC_SUBST(otama_libpq_h_include)
+AC_SUBST(otama_libpq_h_include_postgresql)
 AC_SUBST(otama_mysql)
 AC_SUBST(otama_debug)
 AC_SUBST(otama_openmp)
