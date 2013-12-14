@@ -20,15 +20,17 @@
 #ifndef OTAMA_CONFIG_AUTO_H
 #define OTAMA_CONFIG_AUTO_H
 
-#define OTAMA_WITH_LEVELDB @otama_leveldb@
-#define OTAMA_WITH_PGSQL   @otama_pgsql@
-#define OTAMA_LIBPQ_H_INCLUDE @otama_libpq_h_include@
+#define OTAMA_WITH_LEVELDB               @otama_leveldb@
+#define OTAMA_WITH_PGSQL                 @otama_pgsql@
+#define OTAMA_LIBPQ_H_INCLUDE            @otama_libpq_h_include@
 #define OTAMA_LIBPQ_H_INCLUDE_POSTGRESQL @otama_libpq_h_include_postgresql@
-#define OTAMA_WITH_SQLITE3 @otama_sqlite3@
-#define OTAMA_WITH_MYSQL   @otama_mysql@
-#define OTAMA_WITH_UNORDERED_MAP_TR1 @otama_unordered_map_tr1@
-#define OTAMA_WITH_UNORDERED_MAP @otama_unordered_map@
-#define OTAMA_HAS_KVS      OTAMA_WITH_LEVELDB
+#define OTAMA_WITH_SQLITE3               @otama_sqlite3@
+#define OTAMA_WITH_MYSQL                 @otama_mysql@
+#define OTAMA_MYSQL_H_INCLUDE            @otama_mysql_h_include@
+#define OTAMA_MYSQL_H_INCLUDE_MYSQL      @otama_mysql_h_include_mysql@
+#define OTAMA_WITH_UNORDERED_MAP_TR1     @otama_unordered_map_tr1@
+#define OTAMA_WITH_UNORDERED_MAP         @otama_unordered_map@
+#define OTAMA_HAS_KVS                    OTAMA_WITH_LEVELDB
 
 #define OTAMA_PACKAGE "@PACKAGE@"
 #define OTAMA_VERSION "@VERSION@"

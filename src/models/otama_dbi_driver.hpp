@@ -140,8 +140,8 @@ namespace otama
 			res = otama_dbi_queryf(
 				m_dbi,
 				"INSERT INTO %s (otama_id, vector) "
-				"  SELECT '%s', %s "
-				"    WHERE NOT EXISTS(SELECT otama_id FROM %s WHERE otama_id='%s');",
+				"  SELECT * FROM (SELECT '%s', %s) AS tmp "
+				"    WHERE NOT EXISTS(SELECT otama_id FROM %s WHERE otama_id='%s') LIMIT 1;",
 				this->table_name().c_str(),
 				id_hexstr,
 				otama_dbi_escape(m_dbi, fv_esc, esc_len, fv_str),

@@ -19,7 +19,13 @@
 
 #include "otama_config.h"
 #if OTAMA_WITH_MYSQL
-#include "mysql/mysql.h"
+#if OTAMA_MYSQL_H_INCLUDE
+#  include "mysql.h"
+#elif OTAMA_MYSQL_H_INCLUDE_MYSQL
+#  include "mysql/mysql.h"
+#else
+#  error "mysql.h not detected"
+#endif
 #include "nv_core.h"
 #include "otama_log.h"
 #include "otama_dbi.h"
