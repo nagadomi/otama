@@ -1,14 +1,3 @@
-# Otama Web API
+# Otama RPC Server
 
-OtamaのWebAPI。
-とりあえず作ってみた、程度のものです。
-
-    bundle install
-    thin start -p 4568 -P ./thin.pid -d
-    ruby test.rb
-    thin stop -P ./thin.pid
-
-`otama_server.rb`がサーバーで、`otama_client.rb`がクライアントのクラス例です。
-
-pullはこまめに行わないと時間かかるようになってタイムアウトするので
-cronから定期的にpullしたほうがいいかもしれません。
+see https://github.com/nagadomi/otama/wiki/example-RPC
