@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <functional>
 
 #define FILELIST "./filelist.txt"
 

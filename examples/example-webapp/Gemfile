@@ -1,6 +1,5 @@
 source 'http://rubygems.org'
 
-gem 'ffi'
 gem 'sinatra'
 gem 'thin'
 gem 'rmagick'
