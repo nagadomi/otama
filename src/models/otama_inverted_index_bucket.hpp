@@ -23,7 +23,7 @@
 
 #if OTAMA_WITH_UNORDERED_MAP
 #  include <unordered_map>
-#elsif OTAMA_WITH_UNORDERED_MAP_TR1
+#elif OTAMA_WITH_UNORDERED_MAP_TR1
 #  include <tr1/unordered_map>
 #else
 #  include <map>
@@ -52,7 +52,7 @@ namespace otama
 		
 #if OTAMA_WITH_UNORDERED_MAP
 		typedef std::unordered_map<int64_t, metadata_record_t> metadata_t;
-#elsif OTAMA_WITH_UNORDERED_MAP_TR1
+#elif OTAMA_WITH_UNORDERED_MAP_TR1
 		typedef std::tr1::unordered_map<int64_t, metadata_record_t> metadata_t;
 #else
 		typedef std::map<int64_t, metadata_record_t> metadata_t;
