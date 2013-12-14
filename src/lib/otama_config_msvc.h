@@ -20,14 +20,17 @@
 #ifndef OTAMA_CONFIG_MSVC_H
 #define OTAMA_CONFIG_MSVC_H
 
-#define OTAMA_WITH_LEVELDB 1
-#define OTAMA_WITH_PGSQL   0
-#define OTAMA_LIBPQ_H_INCLUDE 0
+#define OTAMA_WITH_LEVELDB               1
+#define OTAMA_WITH_PGSQL                 0
+#define OTAMA_LIBPQ_H_INCLUDE            0
 #define OTAMA_LIBPQ_H_INCLUDE_POSTGRESQL 0
-#define OTAMA_WITH_SQLITE3 1
-#define OTAMA_WITH_MYSQL   0
-#define OTAMA_WITH_UNORDERED_MAP_TR1 0
-#define OTAMA_WITH_UNORDERED_MAP 0
+#define OTAMA_WITH_SQLITE3               1
+#define OTAMA_WITH_MYSQL                 0
+#define OTAMA_MYSQL_H_INCLUDE            0
+#define OTAMA_MYSQL_H_INCLUDE_MYSQL      0
+#define OTAMA_WITH_UNORDERED_MAP_TR1     0
+#define OTAMA_WITH_UNORDERED_MAP         0
+#define OTAMA_HAS_KVS                    OTAMA_WITH_LEVELDB
 
 #define OTAMA_PACKAGE "otama"
 #define OTAMA_VERSION "0.7.0"

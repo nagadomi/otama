@@ -44,6 +44,8 @@ AC_PROG_MAKE_SET
 AC_PROG_MKDIR_P
 #AC_OPENMP
 AC_CHECK_PROG(RUBY, [ruby], [ruby], [no])
+AC_CHECK_PROG(PG_CONFIG, [pg_config], [pg_config], [no])
+AC_CHECK_PROG(MYSQL_CONFIG, [mysql_config], [mysql_config], [no])
 
 AC_CHECK_PROG(GZIP, [gzip], [gzip], [no])
 if test "$GZIP" = no ; then
@@ -112,8 +114,8 @@ AX_ARG_ENABLE(openmp,
 		[omp.h],
 		[otama_openmp=1
 		CFLAGS="$CFLAGS -fopenmp -D_GLIBCXX_PARALLEL "
-		AC_CHECK_LIB(gomp, omp_get_num_procs)
-		AC_CHECK_LIB(pthread, pthread_create)],
+		AC_CHECK_LIB(gomp, main)
+		AC_CHECK_LIB(pthread, main)],
 		[AC_MSG_ERROR(*** omp.h not found. please either install gcc version 4.2 or any later version or use the --disable-openmp option..)])
 	],
     []
@@ -122,46 +124,75 @@ AX_ARG_ENABLE(openmp,
 otama_pgsql=0
 otama_libpq_h_include=0
 otama_libpq_h_include_postgresql=0
-otama_sqlite3=0
-otama_mysql=0
 AX_ARG_ENABLE(pgsql,
         AS_HELP_STRING([--enable-pgsql], [enable pgsql driver.]), [no],
-        [AC_CHECK_HEADERS([postgresql/libpq-fe.h],
-		[otama_pgsql=1
-		otama_libpq_h_include_postgresql=1
-		AC_CHECK_LIB(pq, main)
-		],
-		[
-		AC_CHECK_HEADERS([libpq-fe.h],
+        [
+	if test "$PG_CONFIG" = no ; then
+		AC_CHECK_HEADERS([postgresql/libpq-fe.h],
 			[otama_pgsql=1
-			otama_libpq_h_include=1
+			otama_libpq_h_include_postgresql=1
 			AC_CHECK_LIB(pq, main)
 			],
-			[AC_MSG_ERROR(*** libpq not found. please install libpq-dev.)]
-			)
-		])
-        ], []
+			[
+			AC_CHECK_HEADERS([libpq-fe.h],
+				[otama_pgsql=1
+				otama_libpq_h_include=1
+				AC_CHECK_LIB(pq, main)
+				],
+				[AC_MSG_ERROR(*** libpq not found. please install libpq-dev.)]
+			)])
+	else
+		CFLAGS=" $CFLAGS -I`$PG_CONFIG --includedir` "
+		LDFLAGS=" $LDFLAGS -L`$PG_CONFIG --libdir` "
+		otama_pgsql=1
+		otama_libpq_h_include=1
+		AC_CHECK_LIB(pq, main)
+	fi
+	],[]
 )
-	
+
+otama_sqlite3=0
 AX_ARG_ENABLE(sqlite3,
         AS_HELP_STRING([--enable-sqlite3], [enable sqlite3 driver.]), [yes],
         [AC_CHECK_HEADERS([sqlite3.h],
 		[otama_sqlite3=1
-        AC_CHECK_LIB(sqlite3, sqlite3_open)
+        AC_CHECK_LIB(sqlite3, main)
 		],
 		[AC_MSG_ERROR(*** libsqlite3 not found. please install libsqlite3-dev.)])],
         [])
+
+otama_mysql=0
+otama_mysql_h_include=0
+otama_mysql_h_include_mysql=0
 AX_ARG_ENABLE(mysql,
         AS_HELP_STRING([--enable-mysql], [enable mysql driver.]), [no],
-        [AC_CHECK_HEADERS([mysql/mysql.h],
-		[otama_mysql=1
-        AC_CHECK_LIB(mysqlclient, mysql_real_connect)
-		],
-		[AC_MSG_ERROR(*** libmysqlclient not found. please install libmysqlclient-dev.)])],
-        [])
-        
+        [
+	if test "$MYSQL_CONFIG" = no; then
+		AC_CHECK_HEADERS([mysql/mysql.h],
+				[otama_mysql=1
+				otama_mysql_h_include_mysql=1
+				AC_CHECK_LIB(mysqlclient, main)
+				],
+				[
+				AC_CHECK_HEADERS([mysql.h],
+					[otama_mysql=1
+					otama_mysql_h_include=1
+					AC_CHECK_LIB(mysqlclient, main)
+					],
+					[AC_MSG_ERROR(*** libmysqlclient not found. please install libmysqlclient-dev.)])
+				]
+		)
+	else
+		CFLAGS=" $CFLAGS `$MYSQL_CONFIG --include` "
+		LDFLAGS=" $LDFLAGS `$MYSQL_CONFIG --libs` "
+		otama_mysql=1
+		otama_mysql_h_include=1
+	fi
+	],[]
+)
+
 AC_CHECK_HEADERS([nv_core.h],
-	[AC_CHECK_LIB(nv, nv_matrix_alloc)],
+	[AC_CHECK_LIB(nv, main)],
 	[AC_MSG_ERROR(*** nv not found. please install libnv.)])
 
 AC_CHECK_HEADERS(
@@ -248,6 +279,8 @@ AC_SUBST(otama_pgsql)
 AC_SUBST(otama_libpq_h_include)
 AC_SUBST(otama_libpq_h_include_postgresql)
 AC_SUBST(otama_mysql)
+AC_SUBST(otama_mysql_h_include)
+AC_SUBST(otama_mysql_h_include_mysql)
 AC_SUBST(otama_debug)
 AC_SUBST(otama_openmp)
 AC_SUBST(otama_unordered_map_tr1)
@@ -285,4 +318,3 @@ echo "   Building PostgreSQL Driver ...... : $otama_pgsql"
 echo "   Building MySQL Driver ........... : $otama_mysql"
 echo "   Building LevelDB Driver ......... : $otama_leveldb"
 echo "   Using ruby ...................... : $RUBY"
-
