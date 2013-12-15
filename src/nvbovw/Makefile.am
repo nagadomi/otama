@@ -7,7 +7,7 @@ noinst_PROGRAMS = nv_bovw_benchmark
 bin_PROGRAMS = nv_bovw_train
 
 libnvbovw_la_LIBADD = 
-libnvbovw_la_CFLAGS = -I$(srcdir) -I$(srcdir)/../nvcolorex $(CFLAGS)  -DPKGDATADIR=\""$(pkgdatadir)"\"
+libnvbovw_la_CFLAGS = -I$(srcdir) -I$(srcdir)/../nvcolorex -DPKGDATADIR=\""$(pkgdatadir)"\"
 libnvbovw_la_CXXFLAGS = $(libnvbovw_la_CFLAGS)
 libnvbovw_la_LDFLAGS = -no-undefined 
 
@@ -20,7 +20,7 @@ nv_bovw_benchmark_LDFLAGS =
 nv_bovw_benchmark_LDADD = $(builddir)/libnvbovw.la $(builddir)/../nvcolorex/libnvcolorex.la
 
 nv_bovw_train_SOURCES = nv_bovw_train.cpp
-nv_bovw_train_CFLAGS = -I$(srcdir) -I$(srcdir)/../nvcolorex $(CFLAGS)  -DPKGDATADIR=\""$(pkgdatadir)"\"
+nv_bovw_train_CFLAGS = -I$(srcdir) -I$(srcdir)/../nvcolorex -DPKGDATADIR=\""$(pkgdatadir)"\"
 nv_bovw_train_CXXFLAGS = $(nv_bovw_train_CFLAGS)
 nv_bovw_train_LDFLAGS = 
 nv_bovw_train_LDADD = $(builddir)/libnvbovw.la $(builddir)/../nvcolorex/libnvcolorex.la
