@@ -59,6 +59,7 @@ LT_INIT([win32-dll])
 
 AC_CHECK_LIB(m, main)
 AC_CHECK_LIB(stdc++, main)
+AC_CHECK_LIB(ssp, main)
 
 otama_debug=0
 AX_ARG_ENABLE(debug,
