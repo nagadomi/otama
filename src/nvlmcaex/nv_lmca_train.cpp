@@ -355,7 +355,7 @@ static int
 vq(int n, const char *file, bool flip, const char *vq_file)
 {
 	nv_matrix_t *vq_posi, *vq_nega;
-	int ret;
+	int ret = 0;
 	
 	vq_posi = nv_matrix_alloc(NV_KEYPOINT_DESC_N, nv_lmca_vq::VQ_DIM);
 	vq_nega = nv_matrix_alloc(NV_KEYPOINT_DESC_N, nv_lmca_vq::VQ_DIM);
