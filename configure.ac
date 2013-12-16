@@ -58,29 +58,37 @@ LT_INIT([win32-dll])
 # Checks for typedefs, structures, and compiler characteristics.
 
 AC_CHECK_LIB(m, main)
-AC_CHECK_LIB(stdc++, main)
+AC_LANG_PUSH([C++])
+  AC_CHECK_LIB(stdc++, main)
+AC_LANG_POP([C++])
 AC_CHECK_LIB(ssp, main)
 
 otama_debug=0
 AX_ARG_ENABLE(debug,
-        AS_HELP_STRING([--enable-debug], [enable assert and -g ]), [no],
+        AS_HELP_STRING([--enable-debug], [enable debug symbol and assertion ]), [no],
 #	[CFLAGS="$CFLAGS -g -D_GLIBCXX_DEBUG "], # bug
 	[otama_debug=1
 	CFLAGS="$CFLAGS -g "],
         [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -DNDEBUG "])
 
-otama_native=0
-AX_ARG_ENABLE(native,
-        AS_HELP_STRING([--disable-native],[disable -march=native]), [yes],
-        [otama_native=1
-	CFLAGS=" $CFLAGS -march=native "],
-        [])
-
-otama_sse2=0	
-AX_ARG_ENABLE(sse2,
-        AS_HELP_STRING([--disable-sse2],[disable -msse2]), [yes],
-        [otama_sse2=1],
-        [])
+otama_arch=native
+AC_ARG_WITH(arch,
+	AS_HELP_STRING([--with-arch],
+	[processor architecture. native/generic. (default is native)]),
+	[otama_arch=${withval}],
+	[])
+case $otama_arch in
+  yes|"")
+    otama_arch=native
+    ;;
+  no)
+    otama_arch=generic
+    ;;
+esac
+if test "$otama_arch" != "generic"; then
+   CFLAGS=" $CFLAGS -march=$otama_arch "
+   AC_MSG_NOTICE(adding -march=$otama_arch)
+fi
 
 otama_leveldb=0
 AC_LANG_PUSH([C++])
@@ -257,22 +265,11 @@ case $host in
     ;;
 esac
 
-case $host in
-  i?86-*)
-    if test $otama_sse2 = 1 -a $otama_native != 1; then
-      echo "Note: set -msse2 flag. (--enable-sse2)"
-      CFLAGS=" $CFLAGS -msse -msse2 "
-    fi
-    ;;
-  *)
-    ;;
-esac
-
 CXXFLAGS=$CFLAGS
 
 AM_CONDITIONAL([BUILDING_RUBY], [test $RUBY != "no"])
 AC_SUBST(RUBY)
-AC_SUBST(otama_native)
+AC_SUBST(otama_arch)
 AC_SUBST(otama_sse2)
 AC_SUBST(otama_leveldb)
 AC_SUBST(otama_sqlite3)
@@ -311,7 +308,7 @@ Makefile
 
 AC_OUTPUT
 echo "Otama $OTAMA_MAJOR.$OTAMA_MINOR.$OTAMA_REVISION:"
-echo "   Compiling with Native Instruction : $otama_native"
+echo "   Processor Architecture .......... : $otama_arch"
 echo "   Compiling with OpenMP ........... : $otama_openmp"
 echo "   Compiling with Debug ............ : $otama_debug"
 echo "   Building SQLite3 Driver ......... : $otama_sqlite3"
