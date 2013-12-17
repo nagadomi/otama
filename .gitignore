@@ -8,6 +8,7 @@
 .deps
 .libs
 *.pc
+.dirstamp
 autom4te.cache
 stamp-h1
 libtool

@@ -7,7 +7,7 @@ AC_INIT(otama, 0.7.0, nagadomi@nurs.or.jp)
 OTAMA_MAJOR=0
 OTAMA_MINOR=7
 OTAMA_REVISION=0
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADER([src/config.h:src/config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
@@ -17,18 +17,11 @@ AC_CANONICAL_HOST
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CPPFLAGS)
-if test "" = "$CFLAGS"; then
-    CFLAGS=" "
-fi
-if test "" = "$CXXFLAGS"; then
-    CXXFLAGS=" "
-fi
-if test "" = "$CPPFLAGS"; then
-    CPPFLAGS=" "
-fi
-if test "" = "$LDFLAGS"; then
-    LDFLAGS=" "
-fi
+
+CFLAGS="$CFLAGS "
+CXXFLAGS="$CXXFLAGS "
+CPPFLAGS="$CPPFLAGS "
+LDFLAGS="$LDFLAGS "
 
 CFLAGS=" $CFLAGS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS "
 CFLAGS=" $CFLAGS -Wall -Wextra -Wformat=2 -Werror=format-security -Wdisabled-optimization -Wno-unused-parameter "
@@ -60,26 +53,54 @@ LT_INIT([win32-dll])
 AC_CHECK_LIB(m, main)
 AC_CHECK_LIB(stdc++, main)
 
+AC_CANONICAL_HOST
+case $host in
+  *-*-mingw* | *-*-cygwin*)
+    AC_CHECK_LIB(ssp, main)
+    CFLAGS="$CFLAGS -mstackrealign -mthreads "
+    LDFLAGS=" $LDFLAGS -Wl,-no-undefined -Wl,--export-all-symbols -Wl,--stack,10485760 "    
+    ;;
+  *-linux*)
+    LDFLAGS="$LDFLAGS -Wl,-z,relro "
+    CFLAGS="$CFLAGS -rdynamic "
+    ;;
+  *freebsd*)
+    AC_CHECK_LIB(ssp, main)
+    CFLAGS="$CFLAGS -rdynamic "
+    ;;
+  *apple-darwin*)
+    AC_CHECK_LIB(ssp, main)
+    ;;
+  *)
+    ;;
+esac
+
 otama_debug=0
 AX_ARG_ENABLE(debug,
-        AS_HELP_STRING([--enable-debug], [enable assert and -g ]), [no],
+        AS_HELP_STRING([--enable-debug], [enable debug symbol and assertion ]), [no],
 #	[CFLAGS="$CFLAGS -g -D_GLIBCXX_DEBUG "], # bug
 	[otama_debug=1
 	CFLAGS="$CFLAGS -g "],
         [CFLAGS="$CFLAGS -ffast-math -O3 -g0 -funroll-loops -DNDEBUG "])
 
-otama_native=0
-AX_ARG_ENABLE(native,
-        AS_HELP_STRING([--disable-native],[disable -march=native]), [yes],
-        [otama_native=1
-	CFLAGS=" $CFLAGS -march=native "],
-        [])
-
-otama_sse2=0	
-AX_ARG_ENABLE(sse2,
-        AS_HELP_STRING([--disable-sse2],[disable -msse2]), [yes],
-        [otama_sse2=1],
-        [])
+otama_arch=native
+AC_ARG_WITH(arch,
+	AS_HELP_STRING([--with-arch],
+	[processor architecture. native/generic. (default is native)]),
+	[otama_arch=${withval}],
+	[])
+case $otama_arch in
+  yes|"")
+    otama_arch=native
+    ;;
+  no)
+    otama_arch=generic
+    ;;
+esac
+if test "$otama_arch" != "generic"; then
+   CFLAGS=" $CFLAGS -march=$otama_arch "
+   AC_MSG_NOTICE(adding -march=$otama_arch)
+fi
 
 otama_leveldb=0
 AC_LANG_PUSH([C++])
@@ -240,38 +261,11 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h limits.h stdlib.h string.h unistd.h])
 AC_CHECK_FUNCS([ftruncate memset munmap realpath strcasecmp strerror strtol])
 
-# host
-AC_CANONICAL_HOST
-case $host in
-  *-*-mingw* | *-*-cygwin*)
-    CFLAGS="$CFLAGS -mstackrealign -mthreads "
-    LDFLAGS="$LDFLAGS -Wl,--stack,10485760 "
-    ;;
-  *-linux*)
-    LDFLAGS="$LDFLAGS -Wl,-z,relro "
-    CFLAGS="$CFLAGS -rdynamic "
-    ;;
-  *)
-    CFLAGS="$CFLAGS -rdynamic "
-    ;;
-esac
-
-case $host in
-  i?86-*)
-    if test $otama_sse2 = 1 -a $otama_native != 1; then
-      echo "Note: set -msse2 flag. (--enable-sse2)"
-      CFLAGS=" $CFLAGS -msse -msse2 "
-    fi
-    ;;
-  *)
-    ;;
-esac
-
 CXXFLAGS=$CFLAGS
 
 AM_CONDITIONAL([BUILDING_RUBY], [test $RUBY != "no"])
 AC_SUBST(RUBY)
-AC_SUBST(otama_native)
+AC_SUBST(otama_arch)
 AC_SUBST(otama_sse2)
 AC_SUBST(otama_leveldb)
 AC_SUBST(otama_sqlite3)
@@ -310,7 +304,7 @@ Makefile
 
 AC_OUTPUT
 echo "Otama $OTAMA_MAJOR.$OTAMA_MINOR.$OTAMA_REVISION:"
-echo "   Compiling with Native Instruction : $otama_native"
+echo "   Processor Architecture .......... : $otama_arch"
 echo "   Compiling with OpenMP ........... : $otama_openmp"
 echo "   Compiling with Debug ............ : $otama_debug"
 echo "   Building SQLite3 Driver ......... : $otama_sqlite3"

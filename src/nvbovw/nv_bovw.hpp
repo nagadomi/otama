@@ -652,7 +652,6 @@ public:
 			uint32_t b = BIT_BIT(*i);
 			bovw->bovw[a] |= (1ULL << b);
 		}
-		return 0;
 	}
 
 	void
