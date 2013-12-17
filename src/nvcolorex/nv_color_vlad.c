@@ -26,7 +26,7 @@
 // HSV ヒストグラムのVLAD
 // 実験以外で使っていない
 
-nv_matrix_t nv_color_boc_static;
+extern nv_matrix_t nv_color_boc_static;
 #define NV_COLOR_VLAD_IMG_SIZE 512.0f
 
 void
