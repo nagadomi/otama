@@ -8,7 +8,7 @@ libnvlmcaex_la_CFLAGS = -I$(srcdir) -I$(srcdir)/../nvcolorex -I$(srcdir)/../nvvl
 libnvlmcaex_la_CXXFLAGS = $(libnvlmcaex_la_CFLAGS)
 libnvlmcaex_la_LDFLAGS = -no-undefined 
 
-libnvlmcaex_la_SOURCES = nv_lmca.hpp
+libnvlmcaex_la_SOURCES = nv_lmca.hpp nv_lmca.cpp
 
 nv_lmca_train_SOURCES = nv_lmca_train.cpp
 nv_lmca_train_CFLAGS = -I$(srcdir) -I$(srcdir)/../nvcolorex -I$(srcdir)/../nvvlad -I$(srcdir)/../nvvlad -DPKGDATADIR=\""$(pkgdatadir)"\"

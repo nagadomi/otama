@@ -11,7 +11,7 @@ libnvbovw_la_CFLAGS = -I$(srcdir) -I$(srcdir)/../nvcolorex -DPKGDATADIR=\""$(pkg
 libnvbovw_la_CXXFLAGS = $(libnvbovw_la_CFLAGS)
 libnvbovw_la_LDFLAGS = -no-undefined 
 
-libnvbovw_la_SOURCES = nv_bovw.hpp
+libnvbovw_la_SOURCES = nv_bovw.hpp nv_bovw.cpp
 
 nv_bovw_benchmark_SOURCES = nv_bovw_benchmark.cpp
 nv_bovw_benchmark_CFLAGS = -I$(srcdir) -I$(srcdir)/../nvcolorex  -DPKGDATADIR=\""$(pkgdatadir)"\"
