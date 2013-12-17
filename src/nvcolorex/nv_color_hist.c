@@ -23,7 +23,7 @@
 #include "nv_ml.h"
 #include "nv_color_hist.h"
 
-nv_matrix_t nv_color_boc_static;
+extern nv_matrix_t nv_color_boc_static;
 #define NV_COLOR_HIST_IMG_SIZE 512.0f
 
 void
