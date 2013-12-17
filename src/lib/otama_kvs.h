@@ -28,7 +28,11 @@ extern "C" {
 #endif
 
 typedef struct otama_kvs otama_kvs_t;
-typedef struct otama_kvs_value otama_kvs_value_t;
+typedef struct otama_kvs_value {
+	void *data;
+	size_t len;
+} otama_kvs_value_t;
+
 typedef int (*otama_kvs_each_pair_f)(void *user_data,
 									 const void *key_ptr, size_t key_len,
 									 const void *value_ptr, size_t value_len);
@@ -59,10 +63,11 @@ otama_status_t otama_kvs_each_key(otama_kvs_t *kvs,
 otama_status_t otama_kvs_each_value(otama_kvs_t *kvs,
 									otama_kvs_each_value_f func,
 									void *user_data);
+#define OTAMA_KVS_VALUE_PTR(value) ((value)->data)
+#define OTAMA_KVS_VALUE_LEN(value) ((value)->len)
 
-const void *otama_kvs_value_ptr(otama_kvs_value_t *value);
-size_t otama_kvs_value_size(otama_kvs_value_t *value);
 otama_kvs_value_t *otama_kvs_value_alloc(void);
+void otama_kvs_value_clear(otama_kvs_value_t *value);
 void otama_kvs_value_free(otama_kvs_value_t **value);
 
 #ifdef __cplusplus

@@ -52,48 +52,48 @@ test_setget(void)
 	NV_ASSERT(otama_kvs_set(kvs, &key, sizeof(key),
 							&value, sizeof(value)) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_kvs_get(kvs, &key, sizeof(key), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == sizeof(value));
-	NV_ASSERT(*(const int64_t *)otama_kvs_value_ptr(db_value) == value);
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == sizeof(value));
+	NV_ASSERT(*(const int64_t *)OTAMA_KVS_VALUE_PTR(db_value) == value);
 	
 	key = 0xFFFFFFFFFFFFFFFFULL;
 	value = 0x1234567812345678ULL;
 	NV_ASSERT(otama_kvs_set(kvs, &key, sizeof(key),
 							&value, sizeof(value)) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_kvs_get(kvs, &key, sizeof(key), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == sizeof(value));
-	NV_ASSERT(*(const int64_t *)otama_kvs_value_ptr(db_value) == value);
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == sizeof(value));
+	NV_ASSERT(*(const int64_t *)OTAMA_KVS_VALUE_PTR(db_value) == value);
 
 	key_s = "thekey";
 	value_s = "thevalue";
 	NV_ASSERT(otama_kvs_set(kvs, key_s, strlen(key_s),
 							value_s, strlen(value_s) + 1) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_kvs_get(kvs, key_s, strlen(key_s), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == strlen(value_s) + 1);
-	NV_ASSERT(memcmp(otama_kvs_value_ptr(db_value),
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == strlen(value_s) + 1);
+	NV_ASSERT(memcmp(OTAMA_KVS_VALUE_PTR(db_value),
 					 value_s,
-					 otama_kvs_value_size(db_value)) == 0);
+					 OTAMA_KVS_VALUE_LEN(db_value)) == 0);
 	otama_kvs_close(&kvs);
 
 	key = -123456;
 	value = -654321;
 	NV_ASSERT(otama_kvs_open(&kvs, DB_PATH) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_kvs_get(kvs, &key, sizeof(key), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == sizeof(value));
-	NV_ASSERT(*(const int64_t *)otama_kvs_value_ptr(db_value) == value);
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == sizeof(value));
+	NV_ASSERT(*(const int64_t *)OTAMA_KVS_VALUE_PTR(db_value) == value);
 
 	key = 0xFFFFFFFFFFFFFFFFULL;
 	value = 0x1234567812345678ULL;
 	NV_ASSERT(otama_kvs_get(kvs, &key, sizeof(key), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == sizeof(value));
-	NV_ASSERT(*(const int64_t *)otama_kvs_value_ptr(db_value) == value);
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == sizeof(value));
+	NV_ASSERT(*(const int64_t *)OTAMA_KVS_VALUE_PTR(db_value) == value);
 	
 	key_s = "thekey";
 	value_s = "thevalue";
 	NV_ASSERT(otama_kvs_get(kvs, key_s, strlen(key_s), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == strlen(value_s) + 1);
-	NV_ASSERT(memcmp(otama_kvs_value_ptr(db_value),
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == strlen(value_s) + 1);
+	NV_ASSERT(memcmp(OTAMA_KVS_VALUE_PTR(db_value),
 					 value_s,
-					 otama_kvs_value_size(db_value)) == 0);
+					 OTAMA_KVS_VALUE_LEN(db_value)) == 0);
 	otama_kvs_close(&kvs);
 	
 	delete_db();
@@ -223,13 +223,13 @@ test_vacuum(void)
 	NV_ASSERT(otama_kvs_set(kvs, &key, sizeof(key),
 							&value, sizeof(value)) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_kvs_get(kvs, &key, sizeof(key), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == sizeof(value));
-	NV_ASSERT(*(const char *)otama_kvs_value_ptr(db_value) == value);
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == sizeof(value));
+	NV_ASSERT(*(const char *)OTAMA_KVS_VALUE_PTR(db_value) == value);
 
 	NV_ASSERT(otama_kvs_vacuum(kvs) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_kvs_get(kvs, &key, sizeof(key), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == sizeof(value));
-	NV_ASSERT(*(const char *)otama_kvs_value_ptr(db_value) == value);
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == sizeof(value));
+	NV_ASSERT(*(const char *)OTAMA_KVS_VALUE_PTR(db_value) == value);
 	
 	otama_kvs_close(&kvs);
 	otama_kvs_value_free(&db_value);
@@ -249,8 +249,8 @@ test_clear(void)
 	NV_ASSERT(otama_kvs_set(kvs, &key, sizeof(key),
 							&value, sizeof(value)) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_kvs_get(kvs, &key, sizeof(key), db_value) == OTAMA_STATUS_OK);
-	NV_ASSERT(otama_kvs_value_size(db_value) == sizeof(value));
-	NV_ASSERT(*(const short *)otama_kvs_value_ptr(db_value) == value);
+	NV_ASSERT(OTAMA_KVS_VALUE_LEN(db_value) == sizeof(value));
+	NV_ASSERT(*(const short *)OTAMA_KVS_VALUE_PTR(db_value) == value);
 
 	NV_ASSERT(otama_kvs_clear(kvs) == OTAMA_STATUS_OK);
 	NV_ASSERT(otama_kvs_get(kvs, &key, sizeof(key), db_value) == OTAMA_STATUS_NODATA);
