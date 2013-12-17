@@ -17,18 +17,11 @@ AC_CANONICAL_HOST
 AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(CPPFLAGS)
-if test "" = "$CFLAGS"; then
-    CFLAGS=" "
-fi
-if test "" = "$CXXFLAGS"; then
-    CXXFLAGS=" "
-fi
-if test "" = "$CPPFLAGS"; then
-    CPPFLAGS=" "
-fi
-if test "" = "$LDFLAGS"; then
-    LDFLAGS=" "
-fi
+
+CFLAGS="$CFLAGS "
+CXXFLAGS="$CXXFLAGS "
+CPPFLAGS="$CPPFLAGS "
+LDFLAGS="$LDFLAGS "
 
 CFLAGS=" $CFLAGS -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS "
 CFLAGS=" $CFLAGS -Wall -Wextra -Wformat=2 -Werror=format-security -Wdisabled-optimization -Wno-unused-parameter "
@@ -58,10 +51,31 @@ LT_INIT([win32-dll])
 # Checks for typedefs, structures, and compiler characteristics.
 
 AC_CHECK_LIB(m, main)
-AC_LANG_PUSH([C++])
-  AC_CHECK_LIB(stdc++, main)
-AC_LANG_POP([C++])
-AC_CHECK_LIB(ssp, main)
+
+AC_CANONICAL_HOST
+case $host in
+  *-*-mingw* | *-*-cygwin*)
+    AC_CHECK_LIB(ssp, main)
+    AC_LANG_PUSH([C++])
+      AC_CHECK_LIB(stdc++, main)
+    AC_LANG_POP([C++])
+    CFLAGS="$CFLAGS -mstackrealign -mthreads "
+    LDFLAGS=" $LDFLAGS -Wl,-no-undefined -Wl,--export-all-symbols -Wl,--stack,10485760 "    
+    ;;
+  *-linux*)
+    LDFLAGS="$LDFLAGS -Wl,-z,relro "
+    CFLAGS="$CFLAGS -rdynamic "
+    ;;
+  *freebsd*)
+    AC_CHECK_LIB(ssp, main)
+    CFLAGS="$CFLAGS -rdynamic "
+    ;;
+  *apple-darwin*)
+    AC_CHECK_LIB(ssp, main)
+    ;;
+  *)
+    ;;
+esac
 
 otama_debug=0
 AX_ARG_ENABLE(debug,
@@ -248,22 +262,6 @@ AC_FUNC_STRTOD
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h limits.h stdlib.h string.h unistd.h])
 AC_CHECK_FUNCS([ftruncate memset munmap realpath strcasecmp strerror strtol])
-
-# host
-AC_CANONICAL_HOST
-case $host in
-  *-*-mingw* | *-*-cygwin*)
-    CFLAGS="$CFLAGS -mstackrealign -mthreads "
-    LDFLAGS="$LDFLAGS -Wl,--stack,10485760 "
-    ;;
-  *-linux*)
-    LDFLAGS="$LDFLAGS -Wl,-z,relro "
-    CFLAGS="$CFLAGS -rdynamic "
-    ;;
-  *)
-    CFLAGS="$CFLAGS -rdynamic "
-    ;;
-esac
 
 CXXFLAGS=$CFLAGS
 
