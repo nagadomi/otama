@@ -51,14 +51,12 @@ LT_INIT([win32-dll])
 # Checks for typedefs, structures, and compiler characteristics.
 
 AC_CHECK_LIB(m, main)
+AC_CHECK_LIB(stdc++, main)
 
 AC_CANONICAL_HOST
 case $host in
   *-*-mingw* | *-*-cygwin*)
     AC_CHECK_LIB(ssp, main)
-    AC_LANG_PUSH([C++])
-      AC_CHECK_LIB(stdc++, main)
-    AC_LANG_POP([C++])
     CFLAGS="$CFLAGS -mstackrealign -mthreads "
     LDFLAGS=" $LDFLAGS -Wl,-no-undefined -Wl,--export-all-symbols -Wl,--stack,10485760 "    
     ;;
