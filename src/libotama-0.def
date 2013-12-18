@@ -159,7 +159,5 @@ otama_kvs_vacuum
 otama_kvs_each_pair
 otama_kvs_each_key
 otama_kvs_each_value
-otama_kvs_value_ptr
-otama_kvs_value_size
 otama_kvs_value_alloc
 otama_kvs_value_free
