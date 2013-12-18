@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <string>
 #include <inttypes.h>
-#include "leveldb/db.h"
+#include "leveldb/c.h"
 #include "leveldb/cache.h"
 #include "leveldb/comparator.h"
 #include "leveldb/write_batch.h"
@@ -38,13 +38,16 @@ namespace otama
 	class LevelDB
 	{
 	protected:
-		leveldb::DB *m_db;
-		leveldb::Options m_opt;
+		leveldb_t *m_db;
+		leveldb_options_t *m_opt;
+		leveldb_readoptions_t *m_ropt;
+		leveldb_writeoptions_t *m_wopt;
+		leveldb_cache_t *m_cache;
 		std::string m_last_error;
 		std::string m_path;
 		
 		void
-		set_error(std::string error_message)
+		set_error(const char *error_message)
 		{
 #ifdef _OPENMP
 #pragma omp critical (otama_leveldb_set_error)
@@ -55,34 +58,17 @@ namespace otama
 		}
 		
 	public:
-		class Result {
-		private:
-			std::string *m_data;
-		public:
-			Result(std::string *m_data)
-			{
-			}
-			const void *data(void)
-			{
-				return m_data->data();
-			}
-			~Result()
-			{
-				delete m_data;
-				m_data = 0;
-			}
-		};
 		LevelDB(void)
 		{
 			m_db = NULL;
-			m_path = "./leveldb";
-			if (WRITE_CACHE_SIZE > 0) {
-				m_opt.write_buffer_size = WRITE_CACHE_SIZE;
-			}
-			m_opt.create_if_missing = true;
-			m_opt.block_cache = NULL;
-		}
+			m_opt = NULL;
+			m_path = "./leveldb.ldb";
+			m_ropt = leveldb_readoptions_create();
+			m_wopt = leveldb_writeoptions_create();
+			m_cache = NULL;
 
+		}
+		
 		bool is_active(void)
 		{
 			return m_db != NULL;
@@ -104,15 +90,31 @@ namespace otama
 		open()
 		{
 			if (!m_db) {
-				leveldb::Status ret;
+				char *errptr = NULL;
+
+				if (m_opt) {
+					leveldb_options_destroy(m_opt);
+				}
+				m_opt = leveldb_options_create();
+				if (WRITE_CACHE_SIZE > 0) {
+					leveldb_options_set_write_buffer_size(m_opt, WRITE_CACHE_SIZE);
+				}
+				leveldb_options_set_create_if_missing(m_opt, 1);
+				
 				if (READ_CACHE_SIZE > 0) {
-					m_opt.block_cache = leveldb::NewLRUCache(READ_CACHE_SIZE);
+					if (m_cache) {
+						leveldb_cache_destroy(m_cache);
+					}
+					m_cache = leveldb_cache_create_lru(READ_CACHE_SIZE);
+					leveldb_options_set_cache(m_opt, m_cache);
 				}
-				ret = leveldb::DB::Open(m_opt, m_path, &m_db);
-				if (!ret.ok()) {
-					set_error(ret.ToString());
+				m_db = leveldb_open(m_opt, m_path.c_str(), &errptr);
+				if (m_db == NULL) {
+					set_error(errptr);
+					leveldb_free(errptr);
+					return false;
 				}
-				return ret.ok();
+				return true;
 			}
 			return true;
 		}
@@ -128,16 +130,20 @@ namespace otama
 		clear()
 		{
 			bool reopen = false;
-			leveldb::Status ret;
+			char *errptr = NULL;
+			leveldb_options_t *opt = leveldb_options_create();
+			leveldb_options_set_create_if_missing(opt, 1);
 			
 			if (m_db) {
 				reopen = true;
 				close();
 			}
-			ret = leveldb::DestroyDB(m_path, m_opt);
-			if (!ret.ok()) {
-				set_error(ret.ToString());
+			leveldb_destroy_db(opt, m_path.c_str(), &errptr);
+			if (errptr != NULL) {
+				set_error(errptr);
+				leveldb_free(errptr);
 			}
+			leveldb_options_destroy(opt);
 			if (reopen) {
 				open();
 			}
@@ -147,7 +153,7 @@ namespace otama
 		vacuum()
 		{
 			assert(m_db != NULL);
-			m_db->CompactRange(NULL, NULL);
+			leveldb_compact_range(m_db, NULL, 0, NULL, 0);
 			return true;
 		}
 		
@@ -155,58 +161,42 @@ namespace otama
 		close()
 		{
 			if (m_db) {
-				delete m_db;
+				leveldb_close(m_db);
 				m_db = NULL;
-				if (m_opt.block_cache) {
-					delete m_opt.block_cache;
-					m_opt.block_cache = NULL;
-				}
+			}
+			if (m_cache) {
+				leveldb_cache_destroy(m_cache);
+				m_cache = NULL;
+			}
+			if (m_opt) {
+				leveldb_options_destroy(m_opt);
+				m_opt = NULL;
 			}
 		}
 		
 		~LevelDB()
 		{
 			close();
+			leveldb_readoptions_destroy(m_ropt);
+			leveldb_writeoptions_destroy(m_wopt);
 		}
-
+		
 		inline void *
 		get(const void *key, size_t key_len, size_t *sp)
 		{
 			assert(m_db != NULL);
-			std::string db_value;
-			leveldb::Status ret;
-			char *value;
-
-			ret = m_db->Get(leveldb::ReadOptions(),
-							leveldb::Slice((const char *)key,
-										   key_len),
-							&db_value);
-			if (!ret.ok()) {
-				set_error(ret.ToString());
+			char *errptr = NULL;
+			char *value = leveldb_get(m_db, m_ropt, 
+									  (const char *)key,
+									  key_len, sp, &errptr);
+			if (value == NULL) {
+				if (errptr != NULL) {
+					set_error(errptr);
+					leveldb_free(errptr);
+				}
 				return NULL;
 			}
-			value = new char[db_value.size()];
-			*sp = db_value.size();
-			memcpy(value, db_value.data(), *sp);
-			
 			return value;
-		}
-
-		inline bool
-		get(const void *key, size_t key_len, std::string &buff)
-		{
-			assert(m_db != NULL);
-			leveldb::Status ret;
-
-			ret = m_db->Get(leveldb::ReadOptions(),
-							leveldb::Slice((const char *)key,
-										   key_len),
-							&buff);
-			if (!ret.ok()) {
-				set_error(ret.ToString());
-				return false;
-			}
-			return true;
 		}
 		
 		inline bool
@@ -214,14 +204,18 @@ namespace otama
 			const void *value, size_t value_len)
 		{
 			assert(m_db != NULL);
-			leveldb::Status ret;
-			ret = m_db->Put(leveldb::WriteOptions(),
-							leveldb::Slice((const char *)key, key_len),
-							leveldb::Slice((const char *)value, value_len));
-			if (!ret.ok()) {
-				set_error(ret.ToString());
+			char *errptr = NULL;
+			
+			leveldb_put(m_db, m_wopt,
+						(const char *)key, key_len,
+						(const char *)value, value_len,
+						&errptr);
+			if (errptr != NULL) {
+				set_error(errptr);
+				leveldb_free(errptr);
+				return false;
 			}
-			return ret.ok();
+			return true;
 		}
 		
 		inline bool
@@ -229,55 +223,76 @@ namespace otama
 				 const void *value, size_t value_len)
 		{
 			assert(m_db != NULL);
-			leveldb::Status ret;
-			leveldb::WriteOptions opt;
+			char *errptr = NULL;
+			leveldb_writeoptions_t *wopt = leveldb_writeoptions_create();
 			
-			opt.sync = true;
-			ret = m_db->Put(opt,
-							leveldb::Slice((const char *)key, key_len),
-							leveldb::Slice((const char *)value, value_len));
-			if (!ret.ok()) {
-				set_error(ret.ToString());
+			leveldb_writeoptions_set_sync(wopt, 1);
+			leveldb_put(m_db, m_wopt,
+						(const char *)key, key_len,
+						(const char *)value, value_len,
+						&errptr);
+			leveldb_writeoptions_destroy(wopt);
+			if (errptr != NULL) {
+				set_error(errptr);
+				leveldb_free(errptr);
+				return false;
 			}
-			return ret.ok();
+			return true;
 		}
 		
 		inline bool
 		append(const KEY_TYPE *key, const VALUE_TYPE *value, size_t n)
 		{
 			assert(m_db != NULL);
-			std::string db_value;
-			leveldb::Slice db_key((const char *)key, sizeof(KEY_TYPE));
-			leveldb::Status ret;
-			leveldb::ReadOptions opt;
+			char *errptr = NULL;
+			char *new_value;
+			char *db_value;
+			size_t len = 0;
+			size_t new_len;
+			bool ret;
 			
-			assert(m_db != NULL);
-			opt.fill_cache = false;
-			ret = m_db->Get(opt, db_key, &db_value);
-			if (!ret.ok() && !ret.IsNotFound()) {
-				set_error(ret.ToString());
-				return false;
+			leveldb_readoptions_t *ropt = leveldb_readoptions_create();
+
+			leveldb_readoptions_set_fill_cache(ropt, 0);
+			db_value = leveldb_get(m_db, m_ropt, 
+								   (const char *)key,
+								   sizeof(KEY_TYPE), &len, &errptr);
+			if (value == NULL) {
+				if (errptr != NULL) {
+					set_error(errptr);
+					leveldb_free(errptr);
+					leveldb_readoptions_destroy(ropt);
+					return false;
+				}
 			}
-			db_value.append((const char *)value, sizeof(VALUE_TYPE) * n);
-			ret = m_db->Put(leveldb::WriteOptions(), db_key, db_value);
-			if (!ret.ok()) {
-				set_error(ret.ToString());
+			new_len = len + sizeof(VALUE_TYPE) * n;
+			new_value = nv_alloc_type(char, new_len);
+			if (len > 0) {
+				memcpy(new_value, db_value, len);
 			}
-			return ret.ok();
+			memcpy(new_value + len, value, sizeof(VALUE_TYPE) * n);
+
+			if (db_value != NULL) {
+				leveldb_free(db_value);
+			}
+			leveldb_readoptions_destroy(ropt);
+			ret = set(key, sizeof(KEY_TYPE), new_value, new_len);
+			nv_free(new_value);
+			
+			return ret;
 		}
 		
 		inline bool
 		set(const KEY_TYPE *key, const VALUE_TYPE *value)
 		{
 			return set(key, sizeof(KEY_TYPE), value, sizeof(VALUE_TYPE));
-		}			
+		}
 		
 		inline bool
 		append(const KEY_TYPE *key, const VALUE_TYPE *value)
 		{
 			return append(key, value, 1);
 		}
-		
 		
 		inline bool
 		replace(const void *key, size_t key_len, const void *value, size_t value_len)
@@ -290,45 +305,23 @@ namespace otama
 		{
 			return set(key, value);
 		}
-
+		
 		inline bool
 		add(const void *key, size_t key_len, const void *value, size_t value_len)
 		{
-			return set(key, key_len,
-					   value, value_len);
+			return set(key, key_len, value, value_len);
 		}
 		
 		inline VALUE_TYPE *
 		get(const KEY_TYPE *key)
 		{
-			assert(m_db != NULL);
-			std::string db_value;
-			leveldb::Status ret;
-			char *value;
-
-			ret = m_db->Get(leveldb::ReadOptions(),
-							leveldb::Slice((const char *)key,
-										   sizeof(KEY_TYPE)),
-							&db_value);
-			if (!ret.ok()) {
-				set_error(ret.ToString());
-				return NULL;
-			}
-			// warning: will not use VALUE_TYPE constructor
-			value = new char[db_value.size()];
-			memcpy(value, db_value.data(), db_value.size());
-			
-			return (VALUE_TYPE *)value;
+			size_t sp;
+			return (VALUE_TYPE *)get(key, sizeof(KEY_TYPE), &sp);
 		}
 		
-		void free_value_raw(void *p)
+		void free_value(void *p)
 		{
-			delete [] (char *)p;
-		}
-		
-		void free_value(VALUE_TYPE *p)
-		{
-			free_value_raw(p);
+			leveldb_free(p);
 		}
 
 		inline int64_t
@@ -343,7 +336,7 @@ namespace otama
 				return 0;
 			}
 			val = *count_ptr;
-			free_value_raw(count_ptr);
+			free_value(count_ptr);
 			
 			return val;
 		}
@@ -354,12 +347,18 @@ namespace otama
 			assert(m_db != NULL);
 			int64_t old_count = count();
 			int64_t new_count = 0;
+			const leveldb_snapshot_t *snap = leveldb_create_snapshot(m_db);
+			leveldb_iterator_t *iter = leveldb_create_iterator(m_db, m_ropt);
 			
-			leveldb::Iterator *i = m_db->NewIterator(leveldb::ReadOptions());
-			for (i->SeekToFirst(); i->Valid(); i->Next()) {
+			for (leveldb_iter_seek_to_first(iter);
+				 leveldb_iter_valid(iter);
+				 leveldb_iter_next(iter))
+			{
 				++new_count;
 			}
-			delete i;
+			leveldb_iter_destroy(iter);
+			leveldb_release_snapshot(m_db, snap);
+			
 			if (old_count > 0) {
 				new_count -= 1;
 			}
