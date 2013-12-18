@@ -25,11 +25,11 @@ otama_test: all
 	cd $(abs_top_srcdir)/src/tests && $(MAKE) $(AM_MAKEFLAGS) otama_test
 
 gdb: otama_test
-	cd $(abs_top_builddir)/src/tests && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:../.libs" gdb ./.libs/otama_test
+	cd $(abs_top_builddir)/src/tests && LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):../.libs" gdb ./.libs/otama_test
 
 valgrind: otama_test
 	cd $(abs_top_builddir)/src/tests && \
-	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:../.libs" valgrind -v --tool=memcheck --leak-check=full --show-reachable=yes --log-file=./valgrind.log ./.libs/otama_test; \
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):../.libs" valgrind -v --tool=memcheck --leak-check=full --show-reachable=yes --log-file=./valgrind.log ./.libs/otama_test; \
 	cat ./valgrind.log
 
 if BUILDING_RUBY
@@ -46,7 +46,7 @@ all-local:
 
 check-local:
 	cd $(abs_top_builddir)/ruby; \
-	LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(abs_top_builddir)/src/.libs" NV_BOVW_PKGDATADIR="$(abs_top_builddir)/src/nvbovw"  $(abs_top_srcdir)/ruby/test.sh $(RUBY) $(abs_top_srcdir)/ruby
+	LD_LIBRARY_PATH="$(LD_LIBRARY_PATH):$(abs_top_builddir)/src/.libs" NV_BOVW_PKGDATADIR="$(abs_top_builddir)/src/nvbovw"  $(abs_top_srcdir)/ruby/test.sh $(RUBY) $(abs_top_srcdir)/ruby
 
 install-exec-hook:
 	cd $(abs_top_builddir)/ruby; \
