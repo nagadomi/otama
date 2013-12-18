@@ -24,7 +24,7 @@ lib/otama_dbi.cpp \
 lib/otama_dbi_pgsql.c \
 lib/otama_dbi_sqlite3.c \
 lib/otama_dbi_mysql.c \
-lib/otama_kvs.cpp \
+lib/otama_kvs.c \
 lib/otama.cpp \
 lib/otama.h \
 lib/otama_feature_raw.h \

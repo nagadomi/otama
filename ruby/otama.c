@@ -947,8 +947,8 @@ otama_kvs_rb_get(VALUE self, VALUE key)
 		}
 		return Qnil;
 	}
-	rb_value = rb_str_new(otama_kvs_value_ptr(value),
-						  otama_kvs_value_size(value));
+	rb_value = rb_str_new(OTAMA_KVS_VALUE_PTR(value),
+						  OTAMA_KVS_VALUE_LEN(value));
 	otama_kvs_value_free(&value);
 	
 	OBJ_TAINT(rb_value);
