@@ -53,7 +53,7 @@ LT_INIT([win32-dll])
 AC_CHECK_LIB(m, main)
 AC_CHECK_LIB(stdc++, main)
 
-AC_CANONICAL_HOST
+otama_archflags=""
 case $host in
   *-*-mingw* | *-*-cygwin*)
     AC_CHECK_LIB(ssp, main)
@@ -70,6 +70,7 @@ case $host in
     ;;
   *apple-darwin*)
     AC_CHECK_LIB(ssp, main)
+    otama_archflags="-arch `uname -m`"
     ;;
   *)
     ;;
@@ -266,6 +267,7 @@ CXXFLAGS=$CFLAGS
 AM_CONDITIONAL([BUILDING_RUBY], [test $RUBY != "no"])
 AC_SUBST(RUBY)
 AC_SUBST(otama_arch)
+AC_SUBST(otama_archflags)
 AC_SUBST(otama_sse2)
 AC_SUBST(otama_leveldb)
 AC_SUBST(otama_sqlite3)

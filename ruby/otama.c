@@ -196,7 +196,7 @@ rubyobj2variant(VALUE value, otama_variant_t *var)
 		otama_variant_set_string(var, StringValuePtr(s));
 		break;
 	case T_ARRAY: {
-		int len = RARRAY_LEN(value), i;
+		int len = (int)RARRAY_LEN(value), i;
 		otama_variant_set_array(var);
 		for (i = 0; i < len; ++i) {
 			VALUE elm = rb_ary_entry(value, i);
@@ -622,8 +622,8 @@ static VALUE
 make_results(const otama_result_t *results)
 {
 	VALUE result_array;
-	long nresult = otama_result_count(results);
-	long i;
+	int nresult = (int)otama_result_count(results);
+	int i;
 	
 	result_array = rb_ary_new2(nresult);
 	for (i = 0; i < nresult; ++i) {
@@ -658,7 +658,7 @@ otama_rb_search(VALUE self, VALUE n, VALUE query)
 	var = otama_variant_new(pool);
 	rubyobj2variant(query, var);
 	
-	ret = otama_search(otama, &results, NUM2LL(n), var);
+	ret = otama_search(otama, &results, NUM2INT(n), var);
 	if (ret != OTAMA_STATUS_OK) {
 		otama_variant_pool_free(&pool);
 		otama_rb_raise(ret);
