@@ -400,6 +400,25 @@ namespace otama
 			
 			return OTAMA_STATUS_OK;
 		}
+		
+		static bool
+		valid_namespace(const char *ns)
+		{
+			static const char *whitelist = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+			for (int i = 0; ns[i] != 0; ++i) {
+				bool ok = false;
+				for (int j = 0; whitelist[j] != 0; ++j) {
+					if (ns[i] == whitelist[j]) {
+						ok = true;
+						break;
+					}
+				}
+				if (!ok) {
+					return false;
+				}
+			}
+			return true;
+		}
 
 	public:
 		Driver(otama_variant_t *options)
@@ -451,6 +470,10 @@ namespace otama
 		virtual otama_status_t
 		open(void)
 		{
+			if (!valid_namespace(m_prefix.c_str())) {
+				OTAMA_LOG_ERROR("invalid namespace `%s'", m_prefix.c_str());
+				return OTAMA_STATUS_INVALID_ARGUMENTS;
+			}
 			return OTAMA_STATUS_OK;
 		}
 		
