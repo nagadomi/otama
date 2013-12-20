@@ -104,13 +104,15 @@ if test "$otama_arch" != "generic"; then
 fi
 
 otama_leveldb=0
+otama_has_leveldb_free=0
 AC_LANG_PUSH([C++])
 AX_ARG_ENABLE(leveldb,
         AS_HELP_STRING([--enable-leveldb], [enable leveldb.]), [yes],
 	[AC_CHECK_HEADERS([leveldb/db.h],
 		[otama_leveldb=1
 		AC_CHECK_LIB(snappy, main)
-		AC_CHECK_LIB(leveldb, main)
+		AC_CHECK_LIB(leveldb, leveldb_free,
+			[otama_has_leveldb_free=1], [AC_CHECK_LIB(leveldb, main)])
 		],
 		[AC_MSG_ERROR(*** libleveldb not found. please install libleveldb-dev and libsnappy-dev.)])],
         [])
@@ -270,6 +272,7 @@ AC_SUBST(otama_arch)
 AC_SUBST(otama_archflags)
 AC_SUBST(otama_sse2)
 AC_SUBST(otama_leveldb)
+AC_SUBST(otama_has_leveldb_free)
 AC_SUBST(otama_sqlite3)
 AC_SUBST(otama_pgsql)
 AC_SUBST(otama_libpq_h_include)
