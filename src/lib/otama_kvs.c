@@ -24,6 +24,15 @@
 #include "leveldb/c.h"
 #include "nv_core.h"
 
+
+#if OTAMA_WITH_LEVELDB
+#  if OTAMA_HAS_LEVELDB_FREE
+#    define LEVELDB_FREE(p) leveldb_free(p)
+#  else
+#    define LEVELDB_FREE(p) free(p)
+#  endif
+#endif
+
 struct otama_kvs {
 	leveldb_t *db;
 	leveldb_options_t *opt;
@@ -48,7 +57,7 @@ otama_kvs_open(otama_kvs_t **kvs, const char *filename)
 	if ((*kvs)->db == NULL) {
 		OTAMA_LOG_ERROR("%s: %s", (*kvs)->path, errptr);
 		nv_free(*kvs);
-		leveldb_free(errptr);
+		LEVELDB_FREE(errptr);
 		*kvs = NULL;
 		return OTAMA_STATUS_SYSERROR;
 	}
@@ -88,7 +97,7 @@ otama_kvs_get(otama_kvs_t *kvs,
 			return OTAMA_STATUS_NODATA;
 		}
 		OTAMA_LOG_ERROR("%s", errptr);
-		leveldb_free(errptr);
+		LEVELDB_FREE(errptr);
 		return OTAMA_STATUS_SYSERROR;
 	}
 	return OTAMA_STATUS_OK;
@@ -107,7 +116,7 @@ otama_kvs_set(otama_kvs_t *kvs,
 				&errptr);
 	if (errptr != NULL) {
 		OTAMA_LOG_ERROR("%s", errptr);
-		leveldb_free(errptr);
+		LEVELDB_FREE(errptr);
 		return OTAMA_STATUS_SYSERROR;
 	}
 	return OTAMA_STATUS_OK;
@@ -123,7 +132,7 @@ otama_kvs_delete(otama_kvs_t *kvs,
 				   (const char *)key_ptr, key_len, &errptr);
 	if (errptr != NULL) {
 		OTAMA_LOG_ERROR("%s", errptr);
-		leveldb_free(errptr);
+		LEVELDB_FREE(errptr);
 		return OTAMA_STATUS_SYSERROR;
 	}
 	return OTAMA_STATUS_OK;
@@ -141,14 +150,14 @@ otama_kvs_clear(otama_kvs_t *kvs)
 	
 	if (errptr != NULL) {
 		OTAMA_LOG_ERROR("%s", errptr);
-		leveldb_free(errptr);
+		LEVELDB_FREE(errptr);
 		kvs->db = leveldb_open(kvs->opt, kvs->path, &errptr);
 		return OTAMA_STATUS_SYSERROR;
 	}
 	kvs->db = leveldb_open(kvs->opt, kvs->path, &errptr);
 	if (kvs->db == NULL) {
 		OTAMA_LOG_ERROR("%s", errptr);
-		leveldb_free(errptr);
+		LEVELDB_FREE(errptr);
 		return OTAMA_STATUS_SYSERROR;
 	}
 	
@@ -253,7 +262,7 @@ void
 otama_kvs_value_clear(otama_kvs_value_t *value)
 {
 	if (value->data) {
-		leveldb_free(value->data);
+		LEVELDB_FREE(value->data);
 		value->data = NULL;
 		value->len = 0;
 	}

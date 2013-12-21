@@ -21,6 +21,7 @@
 #define OTAMA_CONFIG_AUTO_H
 
 #define OTAMA_WITH_LEVELDB               @otama_leveldb@
+#define OTAMA_HAS_LEVELDB_FREE           @otama_has_leveldb_free@
 #define OTAMA_WITH_PGSQL                 @otama_pgsql@
 #define OTAMA_LIBPQ_H_INCLUDE            @otama_libpq_h_include@
 #define OTAMA_LIBPQ_H_INCLUDE_POSTGRESQL @otama_libpq_h_include_postgresql@

@@ -111,7 +111,7 @@ namespace otama
 				m_db = leveldb_open(m_opt, m_path.c_str(), &errptr);
 				if (m_db == NULL) {
 					set_error(errptr);
-					leveldb_free(errptr);
+					free_value(errptr);
 					return false;
 				}
 				return true;
@@ -141,7 +141,7 @@ namespace otama
 			leveldb_destroy_db(opt, m_path.c_str(), &errptr);
 			if (errptr != NULL) {
 				set_error(errptr);
-				leveldb_free(errptr);
+				free_value(errptr);
 			}
 			leveldb_options_destroy(opt);
 			if (reopen) {
@@ -192,7 +192,7 @@ namespace otama
 			if (value == NULL) {
 				if (errptr != NULL) {
 					set_error(errptr);
-					leveldb_free(errptr);
+					free_value(errptr);
 				}
 				return NULL;
 			}
@@ -212,7 +212,7 @@ namespace otama
 						&errptr);
 			if (errptr != NULL) {
 				set_error(errptr);
-				leveldb_free(errptr);
+				free_value(errptr);
 				return false;
 			}
 			return true;
@@ -234,7 +234,7 @@ namespace otama
 			leveldb_writeoptions_destroy(wopt);
 			if (errptr != NULL) {
 				set_error(errptr);
-				leveldb_free(errptr);
+				free_value(errptr);
 				return false;
 			}
 			return true;
@@ -260,7 +260,7 @@ namespace otama
 			if (value == NULL) {
 				if (errptr != NULL) {
 					set_error(errptr);
-					leveldb_free(errptr);
+					free_value(errptr);
 					leveldb_readoptions_destroy(ropt);
 					return false;
 				}
@@ -273,7 +273,7 @@ namespace otama
 			memcpy(new_value + len, value, sizeof(VALUE_TYPE) * n);
 
 			if (db_value != NULL) {
-				leveldb_free(db_value);
+				free_value(db_value);
 			}
 			leveldb_readoptions_destroy(ropt);
 			ret = set(key, sizeof(KEY_TYPE), new_value, new_len);
@@ -321,7 +321,11 @@ namespace otama
 		
 		void free_value(void *p)
 		{
+#if OTAMA_HAS_LEVELDB_FREE
 			leveldb_free(p);
+#else
+			free(p);
+#endif
 		}
 
 		inline int64_t

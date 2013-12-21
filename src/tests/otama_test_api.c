@@ -46,7 +46,8 @@ test_error(const char *config)
 	char *s;
 	otama_feature_raw_t *p;
 	int64_t count;
-	
+	otama_variant_pool_t *pool;
+	otama_variant_t *opt;
 	OTAMA_TEST_NAME;
 	
 	drop_create(config);
@@ -70,6 +71,13 @@ test_error(const char *config)
 	NV_ASSERT(count == 2);
 	
 	otama_close(&otama);
+
+	pool = otama_variant_pool_alloc();
+	opt = otama_yaml_read_file(config, pool);
+	otama_variant_set_string(otama_variant_hash_at(opt, "namespace"), "ok-success");
+	NV_ASSERT(otama_open_opt(&otama, opt) != OTAMA_STATUS_OK);
+	
+	otama_variant_pool_free(&pool);
 }
 
 static void

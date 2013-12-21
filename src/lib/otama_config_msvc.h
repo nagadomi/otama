@@ -21,6 +21,7 @@
 #define OTAMA_CONFIG_MSVC_H
 
 #define OTAMA_WITH_LEVELDB               1
+#define OTAMA_HAS_LEVELDB_FREE           1
 #define OTAMA_WITH_PGSQL                 0
 #define OTAMA_LIBPQ_H_INCLUDE            0
 #define OTAMA_LIBPQ_H_INCLUDE_POSTGRESQL 0
