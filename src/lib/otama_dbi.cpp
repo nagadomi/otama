@@ -596,10 +596,7 @@ int
 otama_dbi_open(otama_dbi_t *dbi)
 {
 #if OTAMA_WITH_PGSQL
-	if (strcmp(dbi->config.driver, "pgsql") == 0 ||
-		strcmp(dbi->config.driver, "postgres") == 0 ||
-		strcmp(dbi->config.driver, "postgresql") == 0)
-	{
+	if (strcmp(dbi->config.driver, "pgsql") == 0) {
 		return otama_dbi_pgsql_open(dbi);
 	}
 #endif
