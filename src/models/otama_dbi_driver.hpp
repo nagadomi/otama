@@ -117,7 +117,7 @@ namespace otama
 					return OTAMA_STATUS_SYSERROR;
 				}
 				otama_dbi_stmt_set_int(m_update_flag, 0, flag);
-				otama_dbi_stmt_set_int(m_update_flag, 1, seq);
+				otama_dbi_stmt_set_int64(m_update_flag, 1, seq);
 				otama_dbi_stmt_set_string(m_update_flag, 2, id_hexstr);
 				ret = otama_dbi_stmt_exec(m_update_flag);
 				if (ret != 0) {
