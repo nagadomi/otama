@@ -91,7 +91,8 @@ int otama_dbi_drop_sequence(otama_dbi_t *dbi,
 /* table declare */
 	
 typedef enum {
-	OTAMA_DBI_COLUMN_STRING
+	OTAMA_DBI_COLUMN_UNDEF
+	,OTAMA_DBI_COLUMN_STRING
 	,OTAMA_DBI_COLUMN_CHAR
 	,OTAMA_DBI_COLUMN_TEXT
 	,OTAMA_DBI_COLUMN_INT
@@ -130,6 +131,20 @@ int otama_dbi_create_index(otama_dbi_t *dbi,
 						   const char *table_name,
 						   otama_dbi_unique_e unique,
 						   const otama_dbi_column_t *columns, int num_columns);
+
+/* prepared statement */
+typedef struct otama_dbi_stmt otama_dbi_stmt_t;
+
+otama_dbi_stmt_t *otama_dbi_stmt_new(otama_dbi_t *dbi,
+									 const char *sql);
+void otama_dbi_stmt_set_int64(otama_dbi_stmt_t *stmt, int num, int64_t value);
+void otama_dbi_stmt_set_int(otama_dbi_stmt_t *stmt, int num, int value);
+void otama_dbi_stmt_set_float(otama_dbi_stmt_t *stmt, int num, float value);
+void otama_dbi_stmt_set_string(otama_dbi_stmt_t *stmt, int num, const char *value);
+void otama_dbi_stmt_reset(otama_dbi_stmt_t *stmt);
+int otama_dbi_stmt_exec(otama_dbi_stmt_t *stmt);
+otama_dbi_result_t *otama_dbi_stmt_query(otama_dbi_stmt_t *stmt);
+void otama_dbi_stmt_free(otama_dbi_stmt_t **stmt);
 
 #ifdef __cplusplus
 }

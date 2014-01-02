@@ -103,9 +103,15 @@ otama_dbi_sqlite3_query(otama_dbi_t *dbi, const char *query)
 		return NULL;
 	}
 	ret = sqlite3_step(stmt);
+	if (ret != SQLITE_DONE && ret != SQLITE_ROW) {
+		OTAMA_LOG_ERROR("%s: %s", query, sqlite3_errmsg((sqlite3 *)dbi->conn));
+		return NULL;
+	}
+	
 	res = nv_alloc_type(otama_dbi_result_t, 1);
 	res->cursor = stmt;
 	res->dbi = dbi;
+	res->prepared = 0;
 	if (ret == SQLITE_ROW) {
 		res->tuples = 1;
 	} else {
@@ -196,7 +202,9 @@ static void
 otama_dbi_sqlite3_result_free(otama_dbi_result_t **res)
 {
 	if (res && *res) {
-		sqlite3_finalize((sqlite3_stmt *)(*res)->cursor);
+		if (!(*res)->prepared) {
+			sqlite3_finalize((sqlite3_stmt *)(*res)->cursor);
+		}
 		nv_free(*res);
 		*res = NULL;
 	}
@@ -257,6 +265,112 @@ otama_dbi_sqlite3_sequence_exist(otama_dbi_t *dbi,
 	return otama_dbi_sqlite3_table_exist(dbi, exist, table_name);
 }
 
+otama_dbi_stmt_t *
+otama_dbi_sqlite3_stmt_new(otama_dbi_t *dbi,
+						   const char *sql)
+{
+	otama_dbi_stmt_t *stmt = nv_alloc_type(otama_dbi_stmt_t, 1);
+	sqlite3_stmt *stmt_native = NULL;
+	int ret;
+	
+	memset(stmt, 0, sizeof(*stmt));
+	ret = sqlite3_prepare_v2((sqlite3 *)dbi->conn, sql, -1, &stmt_native, NULL);
+	if (ret != SQLITE_OK) {
+		OTAMA_LOG_ERROR("%s: %s", sql, sqlite3_errmsg((sqlite3 *)dbi->conn));
+		nv_free(stmt);
+		return NULL;
+	}
+	stmt->dbi = dbi;
+	stmt->params = sqlite3_bind_parameter_count(stmt_native);
+	stmt->stmt = stmt_native;
+
+	return stmt;
+}
+
+otama_dbi_result_t *
+otama_dbi_sqlite3_stmt_query(otama_dbi_stmt_t *stmt)
+{
+	otama_dbi_result_t *res;
+	sqlite3_stmt *stmt_native = (sqlite3_stmt *)stmt->stmt;
+	int  ret;
+	int i;
+	int err = 0;
+	for (i = 0; i < stmt->params; ++i) {
+		switch (stmt->param_types[i]) {
+		case OTAMA_DBI_COLUMN_INT:
+			ret = sqlite3_bind_int(stmt_native, i + 1,
+								   stmt->param_values[i].i);
+			if (ret != SQLITE_OK) {
+				err = 0;
+			}
+			break;
+		case OTAMA_DBI_COLUMN_INT64:
+			ret = sqlite3_bind_int64(stmt_native, i + 1,
+									 stmt->param_values[i].i64);
+			if (ret != SQLITE_OK) {
+				err = 0;
+			}
+			break;
+		case OTAMA_DBI_COLUMN_FLOAT:
+			ret = sqlite3_bind_double(stmt_native, i + 1,
+									  (double)stmt->param_values[i].f);
+			if (ret != SQLITE_OK) {
+				err = 0;
+			}
+			break;
+		case OTAMA_DBI_COLUMN_STRING:
+			ret = sqlite3_bind_text(stmt_native, i + 1,
+									stmt->param_values[i].s, -1, SQLITE_STATIC);
+			if (ret != SQLITE_OK) {
+				err = 0;
+			}
+			break;
+		default:
+			NV_ASSERT(0);
+			err = 1;
+			break;
+		}
+	}
+	if (err) {
+		sqlite3_reset(stmt_native);
+		return NULL;
+	}
+	ret = sqlite3_step(stmt_native);
+	if (ret != SQLITE_DONE && ret != SQLITE_ROW) {
+		OTAMA_LOG_ERROR("%s", sqlite3_errmsg((sqlite3 *)stmt->dbi->conn));
+		sqlite3_reset(stmt_native);
+		return NULL;
+	}
+	res = nv_alloc_type(otama_dbi_result_t, 1);
+	res->cursor = stmt_native;
+	res->dbi = stmt->dbi;
+	res->prepared = 1;
+	if (ret == SQLITE_ROW) {
+		res->tuples = 1;
+	} else {
+		res->tuples = 0;
+	}
+	res->fields = sqlite3_column_count((sqlite3_stmt *)res->cursor);
+	res->index = 1;
+	
+	return res;
+}
+
+void
+otama_dbi_sqlite3_stmt_reset(otama_dbi_stmt_t *stmt)
+{
+	sqlite3_reset((sqlite3_stmt *)stmt->stmt);
+}
+
+void
+otama_dbi_sqlite3_stmt_free(otama_dbi_stmt_t **stmt)
+{
+	if (stmt && *stmt) {
+		sqlite3_finalize((*stmt)->stmt);
+		nv_free(*stmt);
+		*stmt = NULL;
+	}
+}
 
 int
 otama_dbi_sqlite3_open(otama_dbi_t *dbi)
@@ -303,6 +417,10 @@ otama_dbi_sqlite3_open(otama_dbi_t *dbi)
 	dbi->func.drop_sequence = otama_dbi_sqlite3_drop_sequence;
 	dbi->func.sequence_next = otama_dbi_sqlite3_sequence_next;
 	dbi->func.sequence_exist = otama_dbi_sqlite3_sequence_exist;
+	dbi->func.stmt_new = otama_dbi_sqlite3_stmt_new;
+	dbi->func.stmt_query = otama_dbi_sqlite3_stmt_query;
+	dbi->func.stmt_reset = otama_dbi_sqlite3_stmt_reset;
+	dbi->func.stmt_free = otama_dbi_sqlite3_stmt_free;
 	
 	// default memory config
 	sqlite3_busy_timeout(conn, DEFAULT_TIMEOUT);

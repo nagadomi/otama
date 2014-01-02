@@ -244,6 +244,190 @@ otama_dbi_pgsql_sequence_next(otama_dbi_t *dbi, int64_t *seq,
 	return 0;
 }
 
+static char *
+otama_dbi_pgsql_replace_placeholder(const char *query, int *params)
+{
+	int escape = 0;
+	int quote = 0;
+	size_t len = strlen(query);
+	char *new_query = nv_alloc_type(char, len * 16);
+	char *p = new_query;
+
+	*params = 0;
+	
+	for (; *query != '\0'; ++query) {
+		if (*query == '\\') {
+			escape = 1;
+			*p++ = *query;
+		} else if (*query == '\'') {
+			*p++ = *query;
+			if (escape) {
+				escape = 0;
+			} else if (quote) {
+				quote = 0;
+			} else {
+				quote = 1;
+			}
+		} else if (*query == '?') {
+			if (escape) {
+				escape = 0;
+				*p++ = *query;
+			} else if (quote) {
+				*p++ = *query;
+			} else {
+				char n[32];
+				size_t params_len;
+				size_t j;
+				
+				nv_snprintf(n, sizeof(n)-1, "%d", (*params) + 1);
+				params_len = strlen(n);
+				*p++ = '$';
+				for (j = 0; j < params_len; ++j) {
+					*p++ = n[j];
+				}
+				++*params;
+			}
+		} else {
+			if (escape) {
+				escape = 0;
+			}
+			*p++ = *query;
+		}
+	}
+	*p = '\0';
+	return new_query;
+}
+
+otama_dbi_stmt_t *
+otama_dbi_pgsql_stmt_new(otama_dbi_t *dbi,
+						   const char *query)
+{
+	otama_dbi_stmt_t *stmt = nv_alloc_type(otama_dbi_stmt_t, 1);
+	PGresult *res;
+	int params = 0;
+	char *pg_query = otama_dbi_pgsql_replace_placeholder(query, &params);
+
+	memset(stmt, 0, sizeof(*stmt));
+	nv_sha1_hexstr(stmt->name, query, strlen(query));
+	
+	res = PQprepare((PGconn *)dbi->conn, stmt->name, pg_query, 0, NULL);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+		if (strcmp(PQresultErrorField(res, PG_DIAG_SQLSTATE), "42P05") != 0) {
+			OTAMA_LOG_ERROR("%s: %s(%d)",
+							pg_query,
+							PQresultErrorMessage(res),
+							PQresultStatus(res));
+			PQclear(res);
+			nv_free(stmt);
+			nv_free(pg_query);
+			return NULL;
+		} else {
+			/* 42P05 DUPLICATE PREPARED STATEMENT */
+		}
+	}
+	PQclear(res);
+	stmt->dbi = dbi;
+	stmt->params = params;
+	stmt->stmt = NULL;
+	nv_free(pg_query);
+	
+	return stmt;
+}
+
+otama_dbi_result_t *
+otama_dbi_pgsql_stmt_query(otama_dbi_stmt_t *stmt)
+{
+	otama_dbi_result_t *res = nv_alloc_type(otama_dbi_result_t, 1);
+	char **values = nv_alloc_type(char *, stmt->params);
+	int *value_lengths = nv_alloc_type(int, stmt->params);
+	int i;
+	int err = 0;
+	size_t len;
+	
+	memset(values, 0, sizeof(char*) * stmt->params);
+	memset(value_lengths, 0, sizeof(int) * stmt->params);
+	
+	for (i = 0; i < stmt->params; ++i) {
+		switch (stmt->param_types[i]) {
+		case OTAMA_DBI_COLUMN_INT:
+			values[i] = nv_alloc_type(char, 32);
+			nv_snprintf(values[i], 31, "%d", stmt->param_values[i].i);
+			value_lengths[i] = strlen(values[i]);
+			break;
+		case OTAMA_DBI_COLUMN_INT64:
+			values[i] = nv_alloc_type(char, 32);
+			nv_snprintf(values[i], 31, "%"PRId64, stmt->param_values[i].i64);
+			value_lengths[i] = strlen(values[i]);
+			break;
+		case OTAMA_DBI_COLUMN_FLOAT:
+			values[i] = nv_alloc_type(char, 32);
+			nv_snprintf(values[i], 31, "%E", stmt->param_values[i].f);
+			value_lengths[i] = strlen(values[i]);
+			break;
+		case OTAMA_DBI_COLUMN_STRING:
+			len = strlen(stmt->param_values[i].s);
+			values[i] = nv_alloc_type(char, len + 1);
+			strncpy(values[i], stmt->param_values[i].s, len);
+			values[i][len] = '\0';
+			value_lengths[i] = strlen(values[i]);
+			break;
+		default:
+			OTAMA_LOG_ERROR("unsupported type at %d", i);
+			NV_ASSERT(0);
+			break;
+		}
+	}
+	if (!err) {
+		PGresult *cursor = PQexecPrepared((PGconn *)(stmt->dbi->conn),
+										  stmt->name,
+										  stmt->params,
+										  (const char * const *)values,
+										  value_lengths,
+										  NULL, 0);
+		ExecStatusType ret = PQresultStatus(cursor);
+		if (!(ret == PGRES_COMMAND_OK || ret == PGRES_TUPLES_OK)) {
+			OTAMA_LOG_ERROR("%s", PQresultErrorMessage(cursor));
+			err = 1;
+			PQclear(cursor);
+		} else {
+			res->cursor = cursor;
+			res->dbi = stmt->dbi;
+			res->tuples = PQntuples(cursor);
+			res->fields = PQnfields(cursor);
+			res->index = 0;
+		}
+	}
+	for (i = 0; i < stmt->params; ++i) {
+		if (values[i] != NULL) {
+			nv_free(values[i]);
+		}
+	}
+	nv_free(values);
+	nv_free(value_lengths);
+	
+	if (err) {
+		nv_free(res);
+		return NULL;
+	}
+	
+	return res;
+}
+
+void
+otama_dbi_pgsql_stmt_reset(otama_dbi_stmt_t *stmt)
+{
+}
+
+void
+otama_dbi_pgsql_stmt_free(otama_dbi_stmt_t **stmt)
+{
+	if (stmt && *stmt) {	
+		otama_dbi_execf((*stmt)->dbi, "DEALLOCATE PREPARE \"%s\"", (*stmt)->name);
+		nv_free(*stmt);
+		*stmt = NULL;
+	}
+}
+
 int
 otama_dbi_pgsql_open(otama_dbi_t *dbi)
 {
@@ -281,6 +465,10 @@ otama_dbi_pgsql_open(otama_dbi_t *dbi)
 	dbi->func.drop_sequence = otama_dbi_pgsql_drop_sequence;
 	dbi->func.sequence_next = otama_dbi_pgsql_sequence_next;
 	dbi->func.sequence_exist = otama_dbi_pgsql_sequence_exist;
+	dbi->func.stmt_new = otama_dbi_pgsql_stmt_new;
+	dbi->func.stmt_query = otama_dbi_pgsql_stmt_query;
+	dbi->func.stmt_reset = otama_dbi_pgsql_stmt_reset;
+	dbi->func.stmt_free = otama_dbi_pgsql_stmt_free;
 
 	return 0;
 }
