@@ -34,6 +34,6 @@
 #define OTAMA_HAS_KVS                    OTAMA_WITH_LEVELDB
 
 #define OTAMA_PACKAGE "otama"
-#define OTAMA_VERSION "0.7.2"
+#define OTAMA_VERSION "0.7.3"
 
 #endif
