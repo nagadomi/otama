@@ -35,7 +35,7 @@ class OtamaClient
       else
         raise ArgumentError
       end
-    elsif (arg.is_a?(String))
+    elsif (data.is_a?(String))
       res = RestClient.post(api_root, 
                             :file => File.new(data))
     else
@@ -60,7 +60,7 @@ class OtamaClient
       else
         raise ArgumentError
       end
-    elsif (arg.is_a?(String))
+    elsif (data.is_a?(String))
       res = RestClient.post(File.join(api_root, "search"), 
                             :file => File.new(data))
     else
