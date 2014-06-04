@@ -144,7 +144,7 @@ nv_color_boc(nv_color_boc_t *boc,
 	for (i = 0; i < vq_len; ++i) {
 		NV_MAT_V(hist, 0, vq[i]) += 1.0f;
 	}
-	max_v = nv_vector_max(hist, 0);
+	max_v = nv_vector_maxs(hist, 0);
 	hist_scale = 1.0f / max_v;
 	
 	memset(boc->color, 0, sizeof(boc->color));
@@ -263,7 +263,7 @@ nv_color_sboc(nv_color_sboc_t *boc, const nv_matrix_t *image)
 	
 	memset(boc->color, 0, sizeof(boc->color));
 	for (j = 0; j < hist->m; ++j) {
-		float max_v = nv_vector_max(hist, j);
+		float max_v = nv_vector_maxs(hist, j);
 		float hist_scale = 1.0f / max_v;
 		int base = j * 4;
 		

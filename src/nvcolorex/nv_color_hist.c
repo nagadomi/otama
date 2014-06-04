@@ -136,7 +136,7 @@ nv_color_shist(nv_matrix_t *hist, int hist_j, const nv_matrix_t *image)
 	}
 	nv_vector_zero(hist, hist_j);
 	for (i = 0; i < hist_tmp->m; ++i) {
-		float scale = 1.0f / nv_vector_max(hist_tmp, i);
+		float scale = 1.0f / nv_vector_maxs(hist_tmp, i);
 		for (j = 0; j < hist_tmp->n; ++j) {
 			float v = (NV_MAT_V(hist_tmp, i, j) * scale) * 2.0f;
 			if (v > 0.02f) {
