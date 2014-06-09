@@ -93,6 +93,11 @@ private:
 	static const int SEARCH_FIRST_SCALE = 10;
 	static const int KEYPOINT_M = N == NV_BOVW_BIT2K ? 640 : (N == NV_BOVW_BIT8K ? 768 : 1800);
 	static const int HKM_NN = 4;
+	nv_kmeans_tree_t *m_posi;
+	nv_kmeans_tree_t *m_nega;
+	nv_matrix_t *m_idf;
+	nv_keypoint_ctx_t *m_ctx;
+	size_t m_fit_area;
 	
 	void
 	init_ctx(void)
@@ -214,11 +219,6 @@ private:
 		return 0;
 	}
 	
-	nv_kmeans_tree_t *m_posi;
-	nv_kmeans_tree_t *m_nega;
-	nv_matrix_t *m_idf;
-	nv_keypoint_ctx_t *m_ctx;
-	
 	static char *
 	default_data_path(char *path, size_t len, const char *filename)
 	{
@@ -275,8 +275,14 @@ private:
 		nv_matrix_free(&key_vec);
 	}
 public:
-	nv_bovw_ctx(): m_posi(0), m_nega(0), m_idf(0), m_ctx(0) {}
+	nv_bovw_ctx(): m_posi(0), m_nega(0), m_idf(0), m_ctx(0), m_fit_area(0) {}
 	~nv_bovw_ctx() { close(); }
+
+	void
+	set_fit_area(size_t area_size)
+	{
+		m_fit_area = area_size;
+	}
 	
 	int
 	open(void)
@@ -346,21 +352,30 @@ public:
 	extract(sparse_t &vec,
 			const nv_matrix_t *image)
 	{
-		float scale = IMG_SIZE() / (float)NV_MAX(image->rows, image->cols);
-		nv_matrix_t *resize = nv_matrix3d_alloc(3, (int)(image->rows * scale),
-												(int)(image->cols * scale));
-		nv_matrix_t *gray = nv_matrix3d_alloc(1, resize->rows, resize->cols);
-		nv_matrix_t *smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		nv_matrix_t *resize, *gray, *smooth;
 		
 		vec.clear();
+		
+		if (m_fit_area == 0) {
+			float scale = IMG_SIZE() / (float)NV_MAX(image->rows, image->cols);
+			resize = nv_matrix3d_alloc(3, (int)(image->rows * scale),
+										(int)(image->cols * scale));
+		} else {
+			float axis_ratio = (float)image->rows / image->cols;
+			int new_cols = (int)sqrtf(m_fit_area / axis_ratio);
+			int new_rows = (int)((float)m_fit_area / new_cols);
+			resize = nv_matrix3d_alloc(3, new_rows, new_cols);
+		}
+		gray = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
 		
 		nv_resize(resize, image);
 		nv_gray(gray, resize);
 		nv_gaussian5x5(smooth, 0, gray, 0);
 		extract_sparse_feature(vec, smooth);
 		
-		nv_matrix_free(&gray);
 		nv_matrix_free(&resize);
+		nv_matrix_free(&gray);
 		nv_matrix_free(&smooth);
 		
 		return 0;

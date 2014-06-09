@@ -57,6 +57,7 @@ public:
 private:
 	nv_keypoint_ctx_t *m_ctx;
 	nv_matrix_t *m_vq_table[2];
+	size_t m_fit_area;
 	
 	const nv_matrix_t *
 	POSI(void)
@@ -167,6 +168,7 @@ public:
 	{
 		m_vq_table[0] = NULL;
 		m_vq_table[1] = NULL;
+		m_fit_area = 0;
 		
 		switch (K) {
 		case NV_VLAD_512:
@@ -204,6 +206,13 @@ public:
 			break;
 		}
 	}
+
+	void
+	set_fit_area(size_t fit_area)
+	{
+		m_fit_area = fit_area;
+	}
+	
 	int
 	set_vq_table(const char *file)
 	{
@@ -254,13 +263,24 @@ public:
 		int desc_m;
 		nv_matrix_t *key_vec;
 		nv_matrix_t *desc_vec;
-		float scale = IMG_SIZE() / (float)NV_MAX(image->rows, image->cols);
-		nv_matrix_t *resize = nv_matrix3d_alloc(3, (int)(image->rows * scale),
-												(int)(image->cols * scale));
-		nv_matrix_t *gray = nv_matrix3d_alloc(1, resize->rows, resize->cols);
-		nv_matrix_t *smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		nv_matrix_t *resize, *gray, *smooth;
+		
 		int i;
 		int km = 0;
+
+		if (m_fit_area == 0) {
+			float scale = IMG_SIZE() / (float)NV_MAX(image->rows, image->cols);	
+			resize = nv_matrix3d_alloc(3, (int)(image->rows * scale),
+									   (int)(image->cols * scale));
+		} else {
+			float axis_ratio = (float)image->rows / image->cols;
+			int new_cols = (int)sqrtf(m_fit_area / axis_ratio);
+			int new_rows = (int)((float)m_fit_area / new_cols);
+			resize = nv_matrix3d_alloc(3, new_rows, new_cols);
+		}
+		gray = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		
 		for (i = 0; i < ndense; ++i) {
 			km += dense[i].rows * dense[i].cols;
 		}
@@ -293,11 +313,20 @@ public:
 		int desc_m;
 		nv_matrix_t *key_vec = nv_matrix_alloc(NV_KEYPOINT_KEYPOINT_N, KEYPOINTS);
 		nv_matrix_t *desc_vec = nv_matrix_alloc(NV_KEYPOINT_DESC_N, KEYPOINTS);
-		float scale = IMG_SIZE() / (float)NV_MAX(image->rows, image->cols);
-		nv_matrix_t *resize = nv_matrix3d_alloc(3, (int)(image->rows * scale),
-												(int)(image->cols * scale));
-		nv_matrix_t *gray = nv_matrix3d_alloc(1, resize->rows, resize->cols);
-		nv_matrix_t *smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		nv_matrix_t *resize, *gray, *smooth;
+		
+		if (m_fit_area == 0) {
+			float scale = IMG_SIZE() / (float)NV_MAX(image->rows, image->cols);
+			resize = nv_matrix3d_alloc(3, (int)(image->rows * scale),
+										(int)(image->cols * scale));
+		} else {
+			float axis_ratio = (float)image->rows / image->cols;
+			int new_cols = (int)sqrtf(m_fit_area / axis_ratio);
+			int new_rows = (int)((float)m_fit_area / new_cols);
+			resize = nv_matrix3d_alloc(3, new_rows, new_cols);
+		}
+		gray = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
 		
 		nv_resize(resize, image);
 		nv_gray(gray, resize);
