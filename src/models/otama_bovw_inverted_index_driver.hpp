@@ -35,6 +35,7 @@ namespace otama
 		typedef InvertedIndex::sparse_vec_t FT;
 		typedef nv_bovw_ctx<BIT, nv_bovw_dummy_color_t> T;
 		nv_bovw_rerank_method_t m_rerank_method;
+		size_t m_fit_area;
 		
 		class IdfW: public InvertedIndex::WeightFunction {
 		public:
@@ -247,6 +248,7 @@ namespace otama
 			
 			m_ctx = NULL;
 			m_rerank_method = NV_BOVW_RERANK_IDF;
+			m_fit_area = 0;
 			
 			driver = otama_variant_hash_at(options, "driver");
 			if (OTAMA_VARIANT_IS_HASH(driver)) {
@@ -259,6 +261,9 @@ namespace otama
 					} else {
 						OTAMA_LOG_NOTICE("invalid rerank_method `%s'", s);
 					}
+				}
+				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver, "fit_area"))) {
+					m_fit_area = otama_variant_to_int(value);
 				}
 			}
 			switch (m_rerank_method) {
@@ -293,6 +298,7 @@ namespace otama
 			if (m_ctx->open() != 0) {
 				return OTAMA_STATUS_SYSERROR;
 			}
+			m_ctx->set_fit_area(m_fit_area);
 			m_idf_w.ctx = m_ctx;
 			
 			return OTAMA_STATUS_OK;

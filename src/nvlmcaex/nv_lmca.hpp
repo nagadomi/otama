@@ -143,6 +143,12 @@ private:
 public:	
 	nv_lmca_ctx(): m_lmca(0), m_lmca2(0) {}
 	~nv_lmca_ctx() { close(); }
+
+	void
+	set_fit_area(size_t fit_area)
+	{
+		m_ctx.set_fit_area(fit_area);
+	}
 	
 	int
 	set_vq_table(const char *file)
@@ -697,9 +703,8 @@ public:
 	static const int VQ_KMEANS_STEP = 100;
 	static const int VQ_KEYPOINT_MAX = 3000;
 	static float VQ_IMAGE_SIZE(void) {return 512.0f;}
-	
 private:
-
+	
 	static int
 	read_filelist(const char *filename, std::vector<std::string> &filelist)
 	{
@@ -732,7 +737,7 @@ private:
 	vq_extract(int sign,
 			   nv_matrix_t *data,
 			   const std::vector<std::string> &filelist,
-			   bool xflip)
+			   bool xflip, size_t fit_area = 0)
 	{
 		int j;
 		int count = 0;
@@ -770,11 +775,20 @@ private:
 				int desc_m;
 				nv_matrix_t *desc_vec = nv_matrix_alloc(NV_KEYPOINT_DESC_N, VQ_KEYPOINT_MAX);
 				nv_matrix_t *key_vec = nv_matrix_alloc(NV_KEYPOINT_KEYPOINT_N, desc_vec->m);
-				float scale = VQ_IMAGE_SIZE() / (float)NV_MAX(image->rows, image->cols);
-				nv_matrix_t *gray = nv_matrix3d_alloc(1, image->rows, image->cols);
-				nv_matrix_t *resize = nv_matrix3d_alloc(1, (int)(image->rows * scale),
-													(int)(image->cols * scale));
-				nv_matrix_t *smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+				nv_matrix_t *resize, *gray, *smooth;
+
+				if (fit_area == 0) {
+					float scale = VQ_IMAGE_SIZE() / (float)NV_MAX(image->rows, image->cols);			
+					resize = nv_matrix3d_alloc(1, (int)(image->rows * scale),
+											   (int)(image->cols * scale));
+				} else {
+					float axis_ratio = (float)image->rows / image->cols;
+					int new_cols = (int)sqrtf(fit_area / axis_ratio);
+					int new_rows = (int)((float)fit_area / new_cols);
+					resize = nv_matrix3d_alloc(1, new_rows, new_cols);
+				}
+				gray = nv_matrix3d_alloc(1, image->rows, image->cols);
+				smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
 				
 				if (o == 1) {
 					nv_matrix_t *flip = nv_matrix_clone(image);
@@ -852,7 +866,7 @@ private:
 public:
 	static int
 	train(int data_max, nv_matrix_t *vq_posi, nv_matrix_t *vq_nega,
-		  const char *file, bool flip = false)
+		  const char *file, bool flip = false, size_t fit_area = 0)
 	{
 		long t;
 		nv_matrix_t *data;
@@ -871,7 +885,7 @@ public:
 		nv_matrix_zero(data);
 		
 		t = nv_clock();
-		m = vq_extract(1, data, filelist, flip);
+		m = vq_extract(1, data, filelist, flip, fit_area);
 		printf("posi keypoints: %d, %ldms\n", m, nv_clock() - t);
 		t = nv_clock();
 		nv_matrix_m(data, m);
@@ -882,7 +896,7 @@ public:
 		nv_matrix_zero(data);
 		
 		t = nv_clock();
-		m = vq_extract(-1, data, filelist, flip);
+		m = vq_extract(-1, data, filelist, flip, fit_area);
 		printf("nega keypoints: %d, %ldms\n", m, nv_clock() - t);
 		t = nv_clock();
 		nv_matrix_m(data, m);

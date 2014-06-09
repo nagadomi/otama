@@ -41,6 +41,7 @@ namespace otama
 		static inline float DEFAULT_COLOR_WEIGHT() { return 0.32f; }
 		
 		bool m_strip;
+		size_t m_fit_area;
 		float m_color_weight;
 		nv_bovw_rerank_method_t m_rerank_method;
 		nv_matrix_t *m_color;
@@ -182,7 +183,7 @@ namespace otama
 				centroid = nv_matrix_alloc(1, CLUSTER_K);
 				count = nv_matrix_alloc(1, CLUSTER_K);
 				step = nresult / CLUSTER_K;
-		
+				
 				nv_matrix_zero(labels);
 				nv_matrix_zero(count);
 				
@@ -193,7 +194,7 @@ namespace otama
 					NV_MAT_V(centroid, i, 0) = NV_MAT_V(similarity, i * step, 0);
 				}
 				nv_kmeans_em(centroid, count, labels, similarity, CLUSTER_K, 50);
-		
+				
 				max_k = (int)NV_MAT_V(labels, 0, 0);
 				
 				results_size = 0;
@@ -291,6 +292,7 @@ namespace otama
 		{
 			otama_variant_t *driver, *value;
 			
+			m_fit_area = 0;
 			m_color = nv_matrix_alloc(3, 1);
 			m_color_weight = DEFAULT_COLOR_WEIGHT();
 			m_strip = false;
@@ -314,6 +316,9 @@ namespace otama
 					} else {
 						OTAMA_LOG_NOTICE("invalid rerank_method `%s'", s);
 					}
+				}
+				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver, "fit_area"))) {
+					m_fit_area = otama_variant_to_int(value);
 				}
 			}
 			
@@ -346,6 +351,8 @@ namespace otama
 			if (m_ctx->open() != 0) {
 				return OTAMA_STATUS_SYSERROR;
 			}
+			m_ctx->set_fit_area(m_fit_area);
+			
 			return OTAMA_STATUS_OK;
 		}
 
