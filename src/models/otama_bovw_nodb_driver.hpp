@@ -38,6 +38,7 @@ namespace otama
 		float m_color_weight;
 		nv_bovw_rerank_method_t m_rerank_method;
 		nv_matrix_t *m_color;
+		size_t m_fit_area;
 		T *m_ctx;
 		
 		virtual FT *
@@ -138,6 +139,7 @@ namespace otama
 			m_color = nv_matrix_alloc(3, 1);
 			m_color_weight = DEFAULT_COLOR_WEIGHT();
 			m_rerank_method = NV_BOVW_RERANK_IDF;
+			m_fit_area = 0;
 			
 			driver = otama_variant_hash_at(options, "driver");
 			if (OTAMA_VARIANT_IS_HASH(driver)) {
@@ -154,6 +156,9 @@ namespace otama
 						OTAMA_LOG_ERROR("invalid rerank_method `%s'", s);
 					}
 				}
+				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver, "fit_area"))) {
+					m_fit_area = otama_variant_to_int(value);
+				}
 			}
 			
 			OTAMA_LOG_DEBUG("driver[color_weight] => %f", m_color_weight);
@@ -167,6 +172,7 @@ namespace otama
 			}
 			m_ctx = new T;
 			m_ctx->open();
+			m_ctx->set_fit_area(m_fit_area);
 		}
 		~BOVWNoDBDriver() {
 			nv_matrix_free(&m_color);

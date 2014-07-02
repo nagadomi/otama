@@ -38,6 +38,15 @@ otama_dbi_rollback
 otama_dbi_sqlite3_open
 otama_dbi_table_exist
 otama_dbi_time_string
+otama_dbi_stmt_new
+otama_dbi_stmt_set_int64
+otama_dbi_stmt_set_int
+otama_dbi_stmt_set_float
+otama_dbi_stmt_set_string
+otama_dbi_stmt_reset
+otama_dbi_stmt_exec
+otama_dbi_stmt_query
+otama_dbi_stmt_free
 otama_exists
 otama_feature_raw
 otama_feature_raw_file

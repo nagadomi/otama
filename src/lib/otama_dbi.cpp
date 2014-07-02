@@ -331,6 +331,7 @@ typedef struct {
 static const driver_column_type_t
 s_pgsql_column[] =
 {
+	{{ "<undef>", NULL, NULL }},
 	{{ "varchar(255)", NULL, NULL }},
 	{{ "char", "char(%d)", NULL }},
 	{{ "text", NULL, NULL }},
@@ -348,6 +349,7 @@ s_pgsql_column[] =
 static const driver_column_type_t
 s_sqlite3_column[] =
 {
+	{{ "<undef>", NULL, NULL }},	
 	{{ "varchar(255)", "varchar(%d)", NULL }},
 	{{ "char", "char(%d)", NULL }},
 	{{ "text", NULL, NULL }},
@@ -365,6 +367,7 @@ s_sqlite3_column[] =
 static const driver_column_type_t
 s_mysql_column[] =
 {
+	{{ "<undef>", NULL, NULL }},
 	{{ "varchar(255)", "varchar(%d)", NULL }},
 	{{ "text", "text(%d)", NULL }},
 	{{ "text", NULL, NULL }},
@@ -593,20 +596,17 @@ int
 otama_dbi_open(otama_dbi_t *dbi)
 {
 #if OTAMA_WITH_PGSQL
-	if (nv_strcasecmp(dbi->config.driver, "pgsql") == 0 ||
-		nv_strcasecmp(dbi->config.driver, "postgres") == 0 ||
-		nv_strcasecmp(dbi->config.driver, "postgresql") == 0)
-	{
+	if (strcmp(dbi->config.driver, "pgsql") == 0) {
 		return otama_dbi_pgsql_open(dbi);
 	}
 #endif
 #if OTAMA_WITH_MYSQL
-	if (nv_strcasecmp(dbi->config.driver, "mysql") == 0) {
+	if (strcmp(dbi->config.driver, "mysql") == 0) {
 		return otama_dbi_mysql_open(dbi);
 	}
 #endif
 #if OTAMA_WITH_SQLITE3
-	if (nv_strcasecmp(dbi->config.driver, "sqlite3") == 0) {
+	if (strcmp(dbi->config.driver, "sqlite3") == 0) {
 		return otama_dbi_sqlite3_open(dbi);
 	}
 #endif
@@ -651,3 +651,99 @@ otama_dbi_sequence_exist(otama_dbi_t *dbi,
 	return dbi->func.sequence_exist(dbi, exist, sequence_name);
 }
 
+otama_dbi_stmt_t *
+otama_dbi_stmt_new(otama_dbi_t *dbi,
+				   const char *sql)
+{
+	return dbi->func.stmt_new(dbi, sql);
+}
+
+static void
+otama_dbi_stmt_clear_param(otama_dbi_stmt_t *stmt, int num)
+{
+	if (stmt->param_types[num] == OTAMA_DBI_COLUMN_STRING
+		&& stmt->param_values[num].s != NULL)
+	{
+		nv_free(stmt->param_values[num].s);
+	}
+	memset(&stmt->param_values[num], 0, sizeof(stmt->param_values[num]));
+	stmt->param_types[num] = OTAMA_DBI_COLUMN_UNDEF;
+}
+
+void
+otama_dbi_stmt_set_int64(otama_dbi_stmt_t *stmt, int num, int64_t value)
+{
+	NV_ASSERT(num < stmt->params);
+	otama_dbi_stmt_clear_param(stmt, num);
+	stmt->param_types[num] = OTAMA_DBI_COLUMN_INT64;
+	stmt->param_values[num].i64 = value;
+}
+
+void
+otama_dbi_stmt_set_int(otama_dbi_stmt_t *stmt, int num, int value)
+{
+	NV_ASSERT(num < stmt->params);
+	otama_dbi_stmt_clear_param(stmt, num);
+	stmt->param_types[num] = OTAMA_DBI_COLUMN_INT;
+	stmt->param_values[num].i = value;
+}
+
+void
+otama_dbi_stmt_set_float(otama_dbi_stmt_t *stmt, int num, float value)
+{
+	NV_ASSERT(num < stmt->params);
+	otama_dbi_stmt_clear_param(stmt, num);
+	stmt->param_types[num] = OTAMA_DBI_COLUMN_FLOAT;
+	stmt->param_values[num].f = value;
+}
+
+void
+otama_dbi_stmt_set_string(otama_dbi_stmt_t *stmt, int num, const char *value)
+{
+	size_t len = strlen(value);
+	NV_ASSERT(num < stmt->params);
+	otama_dbi_stmt_clear_param(stmt, num);
+	stmt->param_types[num] = OTAMA_DBI_COLUMN_STRING;
+	stmt->param_values[num].s = nv_alloc_type(char, len + 1);
+	memcpy(stmt->param_values[num].s, value, len);
+	stmt->param_values[num].s[len] = '\0';
+}
+
+void
+otama_dbi_stmt_reset(otama_dbi_stmt_t *stmt)
+{
+	int i;
+	for (i = 0; i < stmt->params; ++i) {
+		otama_dbi_stmt_clear_param(stmt, i);
+	}
+	stmt->dbi->func.stmt_reset(stmt);
+}
+
+otama_dbi_result_t *
+otama_dbi_stmt_query(otama_dbi_stmt_t *stmt)
+{
+	return stmt->dbi->func.stmt_query(stmt);
+}
+
+int
+otama_dbi_stmt_exec(otama_dbi_stmt_t *stmt)
+{
+	otama_dbi_result_t *res = stmt->dbi->func.stmt_query(stmt);
+	if (res) {
+		otama_dbi_result_free(&res);
+		return 0;
+	}
+	return -1;
+}
+
+void
+otama_dbi_stmt_free(otama_dbi_stmt_t **stmt)
+{
+	if (stmt && *stmt) {
+		int i;
+		for (i = 0; i < (*stmt)->params; ++i) {
+			otama_dbi_stmt_clear_param((*stmt), i);
+		}
+		(*stmt)->dbi->func.stmt_free(stmt);
+	}
+}

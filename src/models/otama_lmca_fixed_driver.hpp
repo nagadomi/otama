@@ -40,6 +40,7 @@ namespace otama
 		std::string m_vq_file;
 		float m_color_threshold;
 		float m_color_weight;
+		size_t m_fit_area;
 		
 		static inline float DEFAULT_COLOR_THRESHOLD() { return 0.7f; }
 		static inline float DEFAULT_COLOR_WEIGHT() { return 0.5f; }
@@ -278,6 +279,8 @@ namespace otama
 			
 			m_color_method = DEFAULT_COLOR_METHOD;
 			m_color_threshold = DEFAULT_COLOR_THRESHOLD();
+			m_fit_area = 0;
+			
 			switch (F) {
 			case NV_LMCA_FEATURE_VLAD_HSV:
 			case NV_LMCA_FEATURE_VLAD_COLORCODE:
@@ -328,6 +331,9 @@ namespace otama
 				if (!OTAMA_VARIANT_IS_NULL(value)) {
 					m_color_threshold = otama_variant_to_float(value);
 				}
+				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver, "fit_area"))) {
+					m_fit_area = otama_variant_to_int(value);
+				}
 			}
 			m_ctx = new T;
 		}
@@ -367,6 +373,8 @@ namespace otama
 					return OTAMA_STATUS_SYSERROR;
 				}
 			}
+			m_ctx->set_fit_area(m_fit_area);
+			
 			return OTAMA_STATUS_OK;
 		}
 		~LMCAFixedDriver() {

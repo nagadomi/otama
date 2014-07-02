@@ -35,6 +35,7 @@ namespace otama
 		typedef InvertedIndex::sparse_vec_t FT;
 		typedef nv_bovw_ctx<BIT, nv_bovw_dummy_color_t> T;
 		nv_bovw_rerank_method_t m_rerank_method;
+		size_t m_fit_area;
 		
 		class IdfW: public InvertedIndex::WeightFunction {
 		public:
@@ -231,6 +232,29 @@ namespace otama
 			nv_matrix_free(&freq);
 		}
 		
+		void
+		update_idf(otama_variant_t *argv)
+		{
+			int stopword_th = 0;
+			int64_t count;
+			nv_matrix_t *freq = nv_matrix_alloc(T::BIT, 1);
+			uint32_t hash;
+			
+			if (argv) {
+				stopword_th = (int)otama_variant_to_int(argv);
+			}
+			OTAMA_LOG_DEBUG("update idf, stopword_th: %d", stopword_th);
+			
+			count = this->m_inverted_index->count();
+			
+			nv_matrix_zero(freq);
+			for (hash = 0; hash < (uint32_t)T::BIT; ++hash) {
+				NV_MAT_V(freq, 0, hash) = (float)this->m_inverted_index->hash_count(hash);
+			}
+			m_ctx->update_idf(freq, 0, count, stopword_th);
+			nv_matrix_free(&freq);
+		}
+		
 	public:
 		static inline std::string
 		itos(int i)	{ char buff[128]; sprintf(buff, "%d", i); return std::string(buff);	}
@@ -247,6 +271,7 @@ namespace otama
 			
 			m_ctx = NULL;
 			m_rerank_method = NV_BOVW_RERANK_IDF;
+			m_fit_area = 0;
 			
 			driver = otama_variant_hash_at(options, "driver");
 			if (OTAMA_VARIANT_IS_HASH(driver)) {
@@ -259,6 +284,9 @@ namespace otama
 					} else {
 						OTAMA_LOG_NOTICE("invalid rerank_method `%s'", s);
 					}
+				}
+				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver, "fit_area"))) {
+					m_fit_area = otama_variant_to_int(value);
 				}
 			}
 			switch (m_rerank_method) {
@@ -293,6 +321,7 @@ namespace otama
 			if (m_ctx->open() != 0) {
 				return OTAMA_STATUS_SYSERROR;
 			}
+			m_ctx->set_fit_area(m_fit_area);
 			m_idf_w.ctx = m_ctx;
 			
 			return OTAMA_STATUS_OK;
@@ -314,6 +343,10 @@ namespace otama
 			
 			if (method == "print_idf") {
 				print_idf(input);
+				otama_variant_set_null(output);
+				return OTAMA_STATUS_OK;
+			} else if (method == "update_idf") {
+				update_idf(input);
 				otama_variant_set_null(output);
 				return OTAMA_STATUS_OK;
 			}

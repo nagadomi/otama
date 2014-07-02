@@ -33,6 +33,9 @@ otama_test_dbi_sql(const otama_dbi_config_t *config)
 	char s[256], esc[256];
 	int exist;
 	int64_t seq1, seq2;
+	long t;
+
+	OTAMA_TEST_NAME;	
 	
 	static const otama_dbi_column_t table_def[] = {
 		{ "id", OTAMA_DBI_COLUMN_INT64, 0, 0, 0, NULL },
@@ -59,7 +62,7 @@ otama_test_dbi_sql(const otama_dbi_config_t *config)
 	NV_ASSERT(otama_dbi_table_exist(dbi, &exist, OTAMA_TEST_TABLE) == 0);
 	NV_ASSERT(exist != 0);
 	NV_ASSERT(otama_dbi_begin(dbi) == 0);
-	for (i = 0; i < 100; ++i) {
+	for (i = 0; i < 1000; ++i) {
 		sprintf(s, "%d's value", i);
 		NV_ASSERT(otama_dbi_execf(dbi, "INSERT INTO "OTAMA_TEST_TABLE" (id, value) values(%d, %s);",
 								 i, otama_dbi_escape(dbi, esc, sizeof(esc), s)) == 0);
@@ -70,18 +73,25 @@ otama_test_dbi_sql(const otama_dbi_config_t *config)
 	NV_ASSERT(otama_dbi_result_next(res) == 1);
 	NV_ASSERT(otama_dbi_result_int(res, 0) == 0);
 	otama_dbi_result_free(&res);
+	t = nv_clock();
 	NV_ASSERT(otama_dbi_begin(dbi) == 0);
-	for (i = 0; i < 100; ++i) {
+	for (i = 0; i < 1000; ++i) {
 		sprintf(s, "%d's value", i);
 		NV_ASSERT(otama_dbi_execf(dbi, "INSERT INTO "OTAMA_TEST_TABLE" (id, value) values(%d, %s);",
 								 i, otama_dbi_escape(dbi, esc, sizeof(esc), s)) == 0);
 	}
 	NV_ASSERT(otama_dbi_commit(dbi) == 0);
-	
+	printf("1000insert %ldms\n", nv_clock() -t);
+	res = otama_dbi_query(dbi, "SELECT count(*) FROM "OTAMA_TEST_TABLE";");
+	NV_ASSERT(res != NULL);
+	NV_ASSERT(otama_dbi_result_next(res) == 1);
+	NV_ASSERT(otama_dbi_result_int(res, 0) == 1000);
+	otama_dbi_result_free(&res);
+
 	res = otama_dbi_query(dbi, "SELECT id,value FROM "OTAMA_TEST_TABLE" order by id;");
 	NV_ASSERT(res != NULL);
 	
-	for (i = 0; i < 100; ++i) {
+	for (i = 0; i < 1000; ++i) {
 		int ret = otama_dbi_result_next(res);
 		sprintf(s, "%d's value", i);
 		NV_ASSERT(ret);
@@ -102,7 +112,7 @@ otama_test_dbi_sql(const otama_dbi_config_t *config)
 	NV_ASSERT(otama_dbi_result_int(res, 0) == 0);
 	NV_ASSERT(otama_dbi_result_seek(res, 99) == 0);
 	NV_ASSERT(otama_dbi_result_int(res, 0) == 99);
-	NV_ASSERT(otama_dbi_result_seek(res, 100) != 0);
+	NV_ASSERT(otama_dbi_result_seek(res, 1000) != 0);
 	
 	otama_dbi_result_free(&res);
 	
@@ -130,20 +140,132 @@ otama_test_dbi_sql(const otama_dbi_config_t *config)
 }
 
 static void
+otama_test_dbi_prepared(const otama_dbi_config_t *config)
+{
+	otama_dbi_t *dbi;
+	otama_dbi_stmt_t *stmt;
+	otama_dbi_result_t *res;
+	int i;
+	char s[256];
+	int exist;
+	long t;
+
+	OTAMA_TEST_NAME;
+	
+	static const otama_dbi_column_t table_def[] = {
+		{ "id", OTAMA_DBI_COLUMN_INT64, 0, 0, 0, NULL },
+		{ "value", OTAMA_DBI_COLUMN_STRING, 0, 0, 0, NULL }
+	};
+	static const otama_dbi_column_t index_def[] = {
+		{ "id", OTAMA_DBI_COLUMN_INT64, 0, 0, 0, NULL }
+	};
+	dbi = otama_dbi_new(config);
+	NV_ASSERT(dbi != NULL);
+	NV_ASSERT(otama_dbi_open(dbi) == 0);
+	
+	NV_ASSERT(otama_dbi_table_exist(dbi, &exist, OTAMA_TEST_TABLE) == 0);
+	if (exist) {
+		otama_dbi_drop_table(dbi, OTAMA_TEST_TABLE);
+	}
+	NV_ASSERT(otama_dbi_create_table(dbi, OTAMA_TEST_TABLE, table_def,
+									 sizeof(table_def) / sizeof(otama_dbi_column_t)) == 0);
+	NV_ASSERT(otama_dbi_create_index(dbi, OTAMA_TEST_TABLE,
+									 OTAMA_DBI_UNIQUE_TRUE,
+									 index_def,
+									 sizeof(index_def) / sizeof(otama_dbi_column_t)) == 0);
+
+	NV_ASSERT(otama_dbi_table_exist(dbi, &exist, OTAMA_TEST_TABLE) == 0);
+	NV_ASSERT(exist != 0);
+	NV_ASSERT(otama_dbi_begin(dbi) == 0);
+	NV_ASSERT((stmt = otama_dbi_stmt_new(dbi, "INSERT INTO "OTAMA_TEST_TABLE" (id, value) values(?, ?)")) != NULL);
+	for (i = 0; i < 1000; ++i) {
+		sprintf(s, "%d's value", i);
+		otama_dbi_stmt_reset(stmt);
+		otama_dbi_stmt_set_int(stmt, 0, i);
+		otama_dbi_stmt_set_string(stmt, 1, s);
+		NV_ASSERT(otama_dbi_stmt_exec(stmt) == 0);
+	}
+	NV_ASSERT(otama_dbi_rollback(dbi) == 0);
+	res = otama_dbi_query(dbi, "SELECT count(*) FROM "OTAMA_TEST_TABLE";");
+	NV_ASSERT(res != NULL);
+	NV_ASSERT(otama_dbi_result_next(res) == 1);
+	NV_ASSERT(otama_dbi_result_int(res, 0) == 0);
+	otama_dbi_result_free(&res);
+	t = nv_clock();
+	NV_ASSERT(otama_dbi_begin(dbi) == 0);
+	for (i = 0; i < 1000; ++i) {
+		sprintf(s, "%d's value", i);
+		otama_dbi_stmt_reset(stmt);
+		otama_dbi_stmt_set_int(stmt, 0, i);
+		otama_dbi_stmt_set_string(stmt, 1, s);
+		NV_ASSERT(otama_dbi_stmt_exec(stmt) == 0);
+	}
+	NV_ASSERT(otama_dbi_commit(dbi) == 0);
+	printf("1000insert %ldms\n", nv_clock() - t);
+	
+	otama_dbi_stmt_free(&stmt);
+	NV_ASSERT((stmt = otama_dbi_stmt_new(dbi, "SELECT id,value FROM "OTAMA_TEST_TABLE" order by id;")) != NULL);
+	
+	res = otama_dbi_stmt_query(stmt);
+	NV_ASSERT(res != NULL);
+	
+	for (i = 0; i < 1000; ++i) {
+		int ret = otama_dbi_result_next(res);
+		sprintf(s, "%d's value", i);
+		NV_ASSERT(ret);
+		NV_ASSERT(otama_dbi_result_int(res, 0) == i);
+		NV_ASSERT(strcmp(otama_dbi_result_string(res, 1), s) == 0);
+	}
+	NV_ASSERT(otama_dbi_result_next(res) == 0);
+	NV_ASSERT(otama_dbi_result_seek(res, 1) == 0);
+	NV_ASSERT(otama_dbi_result_int(res, 0) == 1);
+	NV_ASSERT(otama_dbi_result_seek(res, 20) == 0);
+	NV_ASSERT(otama_dbi_result_int(res, 0) == 20);
+	NV_ASSERT(otama_dbi_result_seek(res, 4) == 0);
+	NV_ASSERT(otama_dbi_result_int(res, 0) == 4);
+	NV_ASSERT(otama_dbi_result_seek(res, 73) == 0);
+	NV_ASSERT(otama_dbi_result_seek(res, 73) == 0);	
+	NV_ASSERT(otama_dbi_result_int(res, 0) == 73);
+	NV_ASSERT(otama_dbi_result_seek(res, 0) == 0);
+	NV_ASSERT(otama_dbi_result_int(res, 0) == 0);
+	NV_ASSERT(otama_dbi_result_seek(res, 99) == 0);
+	NV_ASSERT(otama_dbi_result_int(res, 0) == 99);
+	NV_ASSERT(otama_dbi_result_seek(res, 1000) != 0);
+
+	otama_dbi_result_free(&res);
+	otama_dbi_stmt_free(&stmt);
+	NV_ASSERT((stmt = otama_dbi_stmt_new(dbi, "SELECT id,value FROM "OTAMA_TEST_TABLE" where id=-1")) != NULL);
+	NV_ASSERT((res = otama_dbi_stmt_query(stmt)) != NULL);
+	NV_ASSERT(otama_dbi_result_next(res) == 0);
+	otama_dbi_result_free(&res);
+	otama_dbi_stmt_free(&stmt);
+	
+	NV_ASSERT(otama_dbi_drop_table(dbi, OTAMA_TEST_TABLE) == 0);
+	NV_ASSERT(otama_dbi_table_exist(dbi, &exist, OTAMA_TEST_TABLE) == 0);
+	NV_ASSERT(exist == 0);
+	
+	otama_dbi_close(&dbi);
+}
+
+static void
 otama_test_dbi_pgsql(void)
 {
-#if (OTAMA_WITH_PGSQL && defined(OTAMA_DBI_TEST))
+#if OTAMA_WITH_PGSQL
 	otama_dbi_config_t config;
-	
-	OTAMA_TEST_NAME;
-	memset(&config, 0, sizeof(config));
-	
-	otama_dbi_config_driver(&config, "pgsql");
-	otama_dbi_config_dbname(&config, "otama_test");
-	otama_dbi_config_username(&config, "nagadomi");
-	otama_dbi_config_password(&config, "1234");	
-	
-	otama_test_dbi_sql(&config);
+	if (nv_getenv("OTAMA_DBI_TEST")) {
+		OTAMA_TEST_NAME;
+		memset(&config, 0, sizeof(config));
+		
+		otama_dbi_config_driver(&config, "pgsql");
+		otama_dbi_config_dbname(&config, nv_getenv("OTAMA_DBI_TEST_DBNAME"));
+		otama_dbi_config_username(&config, nv_getenv("OTAMA_DBI_TEST_USERNAME"));
+		otama_dbi_config_password(&config, nv_getenv("OTAMA_DBI_TEST_PASSWORD"));
+		
+		otama_test_dbi_sql(&config);
+		otama_test_dbi_prepared(&config);
+	} else {
+		printf("OTAMA_DBI_TEST is not defined. skip pgsql test..\n");
+	}
 #else
 	printf("skip pgsql..\n");
 #endif
@@ -161,6 +283,7 @@ otama_test_dbi_sqlite3(void)
 	otama_dbi_config_driver(&config, "sqlite3");
 	otama_dbi_config_dbname(&config, "./data/dbi-test.db");
 	otama_test_dbi_sql(&config);
+	otama_test_dbi_prepared(&config);
 #else
 	printf("skip sqlite3..\n");
 #endif
@@ -169,17 +292,22 @@ otama_test_dbi_sqlite3(void)
 static void
 otama_test_dbi_mysql(void)
 {
-#if (OTAMA_WITH_MYSQL && defined(OTAMA_DBI_TEST))
-	otama_dbi_config_t config;
-	
-	OTAMA_TEST_NAME;
-	memset(&config, 0, sizeof(config));
-	
-	otama_dbi_config_driver(&config, "mysql");
-	otama_dbi_config_dbname(&config, "otama_test");
-	otama_dbi_config_username(&config, "nagadomi");
-	otama_dbi_config_password(&config, "1234");	
-	otama_test_dbi_sql(&config);
+#if OTAMA_WITH_MYSQL
+	if (nv_getenv("OTAMA_DBI_TEST")) {
+		otama_dbi_config_t config;
+		OTAMA_TEST_NAME;
+		memset(&config, 0, sizeof(config));
+		
+		otama_dbi_config_driver(&config, "mysql");
+		otama_dbi_config_dbname(&config, nv_getenv("OTAMA_DBI_TEST_DBNAME"));
+		otama_dbi_config_username(&config, nv_getenv("OTAMA_DBI_TEST_USERNAME"));
+		otama_dbi_config_password(&config, nv_getenv("OTAMA_DBI_TEST_PASSWORD"));
+		
+		otama_test_dbi_sql(&config);
+		otama_test_dbi_prepared(&config);
+	} else {
+		printf("OTAMA_DBI_TEST is not defined. skip mysql test..\n");
+	}
 #else
 	printf("skip mysql..\n");
 #endif
@@ -190,8 +318,8 @@ otama_test_dbi(void)
 {
 	int i;
 	for (i = 0; i < 2; ++i) {
-		otama_test_dbi_pgsql();
 		otama_test_dbi_sqlite3();
+		otama_test_dbi_pgsql();
 		otama_test_dbi_mysql();
 	}
 }

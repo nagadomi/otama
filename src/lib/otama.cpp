@@ -104,6 +104,7 @@ otama_open_opt(otama_t **otama,
 	
 	o->driver = otama::createDriver(o->config);
 	if (o->driver == NULL) {
+		otama_variant_pool_free(&(o->pool));
 		nv_free(o);
 		return OTAMA_STATUS_INVALID_ARGUMENTS;
 	}
@@ -112,6 +113,7 @@ otama_open_opt(otama_t **otama,
 	if (ret != OTAMA_STATUS_OK) {
 		o->driver->close();
 		delete o->driver;
+		otama_variant_pool_free(&(o->pool));
 		nv_free(o);
 		return ret;
 	}

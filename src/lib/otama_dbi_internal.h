@@ -48,6 +48,26 @@ typedef int (*otama_dbi_drop_sequence_t)(otama_dbi_t *dbi, const char *sequence_
 typedef int (*otama_dbi_sequence_next_t)(otama_dbi_t *dbi, int64_t *seq, const char *sequence_name);
 typedef int (*otama_dbi_sequence_exist_t)(otama_dbi_t *dbi, int *exist, const char *sequence_name);
 
+typedef otama_dbi_stmt_t *(*otama_dbi_stmt_new_t)(otama_dbi_t *dbi, const char *sql);
+typedef otama_dbi_result_t *(*otama_dbi_stmt_query_t)(otama_dbi_stmt_t *stmt);
+typedef void (*otama_dbi_stmt_reset_t)(otama_dbi_stmt_t *stmt);	
+typedef void (*otama_dbi_stmt_free_t)(otama_dbi_stmt_t **stmt);
+
+#define OTAMA_DBI_PARAM_MAX 256
+struct otama_dbi_stmt {
+	void *stmt;
+	otama_dbi_t *dbi;
+	int params;
+	char name[128];
+	otama_dbi_column_e param_types[OTAMA_DBI_PARAM_MAX];
+	union {
+		int64_t i64;
+		int i;
+		float f;
+		char *s;
+	} param_values[OTAMA_DBI_PARAM_MAX];
+};
+
 typedef struct {
 	otama_dbi_close_t close;
 	otama_dbi_query_t query;
@@ -64,6 +84,10 @@ typedef struct {
 	otama_dbi_drop_sequence_t drop_sequence;
 	otama_dbi_sequence_next_t sequence_next;
 	otama_dbi_sequence_exist_t sequence_exist;
+	otama_dbi_stmt_new_t stmt_new;
+	otama_dbi_stmt_query_t stmt_query;
+	otama_dbi_stmt_reset_t stmt_reset;
+	otama_dbi_stmt_free_t stmt_free;
 } otama_dbi_func_t;
 
 #if OTAMA_WITH_PGSQL
@@ -88,8 +112,8 @@ struct otama_dbi_result {
 	int64_t tuples;
 	int fields;
 	void *row;              // for mysql
-	unsigned long *lengths; // for mysql
 	otama_dbi_t *dbi;
+	int prepared;
 };
 
 #ifdef __cplusplus

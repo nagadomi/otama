@@ -34,12 +34,23 @@ namespace otama
 	{
 	protected:
 		otama_dbi_t *m_dbi;
+		otama_dbi_stmt_t *m_find_id;
+		otama_dbi_stmt_t *m_load_vector;
+		otama_dbi_stmt_t *m_load_flag;
+		otama_dbi_stmt_t *m_insert;
+		otama_dbi_stmt_t *m_update_flag;
+		std::string m_dbi_driver_name;
+		
 		static const int PULL_LIMIT = 100000;
 		
 		virtual otama_status_t
 		exists_master(bool &exists, uint64_t &seq,
 					  const otama_id_t *id)
 		{
+			if (!stmt_ready()) {
+				OTAMA_LOG_ERROR("table not found", 0);
+				return OTAMA_STATUS_SYSERROR;
+			}
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
 			otama_dbi_result_t *res;
 			otama_status_t ret = OTAMA_STATUS_OK;
@@ -48,10 +59,9 @@ namespace otama
 			OMPLock lock(this->m_lock);
 #endif
 			otama_id_bin2hexstr(id_hexstr, id);
-			res = otama_dbi_queryf(m_dbi,
-								   "SELECT id FROM %s WHERE otama_id = '%s';",
-								   this->table_name().c_str(),
-								   id_hexstr);
+			otama_dbi_stmt_set_string(m_find_id, 0, id_hexstr);
+			
+			res = otama_dbi_stmt_query(m_find_id);
 			if (!res) {
 				ret = OTAMA_STATUS_SYSERROR;
 			} else {
@@ -63,6 +73,7 @@ namespace otama
 				}
 				otama_dbi_result_free(&res);
 			}
+			otama_dbi_stmt_reset(m_find_id);
 	
 			return ret;
 		}
@@ -70,6 +81,10 @@ namespace otama
 		virtual otama_status_t
 		update_flag(const otama_id_t *id, uint8_t flag)
 		{
+			if (!stmt_ready()) {
+				OTAMA_LOG_ERROR("table not found", 0);
+				return OTAMA_STATUS_SYSERROR;
+			}
 			otama_dbi_result_t *res;
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
 			
@@ -82,13 +97,12 @@ namespace otama
 			if (otama_dbi_begin(m_dbi) != 0) {
 				return OTAMA_STATUS_SYSERROR;
 			}
-			res = otama_dbi_queryf(m_dbi,
-								   "SELECT flag FROM %s WHERE otama_id = '%s' AND flag != %u;",
-								   this->table_name().c_str(),
-								   id_hexstr,
-								   (unsigned int)flag);
+			otama_dbi_stmt_set_string(m_load_flag, 0, id_hexstr);
+			otama_dbi_stmt_set_int(m_load_flag, 1, flag);
+			res = otama_dbi_stmt_query(m_load_flag);
 			if (!res) {
 				otama_dbi_rollback(m_dbi);
+				otama_dbi_stmt_reset(m_load_flag);
 				return OTAMA_STATUS_SYSERROR;
 			}
 			if (otama_dbi_result_next(res)) {
@@ -99,25 +113,29 @@ namespace otama
 				ret = otama_dbi_sequence_next(m_dbi, &seq, this->table_name().c_str());
 				if (ret != 0) {
 					otama_dbi_rollback(m_dbi);
+					otama_dbi_stmt_reset(m_load_flag);
 					return OTAMA_STATUS_SYSERROR;
 				}
-				ret = otama_dbi_execf(
-					m_dbi,
-					"UPDATE %s SET flag = %u, commit_id = %"PRId64" WHERE otama_id = '%s';",
-					this->table_name().c_str(),
-					(unsigned int)flag,
-					seq,
-					id_hexstr);
+				otama_dbi_stmt_set_int(m_update_flag, 0, flag);
+				otama_dbi_stmt_set_int64(m_update_flag, 1, seq);
+				otama_dbi_stmt_set_string(m_update_flag, 2, id_hexstr);
+				ret = otama_dbi_stmt_exec(m_update_flag);
 				if (ret != 0) {
 					otama_dbi_rollback(m_dbi);
+					otama_dbi_stmt_reset(m_load_flag);
+					otama_dbi_stmt_reset(m_update_flag);
 					return OTAMA_STATUS_SYSERROR;
 				}
 			} else {
 				otama_dbi_result_free(&res);
 			}
 			if (otama_dbi_commit(m_dbi) != 0) {
+				otama_dbi_stmt_reset(m_load_flag);
+				otama_dbi_stmt_reset(m_update_flag);
 				return OTAMA_STATUS_SYSERROR;
 			}
+			otama_dbi_stmt_reset(m_load_flag);
+			otama_dbi_stmt_reset(m_update_flag);
 			
 			return OTAMA_STATUS_OK;
 		}
@@ -126,35 +144,29 @@ namespace otama
 		insert(const otama_id_t *id,
 			   const T *fv)
 		{
+			if (!stmt_ready()) {
+				OTAMA_LOG_ERROR("table not found", 0);
+				return OTAMA_STATUS_SYSERROR;
+			}
 			otama_status_t ret = OTAMA_STATUS_OK;
-			otama_dbi_result_t *res;
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
 			char *fv_str = this->feature_serialize(fv);
-			size_t esc_len = strlen(fv_str) * 2 + 3;
-			char *fv_esc = nv_alloc_type(char, esc_len);
 			
 #ifdef _OPENMP
 			OMPLock lock(this->m_lock);
 #endif
 			otama_id_bin2hexstr(id_hexstr, id);
-			res = otama_dbi_queryf(
-				m_dbi,
-				"INSERT INTO %s (otama_id, vector) "
-				"  SELECT * FROM (SELECT '%s', %s) AS tmp "
-				"    WHERE NOT EXISTS(SELECT otama_id FROM %s WHERE otama_id='%s') LIMIT 1;",
-				this->table_name().c_str(),
-				id_hexstr,
-				otama_dbi_escape(m_dbi, fv_esc, esc_len, fv_str),
-				this->table_name().c_str(),
-				id_hexstr
-				);
-			if (!res) {
-				ret = OTAMA_STATUS_SYSERROR;
-			} else {
-				otama_dbi_result_free(&res);
+
+			otama_dbi_stmt_set_string(m_insert, 0, id_hexstr);
+			otama_dbi_stmt_set_string(m_insert, 1, fv_str);
+			if (m_dbi_driver_name != "mysql") {
+				otama_dbi_stmt_set_string(m_insert, 2, id_hexstr);
 			}
+			if (otama_dbi_stmt_exec(m_insert) != 0) {
+				ret = OTAMA_STATUS_SYSERROR;
+			}
+			otama_dbi_stmt_reset(m_insert);
 			nv_free(fv_str);
-			nv_free(fv_esc);
 			
 			return ret;
 		}
@@ -163,6 +175,10 @@ namespace otama
 		load(const otama_id_t *id,
 			 T *fv)
 		{
+			if (!stmt_ready()) {
+				OTAMA_LOG_ERROR("table not found", 0);
+				return OTAMA_STATUS_SYSERROR;
+			}
 			char id_hexstr[OTAMA_ID_HEXSTR_LEN];
 			otama_dbi_result_t *res;
 			otama_status_t ret = OTAMA_STATUS_OK;
@@ -171,10 +187,8 @@ namespace otama
 			OMPLock lock(this->m_lock);
 #endif
 			otama_id_bin2hexstr(id_hexstr, id);
-			res = otama_dbi_queryf(m_dbi,
-								   "SELECT vector FROM %s WHERE otama_id = '%s';",
-								   this->table_name().c_str(),
-								   id_hexstr);
+			otama_dbi_stmt_set_string(m_load_vector, 0, id_hexstr);
+			res = otama_dbi_stmt_query(m_load_vector);
 			if (!res) {
 				ret = OTAMA_STATUS_SYSERROR;
 			} else {
@@ -193,6 +207,7 @@ namespace otama
 				}
 				otama_dbi_result_free(&res);
 			}
+			otama_dbi_stmt_reset(m_load_vector);
 			
 			return ret;
 		}
@@ -339,23 +354,127 @@ namespace otama
 			}
 			return res;
 		}
+	private:
+		inline bool
+		stmt_ready(void)
+		{
+			return (m_find_id
+					&& m_update_flag
+					&& m_load_flag
+					&& m_load_vector
+					&& m_insert);
+		}
+		int
+		stmt_init(otama_dbi_t *dbi)
+		{
+			int ret, exist;
+			char base_sql[8192];
+			
+			ret = otama_dbi_table_exist(dbi, &exist, this->table_name().c_str());
+			if (ret) {
+				return -1;
+			}
+			if (exist == 0) {
+				// table not found
+				return 0;
+			}
+			nv_snprintf(base_sql, sizeof(base_sql)-1,
+						"SELECT id FROM %s WHERE otama_id = ?",
+							this->table_name().c_str());
+			otama_dbi_stmt_free(&m_find_id);
+			m_find_id = otama_dbi_stmt_new(dbi, base_sql);
+			if (m_find_id == NULL) {
+				return -1;
+			}
+			if (m_dbi_driver_name == "mysql") {
+				nv_snprintf(base_sql, sizeof(base_sql)-1,
+							"INSERT IGNORE INTO %s (otama_id, vector) VALUES(?, ?)",
+							this->table_name().c_str());
+			} else if (m_dbi_driver_name == "pgsql") {
+				nv_snprintf(base_sql, sizeof(base_sql)-1,
+							"INSERT INTO %s (otama_id, vector) "
+							"    SELECT ?::varchar, ?::text "
+							"    WHERE NOT EXISTS(SELECT otama_id FROM %s WHERE otama_id = ?)",
+							this->table_name().c_str(),
+							this->table_name().c_str());
+			} else {
+				nv_snprintf(base_sql, sizeof(base_sql)-1,
+							"INSERT INTO %s (otama_id, vector) "
+							"    SELECT ?, ? "
+							"    WHERE NOT EXISTS(SELECT otama_id FROM %s WHERE otama_id = ?)",
+							this->table_name().c_str(),
+							this->table_name().c_str());
+			}
+			otama_dbi_stmt_free(&m_insert);
+			m_insert = otama_dbi_stmt_new(dbi, base_sql);
+			if (m_insert == NULL) {
+				return -1;
+			}
+			
+			nv_snprintf(base_sql, sizeof(base_sql)-1,
+						"SELECT vector FROM %s WHERE otama_id = ?",
+						this->table_name().c_str());
+			otama_dbi_stmt_free(&m_load_vector);
+			m_load_vector = otama_dbi_stmt_new(dbi, base_sql);
+			if (m_load_vector == NULL) {
+				return -1;
+			}
+			
+			nv_snprintf(base_sql, sizeof(base_sql)-1,
+						"SELECT flag FROM %s WHERE otama_id = ? AND flag != ?",
+						this->table_name().c_str());
+			otama_dbi_stmt_free(&m_load_flag);
+			m_load_flag = otama_dbi_stmt_new(dbi, base_sql);
+			if (m_load_flag == NULL) {
+				return -1;
+			}
+			
+			nv_snprintf(base_sql, sizeof(base_sql)-1,
+						"UPDATE %s SET flag = ?, commit_id = ? WHERE otama_id = ?",
+						this->table_name().c_str());
+			otama_dbi_stmt_free(&m_update_flag);
+			m_update_flag = otama_dbi_stmt_new(dbi, base_sql);
+			if (m_update_flag == NULL) {
+				return -1;
+			}
+			
+			return 0;
+		}
+
+		void
+		stmt_free(void)
+		{
+			otama_dbi_stmt_free(&m_find_id);
+			otama_dbi_stmt_free(&m_insert);
+			otama_dbi_stmt_free(&m_load_flag);
+			otama_dbi_stmt_free(&m_load_vector);
+			otama_dbi_stmt_free(&m_update_flag);
+		}
 		
 	public:
 		DBIDriver(otama_variant_t *options)
-			: Driver<T>(options)
+		: Driver<T>(options),
+		  m_find_id(0),
+		  m_load_vector(0),
+		  m_load_flag(0),
+		  m_insert(0),
+		  m_update_flag(0)
 		{
 			otama_variant_t *database = otama_variant_hash_at(options, "database");
 			otama_dbi_config_t dbi_config;
 			
-			this->read_dbi_config(&dbi_config, database);
-			m_dbi = otama_dbi_new(&dbi_config);
+			memset(&dbi_config, 0, sizeof(dbi_config));
+			if (OTAMA_VARIANT_IS_HASH(database)) {
+				this->read_dbi_config(&dbi_config, database);
+				m_dbi = otama_dbi_new(&dbi_config);
+				m_dbi_driver_name = dbi_config.driver;
+			}
 		}
 		
 		virtual otama_status_t
 		open(void)
 		{
 			otama_status_t ret;
-	
 #ifdef _OPENMP
 			OMPLock lock(this->m_lock);
 #endif
@@ -369,6 +488,9 @@ namespace otama
 			}
 			
 			if (otama_dbi_open(m_dbi) != 0) {
+				return OTAMA_STATUS_SYSERROR;
+			}
+			if (stmt_init(m_dbi) != 0) {
 				return OTAMA_STATUS_SYSERROR;
 			}
 			
@@ -455,6 +577,7 @@ namespace otama
 				if (ret != 0) {
 					return OTAMA_STATUS_SYSERROR;
 				}
+				stmt_init(m_dbi);
 			}
 			
 			return OTAMA_STATUS_OK;
@@ -470,6 +593,7 @@ namespace otama
 #ifdef _OPENMP
 			OMPLock lock(this->m_lock);
 #endif
+			stmt_free();
 			ret = otama_dbi_table_exist(m_dbi, &exist, this->table_name().c_str());
 			if (ret == 0) {
 				if (exist != 0) {
@@ -506,6 +630,7 @@ namespace otama
 		virtual otama_status_t
 		close(void)
 		{
+			stmt_free();
 			if (m_dbi) {
 				otama_dbi_close(&m_dbi);
 			}
