@@ -1,8 +1,9 @@
 source 'http://rubygems.org'
 
+if RUBY_VERSION =~ /^1\.8/
+   gem 'mime-types', '< 2.0.0'
+end
 gem 'json'
 gem 'sinatra'
 gem 'rest-client'
 gem 'thin'
-
-
