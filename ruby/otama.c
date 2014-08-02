@@ -300,8 +300,12 @@ otama_rb_s_set_log_file(VALUE self,
 						VALUE file)
 {
 	int ret;
-	
-	ret = otama_log_set_file(StringValuePtr(file));
+
+	if (file == Qnil) {
+		ret = otama_log_set_file(NULL);
+	} else {
+		ret = otama_log_set_file(StringValuePtr(file));
+	}
 	if (ret != 0) {
 		otama_rb_raise(ret);
 	}
