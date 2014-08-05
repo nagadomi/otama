@@ -3,5 +3,8 @@ source 'http://rubygems.org'
 gem 'sinatra'
 gem 'thin'
 gem 'rmagick'
-gem 'ruby-filemagic'
-
+if RUBY_VERSION =~ /^1\.8/
+   gem 'ruby-filemagic', '0.5.2'
+else
+   gem 'ruby-filemagic'
+end
