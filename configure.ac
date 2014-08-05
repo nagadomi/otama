@@ -3,10 +3,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(otama, 0.7.3, nagadomi@nurs.or.jp)
+AC_INIT(otama, 0.7.4, nagadomi@nurs.or.jp)
 OTAMA_MAJOR=0
 OTAMA_MINOR=7
-OTAMA_REVISION=3
+OTAMA_REVISION=4
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADER([src/config.h:src/config.h.in])
