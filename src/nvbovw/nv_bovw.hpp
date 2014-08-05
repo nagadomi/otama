@@ -313,6 +313,32 @@ public:
 		return 0;
 	}
 	
+	int
+	open_with_idf(const char *idf_file)
+	{
+		char name[8192];
+		char path[8192];
+		
+		close();
+		
+		nv_snprintf(name, sizeof(name) - 1, "nv_bovw%dk_posi.kmtb", BIT / 1024);
+		default_data_path(path, sizeof(path) - 1, name);
+		m_posi = nv_load_kmeans_tree_bin(path);
+		
+		nv_snprintf(name, sizeof(name) - 1, "nv_bovw%dk_nega.kmtb", BIT / 1024);
+		default_data_path(path, sizeof(path) - 1, name);
+		m_nega = nv_load_kmeans_tree_bin(path);
+		
+		m_idf = nv_load_matrix_bin(idf_file);
+		
+		init_ctx();
+		
+		if (m_posi == NULL || m_nega == NULL || m_idf == NULL || m_ctx == NULL) {
+			close();
+			return -1;
+		}
+		return 0;
+	}
 	int 	
 	open(const char *posi_file,
 		 const char *nega_file,
@@ -846,19 +872,36 @@ public:
 	}
 
 	void
+	calc_idf(nv_matrix_t *idf, int idf_j,
+			 nv_matrix_t *freq, int freq_j,
+			 int64_t count, int64_t stopword_th = 0)
+	{
+		int i;
+		if (stopword_th < 0) {
+			for (i = 0; i < idf->n; ++i) {
+				if (!NV_MAT_V(m_idf, 0, i) > 0.0f) {
+					NV_MAT_V(idf, idf_j, i) = 0.0f;
+				} else {
+					NV_MAT_V(idf, idf_j, i) = logf((count + 0.5f) / (NV_MAT_V(freq, freq_j, i) + 0.5f)) / logf(2.0f) + 1.0f;
+				}
+			}
+		} else {
+			for (i = 0; i < idf->n; ++i) {
+				if (stopword_th != 0 && stopword_th < NV_MAT_V(freq, freq_j, i)) {
+					NV_MAT_V(idf, idf_j, i) = 0.0f;
+				} else {
+					NV_MAT_V(idf, idf_j, i) = logf((count + 0.5f) / (NV_MAT_V(freq, freq_j, i) + 0.5f)) / logf(2.0f) + 1.0f;
+				}
+			}
+		}
+	}
+
+	void
 	update_idf(nv_matrix_t *freq, int freq_j,
 			   uint64_t count,
 			   uint64_t stopword_th = 0)
 	{
-		int i;
-		
-		for (i = 0; i < m_idf->n; ++i) {
-			if (stopword_th != 0 && stopword_th < NV_MAT_V(freq, freq_j, i)) {
-				NV_MAT_V(m_idf, 0, i) = 0.0f;
-			} else {
-				NV_MAT_V(m_idf, 0, i) = logf((count + 0.5f) / (NV_MAT_V(freq, freq_j, i) + 0.5f)) / logf(2.0f) + 1.0f;
-			}
-		}
+		calc_idf(m_idf, 0, freq, freq_j, count, stopword_th);
 	}
 
 	float idf(int i)
