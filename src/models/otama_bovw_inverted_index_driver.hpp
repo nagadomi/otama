@@ -236,7 +236,7 @@ namespace otama
 		otama_status_t
 		save_idf(otama_variant_t *argv)
 		{
-			int64_t stopword_th = 1;
+			int64_t stopword_th = -1;
 			int64_t count;
 			uint32_t hash;
 			char filename[8192] = "./idf.matb";

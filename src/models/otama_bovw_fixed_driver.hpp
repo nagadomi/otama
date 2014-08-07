@@ -45,6 +45,7 @@ namespace otama
 		float m_color_weight;
 		nv_bovw_rerank_method_t m_rerank_method;
 		nv_matrix_t *m_color;
+		std::string m_idf_file;
 		T *m_ctx;
 
 		virtual FT *
@@ -274,6 +275,54 @@ namespace otama
 			nv_matrix_free(&vec);
 		}
 		
+		otama_status_t
+		save_idf(otama_variant_t *argv)
+		{
+			int64_t stopword_th = 0, feature_count = 0;
+			int64_t i, count = this->m_mmap->count();
+			const FT *db = this->m_mmap->vec();			
+			char filename[8192] = "./idf.matb";
+			nv_matrix_t *freq = nv_matrix_alloc(T::BIT, 1);
+			nv_matrix_t *idf = nv_matrix_alloc(T::BIT, 1);
+			nv_matrix_t *vec = nv_matrix_alloc(T::BIT, 1);
+			otama_status_t ret = OTAMA_STATUS_OK;
+			if (OTAMA_VARIANT_IS_HASH(argv)) {
+				otama_variant_t *file = otama_variant_hash_at(argv, "filename");
+				otama_variant_t *stopword = otama_variant_hash_at(argv, "stopword");
+				if (!OTAMA_VARIANT_IS_NULL(file)) {
+					strncpy(filename, otama_variant_to_string(file), sizeof(filename)-1);
+				}
+				if (!OTAMA_VARIANT_IS_NULL(stopword)) {
+					stopword_th = otama_variant_to_int(stopword);
+				}
+			} else {
+				strncpy(filename, otama_variant_to_string(argv), sizeof(filename)-1);
+			}
+			nv_matrix_zero(freq);
+			for (i = 0; i < count; ++i) {
+				m_ctx->decode(vec, 0, &db[i]);
+				nv_vector_add(freq, 0, freq, 0, vec, 0);
+			}
+			m_ctx->calc_idf(idf, 0, freq, 0, count, stopword_th);
+			for (i = 0; i < idf->n; ++i) {
+				if (NV_MAT_V(idf, 0, i) > 0.0f) {
+					feature_count += 1;
+				}
+			}
+			OTAMA_LOG_DEBUG("idf_save: filename: %s, stopword_th: %d, features: %d/%d",
+							filename, stopword_th, feature_count, (int)T::BIT);
+			
+			if (nv_save_matrix_bin(filename, idf) != 0) {
+				OTAMA_LOG_ERROR("%s: failed to save idf", filename);
+				ret = OTAMA_STATUS_SYSERROR;
+			}
+			nv_matrix_free(&freq);
+			nv_matrix_free(&idf);
+			nv_matrix_free(&vec);
+			
+			return ret;
+		}
+		
 	public:
 		static inline std::string
 		itos(int i)	{ char buff[128]; sprintf(buff, "%d", i); return std::string(buff);	}
@@ -298,6 +347,7 @@ namespace otama
 			m_strip = false;
 			m_rerank_method = NV_BOVW_RERANK_IDF;
 			m_ctx = NULL;
+			m_idf_file.clear();
 			
 			driver = otama_variant_hash_at(options, "driver");
 			if (OTAMA_VARIANT_IS_HASH(driver)) {
@@ -319,6 +369,9 @@ namespace otama
 				}
 				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver, "fit_area"))) {
 					m_fit_area = otama_variant_to_int(value);
+				}
+				if (!OTAMA_VARIANT_IS_NULL(value = otama_variant_hash_at(driver, "idf_file"))) {
+					m_idf_file.assign(otama_variant_to_string(value));
 				}
 			}
 			
@@ -348,8 +401,14 @@ namespace otama
 				return ret;
 			}
 			m_ctx = new T;
-			if (m_ctx->open() != 0) {
-				return OTAMA_STATUS_SYSERROR;
+			if (m_idf_file.size() == 0) {
+				if (m_ctx->open() != 0) {
+					return OTAMA_STATUS_SYSERROR;
+				}
+			} else {
+				if (m_ctx->open_with_idf(m_idf_file.c_str()) != 0) {
+					return OTAMA_STATUS_SYSERROR;
+				}
 			}
 			m_ctx->set_fit_area(m_fit_area);
 			
@@ -421,6 +480,10 @@ namespace otama
 				update_idf(input);
 				otama_variant_set_null(output);
 				return OTAMA_STATUS_OK;
+			} else if (method == "save_idf") {
+				otama_status_t ret = save_idf(input);
+				otama_variant_set_null(output);
+				return ret;
 			}
 			return FixedDriver<FT>::invoke(method, output, input);
 		}
