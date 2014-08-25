@@ -147,13 +147,12 @@ namespace otama
 			std::set_intersection(fv1->begin(), fv1->end(),
 								  fv2->begin(), fv2->end(),
 								  std::back_inserter(intersection));
-			
 			for (it = fv1->begin(); it != fv1->end(); ++it) {
 				float w = (*score_func)(*it);
 				norm1 += w * w;
 			}
 			for (it = fv2->begin(); it != fv2->end(); ++it) {
-				float w = (*score_func)(*it);				
+				float w = (*score_func)(*it);
 				norm2 += w * w;
 			}
 			for (it = intersection.begin(); it != intersection.end(); ++it) {
@@ -334,7 +333,7 @@ namespace otama
 			// bucket.reserve
 			this->m_inverted_index->reserve((size_t)BIT);
 		}
-		~BOVWInvertedIndexDriver()
+		virtual ~BOVWInvertedIndexDriver()
 		{
 			delete m_ctx;
 		}

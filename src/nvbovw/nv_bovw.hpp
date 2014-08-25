@@ -67,6 +67,9 @@ typedef struct {
 template <nv_bovw_bit_e N, typename C>
 class nv_bovw_ctx {
 public:
+	static const uint32_t VSPLIT3_TOP = 0x10000000;
+	static const uint32_t VSPLIT3_MIDDLE = 0x20000000;
+	static const uint32_t VSPLIT3_BOTTOM = 0x40000000;
 	static const int BIT = N;
 	static const int TOP_VQ = 2048; /* NV_BOVW_KMT_POSI()->dim[0] * 2 */
 	static const int INT_BLOCKS = N / 64;
@@ -274,6 +277,61 @@ private:
 		nv_matrix_free(&desc_vec);
 		nv_matrix_free(&key_vec);
 	}
+	void
+	extract_sparse_feature_vsplit3(sparse_t &vec, const nv_matrix_t *smooth)
+	{
+		nv_matrix_t *key_vec;
+		nv_matrix_t *desc_vec;
+		int desc_m;
+		int i;
+		int procs = nv_omp_procs();
+		int half_y = NV_FLOOR(smooth->rows / 2.0f);
+		int middle_top_y = NV_FLOOR(smooth->rows / 3.0f);
+		int middle_bottom_y = NV_FLOOR(smooth->rows / 3.0f * 2);
+		std::vector<std::set<uint32_t> >tmp(procs);
+		std::set<uint32_t> tmp2;
+		std::set<uint32_t>::const_iterator it;
+		
+		key_vec = nv_matrix_alloc(NV_KEYPOINT_KEYPOINT_N, KEYPOINT_M);
+		desc_vec = nv_matrix_alloc(NV_KEYPOINT_DESC_N, KEYPOINT_M);
+		
+		desc_m = nv_keypoint_ex(m_ctx, key_vec, desc_vec, smooth, 0);
+		
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(procs) schedule(dynamic, 1)
+#endif
+		for (i = 0; i < desc_m; ++i) {
+			int thread_id = nv_omp_thread_id();
+			uint32_t label;
+			
+			nv_vector_normalize(desc_vec, i);
+			
+			if (NV_MAT_V(key_vec, i, NV_KEYPOINT_RESPONSE_IDX) > 0.0f) {
+				label = nv_kmeans_tree_predict_label_ex(m_posi, m_posi->height, desc_vec, i, HKM_NN);
+			} else {
+				label = nv_kmeans_tree_predict_label_ex(m_nega, m_nega->height, desc_vec, i, HKM_NN) + POSI_N;
+			}
+			if (NV_MAT_V(m_idf, 0, label) > 0.0f) {
+				int y = NV_FLOOR(NV_MAT_V(key_vec, i, NV_KEYPOINT_Y_IDX));
+				if (y < half_y) {
+					tmp[thread_id].insert(label | VSPLIT3_TOP);
+				} else {
+					tmp[thread_id].insert(label | VSPLIT3_BOTTOM);
+				}
+				if (middle_top_y < y && y < middle_bottom_y) {
+					tmp[thread_id].insert(label | VSPLIT3_MIDDLE);
+				}
+			}
+		}
+		for (i = 0; i < procs; ++i) {
+			tmp2.insert(tmp[i].begin(), tmp[i].end());
+		}
+		std::copy(tmp2.begin(), tmp2.end(), std::back_inserter(vec));
+		
+		nv_matrix_free(&desc_vec);
+		nv_matrix_free(&key_vec);
+	}
+	
 public:
 	nv_bovw_ctx(): m_posi(0), m_nega(0), m_idf(0), m_ctx(0), m_fit_area(0) {}
 	~nv_bovw_ctx() { close(); }
@@ -428,7 +486,7 @@ public:
 			const char *file)
 	{
 		nv_matrix_t *image = nv_load_image(file);
-	
+		
 		if (image == NULL) {
 			return -1;
 		}
@@ -437,6 +495,77 @@ public:
 		nv_matrix_free(&image);
 		
 		return 0;
+	}
+	
+	int
+	extract_vsplit3(sparse_t &vec,
+			const nv_matrix_t *image)
+	{
+		nv_matrix_t *resize, *gray, *smooth;
+		
+		vec.clear();
+		
+		if (m_fit_area == 0) {
+			float scale = IMG_SIZE() / (float)NV_MAX(image->rows, image->cols);
+			resize = nv_matrix3d_alloc(3, (int)(image->rows * scale),
+										(int)(image->cols * scale));
+		} else {
+			float axis_ratio = (float)image->rows / image->cols;
+			int new_cols = (int)sqrtf(m_fit_area / axis_ratio);
+			int new_rows = (int)((float)m_fit_area / new_cols);
+			resize = nv_matrix3d_alloc(3, new_rows, new_cols);
+		}
+		gray = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		smooth = nv_matrix3d_alloc(1, resize->rows, resize->cols);
+		
+		nv_resize(resize, image);
+		nv_gray(gray, resize);
+		nv_gaussian5x5(smooth, 0, gray, 0);
+		extract_sparse_feature_vsplit3(vec, smooth);
+		
+		nv_matrix_free(&resize);
+		nv_matrix_free(&gray);
+		nv_matrix_free(&smooth);
+		
+		return 0;
+	}
+	
+	int
+	extract_vsplit3(sparse_t &vec,
+			const void *data, size_t len)
+	{
+		nv_matrix_t *image = nv_decode_image(data, len);
+	
+		if (image == NULL) {
+			return -1;
+		}
+		
+		extract_vsplit3(vec, image);
+		nv_matrix_free(&image);
+		
+		return 0;
+	}
+	
+	int
+	extract_vsplit3(sparse_t &vec,
+					const char *file)
+	{
+		nv_matrix_t *image = nv_load_image(file);
+	
+		if (image == NULL) {
+			return -1;
+		}
+		
+		extract_vsplit3(vec, image);
+		nv_matrix_free(&image);
+		
+		return 0;
+	}
+	
+	inline int
+	remove_vsplit3_flag(uint32_t label)
+	{
+		return (label & ~(VSPLIT3_TOP | VSPLIT3_BOTTOM|VSPLIT3_MIDDLE));
 	}
 	
 	int
@@ -796,7 +925,7 @@ public:
 			errp = NULL;
 			h = (uint32_t)strtoul(s, &errp, 16);
 			if (errp != s) {
-				if (NV_MAT_V(m_idf, 0, h) > 0.0f) {
+				if (NV_MAT_V(m_idf, 0, remove_vsplit3_flag(h)) > 0.0f) {
 					hash->push_back(h);
 				}
 			}
