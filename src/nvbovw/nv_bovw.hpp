@@ -67,7 +67,7 @@ typedef struct {
 template <nv_bovw_bit_e N, typename C>
 class nv_bovw_ctx {
 public:
-	static const uint32_t VSPLIT3_TOP = 0x10000000;
+	static const uint32_t VSPLIT3_TOP    = 0x10000000;
 	static const uint32_t VSPLIT3_MIDDLE = 0x20000000;
 	static const uint32_t VSPLIT3_BOTTOM = 0x40000000;
 	static const int BIT = N;
@@ -285,13 +285,12 @@ private:
 		int desc_m;
 		int i;
 		int procs = nv_omp_procs();
-		int half_y = NV_FLOOR(smooth->rows / 2.0f);
-		int middle_top_y = NV_FLOOR(smooth->rows / 3.0f);
-		int middle_bottom_y = NV_FLOOR(smooth->rows / 3.0f * 2);
+		int roi_size = NV_FLOOR(smooth->rows / 3.0f);
+		int roi_offset = NV_MAX(1, NV_FLOOR(smooth->rows / 3.0f / 20.0f));
 		std::vector<std::set<uint32_t> >tmp(procs);
 		std::set<uint32_t> tmp2;
 		std::set<uint32_t>::const_iterator it;
-		
+
 		key_vec = nv_matrix_alloc(NV_KEYPOINT_KEYPOINT_N, KEYPOINT_M);
 		desc_vec = nv_matrix_alloc(NV_KEYPOINT_DESC_N, KEYPOINT_M);
 		
@@ -313,13 +312,14 @@ private:
 			}
 			if (NV_MAT_V(m_idf, 0, label) > 0.0f) {
 				int y = NV_FLOOR(NV_MAT_V(key_vec, i, NV_KEYPOINT_Y_IDX));
-				if (y < half_y) {
+				if (y < 1 * roi_size + roi_offset) {
 					tmp[thread_id].insert(label | VSPLIT3_TOP);
-				} else {
-					tmp[thread_id].insert(label | VSPLIT3_BOTTOM);
 				}
-				if (middle_top_y < y && y < middle_bottom_y) {
+				if (1 * roi_size - roi_offset < y && y < 2 * roi_size + roi_offset) {
 					tmp[thread_id].insert(label | VSPLIT3_MIDDLE);
+				}
+				if (2 * roi_size - roi_offset < y) {
+					tmp[thread_id].insert(label | VSPLIT3_BOTTOM);
 				}
 			}
 		}
