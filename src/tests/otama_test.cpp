@@ -90,6 +90,7 @@ int main(void)
 #endif
 #if (OTAMA_WITH_LEVELDB && OTAMA_WITH_SQLITE3)
 	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_iv_ldb.yaml");
+	otama_test_api(OTAMA_TEST_CONFIG_DIR "/bovw512k_vsplit3_iv_ldb.yaml");
 #endif
 #if (!OTAMA_WINDOWS && OTAMA_WTIH_SQLITE3) /* does not work on WindowsOS */
 	otama_test_cluster(
