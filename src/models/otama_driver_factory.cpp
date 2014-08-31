@@ -60,6 +60,9 @@ otama::createDriver(otama_variant_t *config)
 	else if (strcmp(driver_name, "id") == 0) {
 		return new BOVWInvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexLevelDB>(config);
 	}
+	else if (strcmp(driver_name, "id_vsplit3") == 0) {
+		return new BOVWVSplit3InvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexLevelDB>(config);		
+	}
 #else
 	else if (strcmp(driver_name, "id") == 0)
 	{
@@ -149,10 +152,6 @@ otama::createDriver(otama_variant_t *config)
 	else if (strcmp(driver_name, "bovw512k_iv") == 0)
 	{
 		return new BOVWInvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexBucket>(config);
-	}
-	else if (strcmp(driver_name, "bovw512k_vsplit3_iv") == 0)
-	{
-		return new BOVWVSplit3InvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexBucket>(config);
 	}
 #if OTAMA_WITH_LEVELDB
 	else if (strcmp(driver_name, "bovw512k_iv_ldb") == 0)
