@@ -1,0 +1,10 @@
+---
+namespace: test
+
+driver:
+  name: bovw512k_vsplit3_iv_ldb
+  data_dir: ./data
+  
+database:
+  driver: sqlite3
+  name: ./data/test.db

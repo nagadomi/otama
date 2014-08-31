@@ -63,6 +63,7 @@ models/otama_bovw_fixed_driver.hpp \
 models/otama_lmca_fixed_driver.hpp \
 models/otama_lmca_nodb_driver.hpp \
 models/otama_bovw_inverted_index_driver.hpp \
+models/otama_bovw_vsplit3_inverted_index_driver.hpp \
 models/otama_bovw_nodb_driver.hpp \
 models/otama_bovw_sparse_nodb_driver.hpp \
 models/otama_sboc_nodb_driver.hpp \

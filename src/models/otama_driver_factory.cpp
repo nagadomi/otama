@@ -23,6 +23,7 @@
 #include "otama_lmca_fixed_driver.hpp"
 #include "otama_lmca_nodb_driver.hpp"
 #include "otama_bovw_inverted_index_driver.hpp"
+#include "otama_bovw_vsplit3_inverted_index_driver.hpp"
 #include "otama_bovw_nodb_driver.hpp"
 #include "otama_bovw_sparse_nodb_driver.hpp"
 #include "otama_vlad_nodb_driver.hpp"
@@ -58,6 +59,9 @@ otama::createDriver(otama_variant_t *config)
 #if OTAMA_WITH_LEVELDB
 	else if (strcmp(driver_name, "id") == 0) {
 		return new BOVWInvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexLevelDB>(config);
+	}
+	else if (strcmp(driver_name, "id_vsplit3") == 0) {
+		return new BOVWVSplit3InvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexLevelDB>(config);		
 	}
 #else
 	else if (strcmp(driver_name, "id") == 0)
@@ -153,6 +157,10 @@ otama::createDriver(otama_variant_t *config)
 	else if (strcmp(driver_name, "bovw512k_iv_ldb") == 0)
 	{
 		return new BOVWInvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexLevelDB>(config);
+	}
+	else if (strcmp(driver_name, "bovw512k_vsplit3_iv_ldb") == 0)
+	{
+		return new BOVWVSplit3InvertedIndexDriver<NV_BOVW_BIT512K, InvertedIndexLevelDB>(config);
 	}
 #endif
 	
