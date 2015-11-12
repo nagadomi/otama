@@ -1,4 +1,4 @@
-require 'otama'
+require './otama'
 require 'yaml'
 require 'test/unit'
 require 'pp'
