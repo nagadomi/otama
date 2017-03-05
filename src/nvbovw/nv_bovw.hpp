@@ -1008,7 +1008,7 @@ public:
 		int i;
 		if (stopword_th < 0) {
 			for (i = 0; i < idf->n; ++i) {
-				if (!NV_MAT_V(m_idf, 0, i) > 0.0f) {
+				if (!(NV_MAT_V(m_idf, 0, i) > 0.0f)) {
 					NV_MAT_V(idf, idf_j, i) = 0.0f;
 				} else {
 					NV_MAT_V(idf, idf_j, i) = logf((count + 0.5f) / (NV_MAT_V(freq, freq_j, i) + 0.5f)) / logf(2.0f) + 1.0f;
