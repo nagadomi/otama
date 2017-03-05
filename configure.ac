@@ -7,6 +7,7 @@ AC_INIT(otama, 0.7.6, nagadomi@nurs.or.jp)
 OTAMA_MAJOR=0
 OTAMA_MINOR=7
 OTAMA_REVISION=6
+AC_CONFIG_AUX_DIR([.])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADER([src/config.h:src/config.h.in])
