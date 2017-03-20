@@ -113,7 +113,7 @@ private:
 				4.0f,
 				15,
 				0.8f,
-				NV_KEYPOINT_DETECTOR_STAR,
+				NV_KEYPOINT_DETECTOR_STAR_WITHOUT_SCALESPACE_SEARCH,
 				NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
 			};
 			m_ctx = nv_keypoint_ctx_alloc(&param);
@@ -125,7 +125,7 @@ private:
 				4.0,
 				15,
 				0.8f,
-				NV_KEYPOINT_DETECTOR_STAR,
+				NV_KEYPOINT_DETECTOR_STAR_WITHOUT_SCALESPACE_SEARCH,
 				NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
 			};
 			m_ctx = nv_keypoint_ctx_alloc(&param);
@@ -137,7 +137,7 @@ private:
 				NV_KEYPOINT_MIN_R,
 				NV_KEYPOINT_LEVEL,
 				NV_KEYPOINT_NN,
-				NV_KEYPOINT_DETECTOR_STAR,
+				NV_KEYPOINT_DETECTOR_STAR_WITHOUT_SCALESPACE_SEARCH,
 				NV_KEYPOINT_DESCRIPTOR_GRADIENT_HISTOGRAM
 			};
 			m_ctx = nv_keypoint_ctx_alloc(&param);
